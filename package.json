@@ -1,0 +1,28 @@
+{
+  "name": "cropvue-monorepo",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "pnpm -C playground dev",
+    "build": "pnpm -r --filter './packages/*' build",
+    "test": "vitest",
+    "test:run": "vitest run",
+    "lint": "eslint .",
+    "typecheck": "tsc --noEmit"
+  },
+  "devDependencies": {
+    "@types/node": "^22.0.0",
+    "typescript": "^5.9.0",
+    "vitest": "^4.0.0",
+    "vue": "^3.5.0"
+  },
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "pnpm": {
+    "onlyBuiltDependencies": [
+      "esbuild",
+      "@parcel/watcher"
+    ]
+  }
+}
