@@ -1,3 +1,5 @@
+import './css/variables.css'
+
 export { default as CropVue } from './components/CropVue.vue'
 export { default as CropEditor } from './components/CropEditor.vue'
 export { default as CropPreview } from './components/CropPreview.vue'

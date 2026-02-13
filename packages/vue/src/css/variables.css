@@ -1,0 +1,67 @@
+:root {
+  /* Overlay */
+  --cropvue-overlay-color: rgba(0, 0, 0, 0.5);
+  --cropvue-overlay-transition: 150ms ease;
+
+  /* Crop area */
+  --cropvue-crop-border-color: #fff;
+  --cropvue-crop-border-width: 2px;
+  --cropvue-crop-border-style: solid;
+
+  /* Grid */
+  --cropvue-grid-color: rgba(255, 255, 255, 0.3);
+  --cropvue-grid-width: 1px;
+  --cropvue-grid-display: block;
+
+  /* Handles */
+  --cropvue-handle-color: #fff;
+  --cropvue-handle-size: 10px;
+  --cropvue-handle-border-radius: 50%;
+
+  /* Dropzone */
+  --cropvue-dropzone-border-color: #d1d5db;
+  --cropvue-dropzone-border-color-active: #3b82f6;
+  --cropvue-dropzone-bg: transparent;
+  --cropvue-dropzone-bg-active: rgba(59, 130, 246, 0.05);
+  --cropvue-dropzone-border-style: dashed;
+  --cropvue-dropzone-border-radius: 8px;
+
+  /* Editor */
+  --cropvue-editor-bg: #1a1a1a;
+
+  /* Preview */
+  --cropvue-preview-border-radius: 0;
+  --cropvue-preview-bg: transparent;
+
+  /* Toolbar */
+  --cropvue-toolbar-bg: #fff;
+  --cropvue-toolbar-border-radius: 8px;
+  --cropvue-toolbar-border-color: #e5e7eb;
+  --cropvue-toolbar-btn-color: #374151;
+  --cropvue-toolbar-btn-hover-bg: #f3f4f6;
+  --cropvue-toolbar-btn-hover-color: #111827;
+  --cropvue-toolbar-btn-active-bg: #e5e7eb;
+  --cropvue-toolbar-btn-radius: 6px;
+  --cropvue-toolbar-separator-color: #e5e7eb;
+
+  /* Queue */
+  --cropvue-queue-thumb-size: 64px;
+  --cropvue-queue-thumb-radius: 6px;
+  --cropvue-queue-active-border: #3b82f6;
+  --cropvue-queue-check-bg: #22c55e;
+
+  /* Buttons */
+  --cropvue-btn-bg: #fff;
+  --cropvue-btn-color: #374151;
+  --cropvue-btn-border-color: #d1d5db;
+  --cropvue-btn-radius: 6px;
+  --cropvue-btn-hover-bg: #f9fafb;
+  --cropvue-btn-confirm-bg: #3b82f6;
+  --cropvue-btn-confirm-color: #fff;
+  --cropvue-btn-confirm-border: #3b82f6;
+  --cropvue-btn-confirm-hover-bg: #2563eb;
+
+  /* Stencil */
+  --cropvue-stencil-bg: transparent;
+  --cropvue-stencil-border: none;
+}

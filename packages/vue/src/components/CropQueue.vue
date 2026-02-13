@@ -2,29 +2,27 @@
 import { useImageQueue } from '@cropvue/core'
 import type { QueueItem } from '@cropvue/core'
 
-const props = withDefaults(defineProps<{
-  items?: QueueItem[]
-}>(), {
-  items: () => [],
-})
-
 const emit = defineEmits<{
   select: [item: QueueItem]
   remove: [item: QueueItem]
-  'update:items': [items: QueueItem[]]
+  change: [items: QueueItem[]]
 }>()
 
 const queue = useImageQueue()
 
-function selectItem(item: QueueItem) {
-  queue.setCurrent(item.id)
+function selectItem(index: number) {
+  const item = queue.images.value[index]
+  if (!item) return
+  queue.select(index)
   emit('select', item)
 }
 
-function removeItem(item: QueueItem) {
-  queue.remove(item.id)
+function removeItem(index: number) {
+  const item = queue.images.value[index]
+  if (!item) return
+  queue.remove(index)
   emit('remove', item)
-  emit('update:items', queue.items.value)
+  emit('change', queue.images.value)
 }
 
 defineExpose({ queue })
@@ -33,33 +31,33 @@ defineExpose({ queue })
 <template>
   <div class="cropvue-queue">
     <slot
-      :items="queue.items.value"
-      :current="queue.current.value"
+      :items="queue.images.value"
+      :current-index="queue.current.value"
       :select="selectItem"
       :remove="removeItem"
       :add="queue.add"
     >
       <div class="cropvue-queue__list">
         <div
-          v-for="item in queue.items.value"
+          v-for="(item, index) in queue.images.value"
           :key="item.id"
           class="cropvue-queue__item"
           :class="{
-            'cropvue-queue__item--active': queue.current.value?.id === item.id,
+            'cropvue-queue__item--active': queue.current.value === index,
             'cropvue-queue__item--done': item.status === 'done',
           }"
-          @click="selectItem(item)"
+          @click="selectItem(index)"
         >
           <img
             :src="item.thumbnail"
-            :alt="`Queue item ${item.id}`"
+            :alt="`Queue item ${index + 1}`"
             class="cropvue-queue__thumbnail"
           />
           <button
             type="button"
             class="cropvue-queue__remove"
             title="Remove"
-            @click.stop="removeItem(item)"
+            @click.stop="removeItem(index)"
           >
             <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2">
               <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
