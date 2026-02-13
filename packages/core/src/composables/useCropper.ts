@@ -38,13 +38,30 @@ export function useCropper(options: CropperOptions = {}) {
 
   // --- Image loading ---
 
+  function initCropForImage(img: CropImageData) {
+    crop.value = createCropState(
+      { width: img.naturalWidth, height: img.naturalHeight },
+      {
+        stencil: crop.value.stencil ?? options.stencil ?? 'rectangle',
+        aspectRatio: crop.value.aspectRatio ?? options.aspectRatio,
+        minWidth: options.minWidth,
+        minHeight: options.minHeight,
+        maxWidth: options.maxWidth,
+        maxHeight: options.maxHeight,
+      }
+    )
+    transform.value = createTransformState()
+  }
+
   async function loadFile(file: File) {
     image.value = await loadImageFromFile(file)
+    initCropForImage(image.value)
     isReady.value = true
   }
 
   async function loadUrl(url: string) {
     image.value = await loadImageFromUrl(url)
+    initCropForImage(image.value)
     isReady.value = true
   }
 

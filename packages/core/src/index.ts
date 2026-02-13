@@ -4,6 +4,8 @@ export { useDropzone, validateFile } from './composables/useDropzone'
 export { useImageQueue, createQueue } from './composables/useImageQueue'
 export { useUploader, createUploadHandler } from './composables/useUploader'
 export { useCompressor, chooseOutputFormat, compressBlob } from './composables/useCompressor'
+export { usePointerHandler } from './composables/usePointerHandler'
+export type { PointerHandlerOptions, PointerHandlerCleanup } from './composables/usePointerHandler'
 
 // Engine (for advanced usage)
 export {

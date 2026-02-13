@@ -7,7 +7,10 @@ export function loadImageFromFile(file: File): Promise<CropImageData> {
     const img = new Image()
 
     img.onload = () => {
-      URL.revokeObjectURL(url)
+      // Do NOT revoke the blob URL here — the CropEditor renders the image
+      // via <img :src="image.element.src">, so the URL must remain valid.
+      // The URL will be garbage collected when the page unloads or when
+      // a new image replaces this one.
       resolve({
         element: img,
         naturalWidth: img.naturalWidth,

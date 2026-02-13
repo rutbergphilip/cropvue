@@ -9,6 +9,9 @@ import type {
   UploadFn,
   QueueItem,
 } from '@cropvue/core'
+import CropEditor from './CropEditor.vue'
+import CropToolbar from './CropToolbar.vue'
+import CropPreview from './CropPreview.vue'
 
 const props = withDefaults(defineProps<{
   stencil?: StencilType
@@ -218,7 +221,15 @@ defineExpose({
         :reset="cropper.reset"
         :confirm="confirm"
         :cancel="cancel"
-      />
+      >
+        <CropEditor
+          :image="cropper.image.value"
+          :transform="cropper.transform.value"
+          :crop="cropper.crop.value"
+          @update:transform="t => cropper.transform.value = t"
+          @update:crop="c => cropper.crop.value = c"
+        />
+      </slot>
 
       <slot
         name="toolbar"
@@ -230,7 +241,18 @@ defineExpose({
         :zoom-out="() => cropper.zoomBy(-0.1)"
         :reset="cropper.reset"
         :transform="cropper.transform.value"
-      />
+      >
+        <CropToolbar
+          :transform="cropper.transform.value"
+          @rotate-left="cropper.rotateLeft"
+          @rotate-right="cropper.rotateRight"
+          @flip-x="cropper.flipX"
+          @flip-y="cropper.flipY"
+          @zoom-in="() => cropper.zoomBy(0.1)"
+          @zoom-out="() => cropper.zoomBy(-0.1)"
+          @reset="cropper.reset"
+        />
+      </slot>
 
       <slot
         name="preview"
