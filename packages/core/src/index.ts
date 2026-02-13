@@ -20,6 +20,13 @@ export {
 export { renderCrop, exportCrop } from './engine/canvas-renderer'
 export { constrainCropSize, constrainAspectRatio, constrainCropPosition } from './engine/constraints'
 export {
+  handlePan,
+  handleZoom,
+  handleCropResize,
+  handleKeyboard,
+} from './engine/gestures'
+export type { HandlePosition } from './engine/gestures'
+export {
   getRectangleClipPath,
   getCircleClipPath,
   getFreeformClipPath,
