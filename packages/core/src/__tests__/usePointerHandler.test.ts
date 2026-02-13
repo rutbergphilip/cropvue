@@ -26,8 +26,10 @@ function createOptions(overrides: Partial<PointerHandlerOptions> = {}): PointerH
     onPan: vi.fn(),
     onZoom: vi.fn(),
     onCropResize: vi.fn(),
+    onCropMove: vi.fn(),
     onKeyboard: vi.fn(),
     getHandleAtPoint: vi.fn(() => null),
+    isInsideCropArea: vi.fn(() => false),
     displayScale: () => 1,
     ...overrides,
   }
@@ -167,6 +169,48 @@ describe('usePointerHandler', () => {
       el._dispatch('pointermove', { pointerId: 1, clientX: 40, clientY: 40 })
 
       expect(opts.onCropResize).toHaveBeenCalledWith('nw', -10, -10)
+    })
+  })
+
+  describe('crop move', () => {
+    it('triggers onCropMove when pointer is inside crop area', () => {
+      const opts = createOptions({
+        isInsideCropArea: vi.fn(() => true),
+      })
+      usePointerHandler(el as unknown as HTMLElement, opts)
+
+      el._dispatch('pointerdown', { button: 0, pointerId: 1, clientX: 200, clientY: 200 })
+      el._dispatch('pointermove', { pointerId: 1, clientX: 220, clientY: 210 })
+
+      expect(opts.onCropMove).toHaveBeenCalledWith(20, 10)
+      expect(opts.onPan).not.toHaveBeenCalled()
+    })
+
+    it('handle takes priority over crop move', () => {
+      const opts = createOptions({
+        getHandleAtPoint: vi.fn(() => 'se' as HandlePosition),
+        isInsideCropArea: vi.fn(() => true),
+      })
+      usePointerHandler(el as unknown as HTMLElement, opts)
+
+      el._dispatch('pointerdown', { button: 0, pointerId: 1, clientX: 200, clientY: 200 })
+      el._dispatch('pointermove', { pointerId: 1, clientX: 220, clientY: 210 })
+
+      expect(opts.onCropResize).toHaveBeenCalledWith('se', 20, 10)
+      expect(opts.onCropMove).not.toHaveBeenCalled()
+    })
+
+    it('falls through to pan when outside crop area', () => {
+      const opts = createOptions({
+        isInsideCropArea: vi.fn(() => false),
+      })
+      usePointerHandler(el as unknown as HTMLElement, opts)
+
+      el._dispatch('pointerdown', { button: 0, pointerId: 1, clientX: 10, clientY: 10 })
+      el._dispatch('pointermove', { pointerId: 1, clientX: 30, clientY: 20 })
+
+      expect(opts.onPan).toHaveBeenCalledWith(20, 10)
+      expect(opts.onCropMove).not.toHaveBeenCalled()
     })
   })
 

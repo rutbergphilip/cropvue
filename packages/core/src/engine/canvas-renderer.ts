@@ -20,7 +20,6 @@ export function renderCrop(
   let outWidth = crop.width
   let outHeight = crop.height
 
-  // Apply output dimension limits
   if (options.maxWidth || options.maxHeight) {
     const maxW = options.maxWidth ?? Infinity
     const maxH = options.maxHeight ?? Infinity
@@ -37,7 +36,6 @@ export function renderCrop(
 
   ctx.clearRect(0, 0, outWidth, outHeight)
 
-  // Apply circle clip if needed
   if (crop.stencil === 'circle') {
     ctx.beginPath()
     ctx.arc(outWidth / 2, outHeight / 2, Math.min(outWidth, outHeight) / 2, 0, Math.PI * 2)
@@ -45,7 +43,6 @@ export function renderCrop(
     ctx.clip()
   }
 
-  // Apply freeform clip if needed
   if (crop.stencil === 'freeform' && crop.points && crop.points.length >= 3) {
     const scaleX = outWidth / crop.width
     const scaleY = outHeight / crop.height
@@ -64,28 +61,23 @@ export function renderCrop(
     ctx.clip()
   }
 
-  // Scale factor from crop coords to output coords
   const scaleX = outWidth / crop.width
   const scaleY = outHeight / crop.height
 
   ctx.save()
-
-  // Move to output center
   ctx.translate(outWidth / 2, outHeight / 2)
-
-  // Apply rotation
   ctx.rotate((transform.rotation * Math.PI) / 180)
-
-  // Apply flip
   ctx.scale(transform.flipX ? -1 : 1, transform.flipY ? -1 : 1)
 
-  // Draw image: map crop area back to image space
   const imgDrawWidth = image.naturalWidth * transform.scale * scaleX
   const imgDrawHeight = image.naturalHeight * transform.scale * scaleY
 
-  // Center the image, apply transform offsets
-  const drawX = (transform.x * scaleX) - imgDrawWidth / 2
-  const drawY = (transform.y * scaleY) - imgDrawHeight / 2
+  // Compensate for crop center offset from image center
+  const cropOffsetX = (crop.x + crop.width / 2 - image.naturalWidth / 2) * scaleX
+  const cropOffsetY = (crop.y + crop.height / 2 - image.naturalHeight / 2) * scaleY
+
+  const drawX = transform.x * scaleX - cropOffsetX - imgDrawWidth / 2
+  const drawY = transform.y * scaleY - cropOffsetY - imgDrawHeight / 2
 
   ctx.drawImage(
     image,

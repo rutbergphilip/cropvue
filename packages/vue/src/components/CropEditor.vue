@@ -6,6 +6,7 @@ import {
   handlePan,
   handleZoom,
   handleCropResize,
+  handleCropMove,
   handleKeyboard,
 } from '@cropvue/core'
 import type { HandlePosition, PointerHandlerCleanup } from '@cropvue/core'
@@ -27,7 +28,6 @@ const containerWidth = ref(0)
 const containerHeight = ref(0)
 const isPanning = ref(false)
 
-// Scale factor to fit image within the editor container
 const displayScale = computed(() => {
   const img = props.image
   if (!img || containerWidth.value === 0 || containerHeight.value === 0) return 1
@@ -37,7 +37,6 @@ const displayScale = computed(() => {
   return Math.min(scaleX, scaleY, 1)
 })
 
-// Image display dimensions (scaled to fit container)
 const displayWidth = computed(() => {
   const img = props.image
   if (!img) return 0
@@ -50,13 +49,11 @@ const displayHeight = computed(() => {
   return img.naturalHeight * displayScale.value
 })
 
-// Offset to center the image in the viewport
 const imageOffset = computed(() => ({
   x: (containerWidth.value - displayWidth.value) / 2,
   y: (containerHeight.value - displayHeight.value) / 2,
 }))
 
-// Image style: scale to fit, then apply user transforms
 const imageStyle = computed(() => {
   const t = props.transform
   const s = displayScale.value
@@ -72,7 +69,6 @@ const imageStyle = computed(() => {
   }
 })
 
-// Crop area style: scale from image space to display space
 const cropStyle = computed(() => {
   const s = displayScale.value
   const offset = imageOffset.value
@@ -84,7 +80,6 @@ const cropStyle = computed(() => {
   }
 })
 
-// Overlay clip path in display space
 const overlayClipPath = computed(() => {
   const c = props.crop
   const s = displayScale.value
@@ -116,7 +111,6 @@ function updateContainerSize() {
   }
 }
 
-// Pointer handler setup
 let pointerHandler: PointerHandlerCleanup | null = null
 
 function setupPointerHandler() {
@@ -143,17 +137,21 @@ function setupPointerHandler() {
         : { width: props.crop.width, height: props.crop.height }
       emit('update:crop', handleCropResize(props.crop, handle, dx, dy, bounds))
     },
+    onCropMove(dx, dy) {
+      const img = props.image
+      const bounds = img
+        ? { width: img.naturalWidth, height: img.naturalHeight }
+        : { width: props.crop.width, height: props.crop.height }
+      emit('update:crop', handleCropMove(props.crop, dx, dy, bounds))
+    },
     onKeyboard(key, shiftKey) {
       emit('update:transform', handleKeyboard(props.transform, key, shiftKey))
     },
     getHandleAtPoint(e: PointerEvent) {
-      // First check DOM target (works when handles have pointer-events: auto)
       const target = e.target as HTMLElement
       const attr = target?.getAttribute?.('data-handle')
       if (attr) return attr as HandlePosition
 
-      // Fallback: coordinate-based detection near crop area corners
-      // This handles cases where CSS pointer-events prevents proper hit-testing
       const s = displayScale.value
       const offset = imageOffset.value
       const c = props.crop
@@ -175,6 +173,23 @@ function setupPointerHandler() {
       if (Math.abs(px - cropRight) < threshold && Math.abs(py - cropBottom) < threshold) return 'se'
 
       return null
+    },
+    isInsideCropArea(e: PointerEvent) {
+      const s = displayScale.value
+      const offset = imageOffset.value
+      const c = props.crop
+      const cropLeft = c.x * s + offset.x
+      const cropTop = c.y * s + offset.y
+      const cropRight = cropLeft + c.width * s
+      const cropBottom = cropTop + c.height * s
+
+      const viewportEl = editorRef.value
+      if (!viewportEl) return false
+      const rect = viewportEl.getBoundingClientRect()
+      const px = e.clientX - rect.left
+      const py = e.clientY - rect.top
+
+      return px >= cropLeft && px <= cropRight && py >= cropTop && py <= cropBottom
     },
     displayScale: () => displayScale.value,
   })
@@ -199,7 +214,6 @@ watch(() => props.image, async () => {
   updateContainerSize()
 })
 
-// Track panning state for cursor via pointerup on the viewport
 function onViewportPointerUp() {
   isPanning.value = false
 }
@@ -310,7 +324,8 @@ defineExpose({ editorRef, displayScale })
   position: absolute;
   border: var(--cropvue-crop-border-width, 2px) var(--cropvue-crop-border-style, solid) var(--cropvue-crop-border-color, #fff);
   box-sizing: border-box;
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: move;
 }
 
 .cropvue-editor__grid {

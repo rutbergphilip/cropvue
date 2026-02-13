@@ -3,6 +3,7 @@ import {
   handlePan,
   handleZoom,
   handleCropResize,
+  handleCropMove,
   handleKeyboard,
 } from '../engine/gestures'
 import { createTransformState, createCropState } from '../engine/transform'
@@ -79,6 +80,36 @@ describe('handleCropResize', () => {
     const result = handleCropResize(crop, 'se', -9999, -9999, { width: 400, height: 400 })
     expect(result.width).toBeGreaterThanOrEqual(32)
     expect(result.height).toBeGreaterThanOrEqual(32)
+  })
+})
+
+describe('handleCropMove', () => {
+  it('moves crop by delta', () => {
+    const crop = { ...createCropState({ width: 800, height: 800 }), x: 100, y: 100, width: 200, height: 200 }
+    const result = handleCropMove(crop, 10, 20, { width: 800, height: 800 })
+    expect(result.x).toBe(110)
+    expect(result.y).toBe(120)
+  })
+
+  it('clamps to left/top bounds', () => {
+    const crop = { ...createCropState({ width: 800, height: 800 }), x: 5, y: 5, width: 200, height: 200 }
+    const result = handleCropMove(crop, -50, -50, { width: 800, height: 800 })
+    expect(result.x).toBe(0)
+    expect(result.y).toBe(0)
+  })
+
+  it('clamps to right/bottom bounds', () => {
+    const crop = { ...createCropState({ width: 800, height: 800 }), x: 590, y: 590, width: 200, height: 200 }
+    const result = handleCropMove(crop, 50, 50, { width: 800, height: 800 })
+    expect(result.x).toBe(600)
+    expect(result.y).toBe(600)
+  })
+
+  it('preserves crop dimensions', () => {
+    const crop = { ...createCropState({ width: 800, height: 800 }), x: 100, y: 100, width: 200, height: 150 }
+    const result = handleCropMove(crop, 30, 40, { width: 800, height: 800 })
+    expect(result.width).toBe(200)
+    expect(result.height).toBe(150)
   })
 })
 

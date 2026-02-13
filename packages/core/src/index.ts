@@ -25,6 +25,7 @@ export {
   handlePan,
   handleZoom,
   handleCropResize,
+  handleCropMove,
   handleKeyboard,
 } from './engine/gestures'
 export type { HandlePosition } from './engine/gestures'

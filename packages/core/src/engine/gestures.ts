@@ -4,8 +4,6 @@ const MIN_SCALE = 0.1
 const MAX_SCALE = 10
 const MIN_CROP = 32
 
-// --- Pan ---
-
 export function handlePan(
   state: TransformState,
   dx: number,
@@ -18,8 +16,6 @@ export function handlePan(
   }
 }
 
-// --- Zoom ---
-
 export function handleZoom(
   state: TransformState,
   delta: number,
@@ -29,7 +25,6 @@ export function handleZoom(
   const newScale = Math.max(MIN_SCALE, Math.min(MAX_SCALE, state.scale + delta))
   const ratio = newScale / state.scale
 
-  // Adjust position so zoom centers around the pointer
   const newX = centerX - (centerX - state.x) * ratio
   const newY = centerY - (centerY - state.y) * ratio
 
@@ -40,8 +35,6 @@ export function handleZoom(
     y: newY,
   }
 }
-
-// --- Crop Resize ---
 
 export type HandlePosition = 'nw' | 'ne' | 'sw' | 'se' | 'n' | 's' | 'e' | 'w'
 
@@ -91,7 +84,6 @@ export function handleCropResize(
       break
   }
 
-  // Enforce minimum crop size
   if (width < MIN_CROP) {
     if (handle === 'nw' || handle === 'sw' || handle === 'w') {
       x = crop.x + crop.width - MIN_CROP
@@ -105,7 +97,6 @@ export function handleCropResize(
     height = MIN_CROP
   }
 
-  // Clamp to bounds
   x = Math.max(0, x)
   y = Math.max(0, y)
   if (x + width > bounds.width) width = bounds.width - x
@@ -114,7 +105,20 @@ export function handleCropResize(
   return { ...crop, x, y, width, height }
 }
 
-// --- Keyboard ---
+export function handleCropMove(
+  crop: CropState,
+  dx: number,
+  dy: number,
+  bounds: { width: number; height: number }
+): CropState {
+  let x = crop.x + dx
+  let y = crop.y + dy
+
+  x = Math.max(0, Math.min(x, bounds.width - crop.width))
+  y = Math.max(0, Math.min(y, bounds.height - crop.height))
+
+  return { ...crop, x, y }
+}
 
 const STEP = 1
 const SHIFT_STEP = 10

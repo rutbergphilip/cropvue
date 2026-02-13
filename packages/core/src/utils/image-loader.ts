@@ -7,10 +7,6 @@ export function loadImageFromFile(file: File): Promise<CropImageData> {
     const img = new Image()
 
     img.onload = () => {
-      // Do NOT revoke the blob URL here — the CropEditor renders the image
-      // via <img :src="image.element.src">, so the URL must remain valid.
-      // The URL will be garbage collected when the page unloads or when
-      // a new image replaces this one.
       resolve({
         element: img,
         naturalWidth: img.naturalWidth,
@@ -29,24 +25,33 @@ export function loadImageFromFile(file: File): Promise<CropImageData> {
   })
 }
 
-export function loadImageFromUrl(url: string): Promise<CropImageData> {
+export async function loadImageFromUrl(url: string): Promise<CropImageData> {
+  // Fetch as blob to ensure the editor and canvas renderer reference the same image data
+  const response = await fetch(url)
+  if (!response.ok) {
+    throw new Error(`Failed to fetch image: ${url} (${response.status})`)
+  }
+  const blob = await response.blob()
+  const blobUrl = URL.createObjectURL(blob)
+
   return new Promise((resolve, reject) => {
     const img = new Image()
-    img.crossOrigin = 'anonymous'
 
     img.onload = () => {
       resolve({
         element: img,
         naturalWidth: img.naturalWidth,
         naturalHeight: img.naturalHeight,
+        originalSize: blob.size,
       })
     }
 
     img.onerror = () => {
+      URL.revokeObjectURL(blobUrl)
       reject(new Error(`Failed to load image: ${url}`))
     }
 
-    img.src = url
+    img.src = blobUrl
   })
 }
 

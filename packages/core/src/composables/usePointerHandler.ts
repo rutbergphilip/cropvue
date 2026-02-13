@@ -4,8 +4,10 @@ export interface PointerHandlerOptions {
   onPan: (dx: number, dy: number) => void
   onZoom: (delta: number, centerX: number, centerY: number) => void
   onCropResize: (handle: HandlePosition, dx: number, dy: number) => void
+  onCropMove: (dx: number, dy: number) => void
   onKeyboard: (key: string, shiftKey: boolean) => void
   getHandleAtPoint: (e: PointerEvent) => HandlePosition | null
+  isInsideCropArea: (e: PointerEvent) => boolean
   displayScale: () => number
 }
 
@@ -13,7 +15,7 @@ export interface PointerHandlerCleanup {
   destroy: () => void
 }
 
-type DragMode = 'pan' | 'resize' | null
+type DragMode = 'pan' | 'resize' | 'crop-move' | null
 
 export function usePointerHandler(
   element: HTMLElement,
@@ -26,9 +28,7 @@ export function usePointerHandler(
   let activePointerId: number | null = null
 
   function onPointerDown(e: PointerEvent) {
-    // Only handle primary button (left click / touch)
     if (e.button !== 0) return
-    // Ignore if already tracking a pointer
     if (activePointerId !== null) return
 
     activePointerId = e.pointerId
@@ -39,6 +39,9 @@ export function usePointerHandler(
     if (handle) {
       dragMode = 'resize'
       activeHandle = handle
+    } else if (options.isInsideCropArea(e)) {
+      dragMode = 'crop-move'
+      activeHandle = null
     } else {
       dragMode = 'pan'
       activeHandle = null
@@ -46,9 +49,7 @@ export function usePointerHandler(
 
     try {
       element.setPointerCapture(e.pointerId)
-    } catch {
-      // Pointer capture may fail for synthetic events
-    }
+    } catch { /* noop */ }
     e.preventDefault()
   }
 
@@ -67,6 +68,8 @@ export function usePointerHandler(
       options.onPan(dx, dy)
     } else if (dragMode === 'resize' && activeHandle) {
       options.onCropResize(activeHandle, dx, dy)
+    } else if (dragMode === 'crop-move') {
+      options.onCropMove(dx, dy)
     }
   }
 
@@ -84,9 +87,7 @@ export function usePointerHandler(
     if (activePointerId !== null) {
       try {
         element.releasePointerCapture(e.pointerId)
-      } catch {
-        // Pointer capture may already be released
-      }
+      } catch { /* noop */ }
     }
     dragMode = null
     activeHandle = null
@@ -98,7 +99,6 @@ export function usePointerHandler(
     const rect = element.getBoundingClientRect()
     const centerX = (e.clientX - rect.left) / options.displayScale()
     const centerY = (e.clientY - rect.top) / options.displayScale()
-    // Normalize wheel delta: negative deltaY = scroll up = zoom in
     const delta = -e.deltaY * 0.001
     options.onZoom(delta, centerX, centerY)
   }
@@ -111,7 +111,6 @@ export function usePointerHandler(
     }
   }
 
-  // Bind events
   element.addEventListener('pointerdown', onPointerDown)
   element.addEventListener('pointermove', onPointerMove)
   element.addEventListener('pointerup', onPointerUp)
