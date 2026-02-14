@@ -115,28 +115,28 @@ onUnmounted(() => {
 const basicsResult = ref<CropResult | null>(null)
 
 const basicsTheme: Record<string, string> = {
-  '--cropvue-crop-border-color': '#00d4ff',
-  '--cropvue-grid-color': 'rgba(0, 212, 255, 0.3)',
-  '--cropvue-handle-color': '#00d4ff',
-  '--cropvue-dropzone-border-color': '#2a2a34',
-  '--cropvue-dropzone-border-color-active': '#00d4ff',
-  '--cropvue-dropzone-bg': 'rgba(0, 212, 255, 0.02)',
-  '--cropvue-dropzone-bg-active': 'rgba(0, 212, 255, 0.06)',
-  '--cropvue-editor-bg': '#111118',
-  '--cropvue-overlay-color': 'rgba(12, 12, 15, 0.65)',
-  '--cropvue-toolbar-bg': '#16161a',
-  '--cropvue-toolbar-border-color': '#2a2a34',
-  '--cropvue-toolbar-btn-color': '#72728a',
-  '--cropvue-toolbar-btn-hover-bg': '#1e1e24',
-  '--cropvue-toolbar-btn-hover-color': '#00d4ff',
-  '--cropvue-btn-bg': '#1e1e24',
-  '--cropvue-btn-color': '#e8e8ed',
-  '--cropvue-btn-border-color': '#2a2a34',
-  '--cropvue-btn-hover-bg': '#2a2a34',
-  '--cropvue-btn-confirm-bg': '#00d4ff',
-  '--cropvue-btn-confirm-border': '#00d4ff',
-  '--cropvue-btn-confirm-color': '#0c0c0f',
-  '--cropvue-btn-confirm-hover-bg': '#00b8db',
+  '--cropvue-crop-border-color': '#10b981',
+  '--cropvue-grid-color': 'rgba(16, 185, 129, 0.3)',
+  '--cropvue-handle-color': '#10b981',
+  '--cropvue-dropzone-border-color': '#253040',
+  '--cropvue-dropzone-border-color-active': '#10b981',
+  '--cropvue-dropzone-bg': 'rgba(16, 185, 129, 0.02)',
+  '--cropvue-dropzone-bg-active': 'rgba(16, 185, 129, 0.06)',
+  '--cropvue-editor-bg': '#0f1620',
+  '--cropvue-overlay-color': 'rgba(11, 15, 20, 0.65)',
+  '--cropvue-toolbar-bg': '#141c24',
+  '--cropvue-toolbar-border-color': '#253040',
+  '--cropvue-toolbar-btn-color': '#6b7a8a',
+  '--cropvue-toolbar-btn-hover-bg': '#1c2530',
+  '--cropvue-toolbar-btn-hover-color': '#10b981',
+  '--cropvue-btn-bg': '#1c2530',
+  '--cropvue-btn-color': '#e6edf3',
+  '--cropvue-btn-border-color': '#253040',
+  '--cropvue-btn-hover-bg': '#253040',
+  '--cropvue-btn-confirm-bg': '#10b981',
+  '--cropvue-btn-confirm-border': '#10b981',
+  '--cropvue-btn-confirm-color': '#0b0f14',
+  '--cropvue-btn-confirm-hover-bg': '#0d9668',
 }
 
 const avatarResult = ref<CropResult | null>(null)
@@ -734,9 +734,31 @@ function kb(bytes: number) {
     <header class="hero">
       <div class="hero__grid" aria-hidden="true"></div>
       <div class="hero__content">
-        <h1 class="hero__title">CropVue</h1>
-        <p class="hero__tagline">Image cropping for Vue, reimagined.</p>
-        <p class="hero__sub">17 interactive demos showcasing what's possible.</p>
+        <div class="hero__brand">
+          <svg class="hero__icon" viewBox="0 0 32 32" width="44" height="44" fill="none">
+            <path d="M4 12V6a2 2 0 012-2h6" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <path d="M28 20v6a2 2 0 01-2 2h-6" stroke="var(--accent)" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"/>
+            <rect x="8" y="8" width="16" height="16" rx="1.5" stroke="var(--accent)" stroke-width="1.5" opacity="0.3"/>
+          </svg>
+          <h1 class="hero__title">CropVue</h1>
+        </div>
+        <p class="hero__tagline">Headless image cropping for <strong>Vue 3</strong> and <strong>Nuxt</strong>.</p>
+        <p class="hero__sub">Crop, compress, and upload with full control over every pixel.</p>
+        <div class="hero__badges">
+          <span class="hero__badge">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none"><path d="M2 6l10 6 10-6M2 6v12l10 6M2 6l10-6 10 6M22 6v12l-10 6M12 12v12" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+            Vue 3
+          </span>
+          <span class="hero__badge">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none"><path d="M12 2L2 19.5h20L12 2z" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/><path d="M12 8v7M8.5 15.5L12 22l3.5-6.5" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round"/></svg>
+            Nuxt
+          </span>
+          <span class="hero__badge">
+            <svg viewBox="0 0 24 24" width="14" height="14" fill="none"><rect x="3" y="3" width="18" height="18" rx="2" stroke="currentColor" stroke-width="1.5"/><path d="M8 17V7h4a3 3 0 010 6H8" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            TypeScript
+          </span>
+          <span class="hero__badge">Headless</span>
+        </div>
       </div>
     </header>
 
@@ -780,7 +802,7 @@ function kb(bytes: number) {
 
     <section id="basics" class="showcase">
       <div class="showcase__header">
-        <span class="showcase__num" style="--accent: var(--cyan)">01</span>
+        <span class="showcase__num">01</span>
         <div>
           <h2 class="showcase__title">The Basics</h2>
           <p class="showcase__desc">Zero-config defaults with CSS variable theming. No custom slots — just drop and crop.</p>
@@ -812,7 +834,7 @@ function kb(bytes: number) {
                   <span class="pill">{{ result.blob.type }}</span>
                   <span class="pill">{{ kb(result.blob.size) }}</span>
                 </div>
-                <button class="btn btn--cyan" @click="restart">Crop Another</button>
+                <button class="btn btn--accent" @click="restart">Crop Another</button>
               </div>
             </template>
           </CropVue>
@@ -831,7 +853,7 @@ function kb(bytes: number) {
 
     <section id="avatar" class="showcase">
       <div class="showcase__header">
-        <span class="showcase__num" style="--accent: var(--magenta)">02</span>
+        <span class="showcase__num">02</span>
         <div>
           <h2 class="showcase__title">Avatar Studio</h2>
           <p class="showcase__desc">Circle stencil with 1:1 lock. Custom dropzone and result display via scoped slots.</p>
@@ -882,11 +904,11 @@ function kb(bytes: number) {
                 <img :src="result.url" alt="Avatar" class="avatar__result-img" />
               </div>
               <div v-if="result" class="result__meta">
-                <span class="pill pill--magenta">{{ result.width }}&times;{{ result.height }}</span>
-                <span class="pill pill--magenta">{{ result.blob.type }}</span>
-                <span class="pill pill--magenta">{{ kb(result.blob.size) }}</span>
+                <span class="pill pill--accent">{{ result.width }}&times;{{ result.height }}</span>
+                <span class="pill pill--accent">{{ result.blob.type }}</span>
+                <span class="pill pill--accent">{{ kb(result.blob.size) }}</span>
               </div>
-              <button class="btn btn--magenta" @click="restart">Choose Different Photo</button>
+              <button class="btn btn--accent" @click="restart">Choose Different Photo</button>
             </div>
           </template>
         </CropVue>
@@ -904,7 +926,7 @@ function kb(bytes: number) {
 
     <section id="full-control" class="showcase">
       <div class="showcase__header">
-        <span class="showcase__num" style="--accent: var(--emerald)">03</span>
+        <span class="showcase__num">03</span>
         <div>
           <h2 class="showcase__title">Full Control</h2>
           <p class="showcase__desc">Every slot overridden — custom dropzone, toolbar, actions, and result view.</p>
@@ -974,7 +996,7 @@ function kb(bytes: number) {
         <template #actions="{ confirm, cancel }">
           <div class="terminal__actions">
             <button class="btn btn--ghost" @click="cancel">Discard</button>
-            <button class="btn btn--emerald" @click="confirm">Export 16:9 JPEG</button>
+            <button class="btn btn--accent" @click="confirm">Export 16:9 JPEG</button>
           </div>
         </template>
 
@@ -987,7 +1009,7 @@ function kb(bytes: number) {
               <tr><td>Size</td><td>{{ kb(result.blob.size) }}</td></tr>
               <tr><td>Original</td><td>{{ result.originalWidth }} &times; {{ result.originalHeight }}</td></tr>
             </table>
-            <button class="btn btn--emerald" @click="restart">Start Over</button>
+            <button class="btn btn--accent" @click="restart">Start Over</button>
           </div>
         </template>
       </CropVue>
@@ -1004,7 +1026,7 @@ function kb(bytes: number) {
 
     <section id="shape-shifter" class="showcase">
       <div class="showcase__header">
-        <span class="showcase__num" style="--accent: var(--amber)">04</span>
+        <span class="showcase__num">04</span>
         <div>
           <h2 class="showcase__title">Shape Shifter</h2>
           <p class="showcase__desc">Reactive props — change stencil, aspect ratio, format and quality in real-time.</p>
@@ -1073,12 +1095,12 @@ function kb(bytes: number) {
           <div class="result">
             <img v-if="result" :src="result.url" alt="Result" class="result__img" />
             <div v-if="result" class="result__meta">
-              <span class="pill pill--amber">{{ result.width }}&times;{{ result.height }}</span>
-              <span class="pill pill--amber">{{ result.blob.type }}</span>
-              <span class="pill pill--amber">{{ kb(result.blob.size) }}</span>
-              <span class="pill pill--amber">q{{ shifterQuality }}</span>
+              <span class="pill pill--accent">{{ result.width }}&times;{{ result.height }}</span>
+              <span class="pill pill--accent">{{ result.blob.type }}</span>
+              <span class="pill pill--accent">{{ kb(result.blob.size) }}</span>
+              <span class="pill pill--accent">q{{ shifterQuality }}</span>
             </div>
-            <button class="btn btn--amber" @click="restart">Try Again</button>
+            <button class="btn btn--accent" @click="restart">Try Again</button>
           </div>
         </template>
       </CropVue>
@@ -1095,7 +1117,7 @@ function kb(bytes: number) {
 
     <section id="composable" class="showcase showcase--blueprint">
       <div class="showcase__header">
-        <span class="showcase__num" style="--accent: var(--cyan)">05</span>
+        <span class="showcase__num">05</span>
         <div>
           <h2 class="showcase__title">Under the Hood</h2>
           <p class="showcase__desc">The <code>useCropper()</code> composable with manual <code>CropEditor</code> wiring. Full programmatic control.</p>
@@ -1143,7 +1165,7 @@ function kb(bytes: number) {
           <pre>{{ JSON.stringify(cropper.transform.value, null, 2) }}</pre>
         </div>
 
-        <button class="btn btn--cyan" style="margin-top: 12px" @click="exportResult">Export Result</button>
+        <button class="btn btn--accent" style="margin-top: 12px" @click="exportResult">Export Result</button>
 
         <div v-if="composableResult" class="result" style="margin-top: 16px">
           <img :src="composableResult.url" alt="Result" class="result__img" />
@@ -1174,7 +1196,7 @@ function kb(bytes: number) {
 
     <section id="themes" class="showcase">
       <div class="showcase__header">
-        <span class="showcase__num" style="--accent: #a78bfa">06</span>
+        <span class="showcase__num">06</span>
         <div>
           <h2 class="showcase__title">Theme Gallery</h2>
           <p class="showcase__desc">Three radically different themes — all CSS custom properties, zero code changes.</p>
@@ -1224,7 +1246,7 @@ function kb(bytes: number) {
 
     <section id="tailwind-skins" class="showcase">
       <div class="showcase__header">
-        <span class="showcase__num" style="--accent: #0ea5e9">07</span>
+        <span class="showcase__num">07</span>
         <div>
           <h2 class="showcase__title">Tailwind Skins</h2>
           <p class="showcase__desc">Three Tailwind-powered skins using the <code>ui</code> prop — zero CSS variables, pure utility classes.</p>
@@ -1274,7 +1296,7 @@ function kb(bytes: number) {
 
     <section id="tailwind-editor" class="showcase">
       <div class="showcase__header">
-        <span class="showcase__num" style="--accent: #a78bfa">08</span>
+        <span class="showcase__num">08</span>
         <div>
           <h2 class="showcase__title">Tailwind Editor</h2>
           <p class="showcase__desc">Fine-grained editor customization — handles, grid, overlay, toolbar — all via <code>ui</code> props.</p>
@@ -1291,40 +1313,40 @@ function kb(bytes: number) {
           :aspect-ratio="16 / 9"
           :ui="{
             root: 'max-w-2xl mx-auto',
-            dropzone: 'rounded-2xl border-2 border-dashed border-violet-400/40 bg-violet-950/20 hover:bg-violet-950/40 min-h-48 transition-colors',
-            dropzoneActive: 'border-violet-400 bg-violet-900/40',
+            dropzone: 'rounded-2xl border-2 border-dashed border-emerald-400/40 bg-emerald-950/20 hover:bg-emerald-950/40 min-h-48 transition-colors',
+            dropzoneActive: 'border-emerald-400 bg-emerald-900/40',
             actions: 'gap-3 pt-4',
-            cancelButton: 'rounded-xl px-6 py-2.5 text-sm font-medium text-violet-300 bg-violet-950/80 border border-violet-700 hover:bg-violet-900 transition-colors cursor-pointer',
-            confirmButton: 'rounded-xl px-6 py-2.5 text-sm font-medium text-white bg-violet-600 border-violet-600 hover:bg-violet-500 transition-colors cursor-pointer',
+            cancelButton: 'rounded-xl px-6 py-2.5 text-sm font-medium text-emerald-300 bg-emerald-950/80 border border-emerald-700 hover:bg-emerald-900 transition-colors cursor-pointer',
+            confirmButton: 'rounded-xl px-6 py-2.5 text-sm font-medium text-white bg-emerald-600 border-emerald-600 hover:bg-emerald-500 transition-colors cursor-pointer',
             done: 'flex flex-col items-center gap-4 py-8',
-            resultImage: 'rounded-2xl max-h-80 shadow-xl shadow-violet-500/10',
+            resultImage: 'rounded-2xl max-h-80 shadow-xl shadow-emerald-500/10',
           }"
           @done="(r: CropResult) => tailwindEditorResult = r"
         >
           <template #toolbar="{ rotateLeft, rotateRight, flipX, flipY, zoomIn, zoomOut, reset }">
             <div class="flex items-center justify-center gap-1 py-3">
-              <button class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-violet-400 hover:bg-violet-900/50 hover:text-violet-200 transition-colors cursor-pointer" title="Rotate left" @click="rotateLeft">
+              <button class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-emerald-400 hover:bg-emerald-900/50 hover:text-emerald-200 transition-colors cursor-pointer" title="Rotate left" @click="rotateLeft">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 2v6h6M2.66 12a9 9 0 1 0 1.18-4.5" /></svg>
               </button>
-              <button class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-violet-400 hover:bg-violet-900/50 hover:text-violet-200 transition-colors cursor-pointer" title="Rotate right" @click="rotateRight">
+              <button class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-emerald-400 hover:bg-emerald-900/50 hover:text-emerald-200 transition-colors cursor-pointer" title="Rotate right" @click="rotateRight">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 12a9 9 0 1 1-1.18-4.5" /></svg>
               </button>
-              <span class="w-px h-5 bg-violet-800 mx-1"></span>
-              <button class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-violet-400 hover:bg-violet-900/50 hover:text-violet-200 transition-colors cursor-pointer" title="Flip H" @click="flipX">
+              <span class="w-px h-5 bg-emerald-800 mx-1"></span>
+              <button class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-emerald-400 hover:bg-emerald-900/50 hover:text-emerald-200 transition-colors cursor-pointer" title="Flip H" @click="flipX">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3M16 3h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-3M12 20V4" /></svg>
               </button>
-              <button class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-violet-400 hover:bg-violet-900/50 hover:text-violet-200 transition-colors cursor-pointer" title="Flip V" @click="flipY">
+              <button class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-emerald-400 hover:bg-emerald-900/50 hover:text-emerald-200 transition-colors cursor-pointer" title="Flip V" @click="flipY">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3M3 16v3a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-3M20 12H4" /></svg>
               </button>
-              <span class="w-px h-5 bg-violet-800 mx-1"></span>
-              <button class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-violet-400 hover:bg-violet-900/50 hover:text-violet-200 transition-colors cursor-pointer" title="Zoom out" @click="zoomOut">
+              <span class="w-px h-5 bg-emerald-800 mx-1"></span>
+              <button class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-emerald-400 hover:bg-emerald-900/50 hover:text-emerald-200 transition-colors cursor-pointer" title="Zoom out" @click="zoomOut">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /><line x1="8" y1="11" x2="14" y2="11" /></svg>
               </button>
-              <button class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-violet-400 hover:bg-violet-900/50 hover:text-violet-200 transition-colors cursor-pointer" title="Zoom in" @click="zoomIn">
+              <button class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-emerald-400 hover:bg-emerald-900/50 hover:text-emerald-200 transition-colors cursor-pointer" title="Zoom in" @click="zoomIn">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /><line x1="11" y1="8" x2="11" y2="14" /><line x1="8" y1="11" x2="14" y2="11" /></svg>
               </button>
-              <span class="w-px h-5 bg-violet-800 mx-1"></span>
-              <button class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-violet-400 hover:bg-violet-900/50 hover:text-violet-200 transition-colors cursor-pointer" title="Reset" @click="reset">
+              <span class="w-px h-5 bg-emerald-800 mx-1"></span>
+              <button class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-emerald-400 hover:bg-emerald-900/50 hover:text-emerald-200 transition-colors cursor-pointer" title="Reset" @click="reset">
                 <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10" /><polyline points="23 20 23 14 17 14" /><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 0 1 3.51 15" /></svg>
               </button>
             </div>
@@ -1332,10 +1354,10 @@ function kb(bytes: number) {
 
           <template #done="{ result, restart, reedit }">
             <div class="flex flex-col items-center gap-4 py-8">
-              <img v-if="result" :src="result.url" alt="Cropped" class="rounded-2xl max-h-80 shadow-xl shadow-violet-500/10" />
+              <img v-if="result" :src="result.url" alt="Cropped" class="rounded-2xl max-h-80 shadow-xl shadow-emerald-500/10" />
               <div class="flex gap-2">
-                <button class="rounded-xl px-5 py-2 text-sm font-medium text-violet-300 bg-violet-950/80 border border-violet-700 hover:bg-violet-900 transition-colors cursor-pointer" @click="reedit">Edit again</button>
-                <button class="rounded-xl px-5 py-2 text-sm font-medium text-white bg-violet-600 hover:bg-violet-500 transition-colors cursor-pointer" @click="restart">New image</button>
+                <button class="rounded-xl px-5 py-2 text-sm font-medium text-emerald-300 bg-emerald-950/80 border border-emerald-700 hover:bg-emerald-900 transition-colors cursor-pointer" @click="reedit">Edit again</button>
+                <button class="rounded-xl px-5 py-2 text-sm font-medium text-white bg-emerald-600 hover:bg-emerald-500 transition-colors cursor-pointer" @click="restart">New image</button>
               </div>
             </div>
           </template>
@@ -1358,7 +1380,7 @@ function kb(bytes: number) {
 
     <section id="standalone" class="showcase">
       <div class="showcase__header">
-        <span class="showcase__num" style="--accent: var(--emerald)">09</span>
+        <span class="showcase__num">09</span>
         <div>
           <h2 class="showcase__title">Standalone Parts</h2>
           <p class="showcase__desc">Individual components used independently — dropzone, toolbar, and URL loading.</p>
@@ -1438,7 +1460,7 @@ function kb(bytes: number) {
                   <span class="pill">{{ result.width }}&times;{{ result.height }}</span>
                   <span class="pill">{{ kb(result.blob.size) }}</span>
                 </div>
-                <button class="btn btn--emerald btn--sm" @click="restart">Reload</button>
+                <button class="btn btn--accent btn--sm" @click="restart">Reload</button>
               </div>
             </template>
           </CropVue>
@@ -1457,7 +1479,7 @@ function kb(bytes: number) {
 
     <section id="profile-editor" class="showcase">
       <div class="showcase__header">
-        <span class="showcase__num" style="--accent: var(--cyan)">10</span>
+        <span class="showcase__num">10</span>
         <div>
           <h2 class="showcase__title">Profile Editor</h2>
           <p class="showcase__desc">A realistic settings card — circular avatar crop alongside form fields. See how CropVue blends into app UI.</p>
@@ -1524,7 +1546,7 @@ function kb(bytes: number) {
         </div>
         <div class="profile-editor__actions">
           <button class="btn btn--ghost">Cancel</button>
-          <button class="btn btn--cyan" @click="saveProfile">
+          <button class="btn btn--accent" @click="saveProfile">
             {{ profileSaved ? 'Saved!' : 'Save Profile' }}
           </button>
         </div>
@@ -1542,7 +1564,7 @@ function kb(bytes: number) {
 
     <section id="post-composer" class="showcase">
       <div class="showcase__header">
-        <span class="showcase__num" style="--accent: var(--magenta)">11</span>
+        <span class="showcase__num">11</span>
         <div>
           <h2 class="showcase__title">Post Composer</h2>
           <p class="showcase__desc">Blog/social post creator with a 16:9 cover image area. Crop replaces the placeholder inline.</p>
@@ -1604,7 +1626,7 @@ function kb(bytes: number) {
         </div>
         <div class="post-composer__actions">
           <button class="btn btn--ghost">Save Draft</button>
-          <button class="btn btn--magenta" @click="publishPost">
+          <button class="btn btn--accent" @click="publishPost">
             {{ postPublished ? 'Published!' : 'Publish' }}
           </button>
         </div>
@@ -1622,7 +1644,7 @@ function kb(bytes: number) {
 
     <section id="product-gallery" class="showcase">
       <div class="showcase__header">
-        <span class="showcase__num" style="--accent: var(--emerald)">12</span>
+        <span class="showcase__num">12</span>
         <div>
           <h2 class="showcase__title">Product Gallery</h2>
           <p class="showcase__desc">E-commerce product card — drop or click any slot to add an image, then crop before placing.</p>
@@ -1703,7 +1725,7 @@ function kb(bytes: number) {
             <template #actions="{ confirm }">
               <div class="product-gallery__cropper-actions">
                 <button class="btn btn--ghost" @click="() => { showProductCropper = false; activeProductSlot = null }">Cancel</button>
-                <button class="btn btn--emerald" @click="confirm">Use Photo</button>
+                <button class="btn btn--accent" @click="confirm">Use Photo</button>
               </div>
             </template>
           </CropVue>
@@ -1713,7 +1735,7 @@ function kb(bytes: number) {
           <h3 class="product-gallery__name">Artisan Ceramic Vase</h3>
           <p class="product-gallery__price">$89.00</p>
           <p class="product-gallery__desc-text">Hand-thrown stoneware vase with reactive glaze finish. Each piece is unique — slight variations in color and texture are part of the charm.</p>
-          <button class="btn btn--emerald product-gallery__cta">Add to Cart</button>
+          <button class="btn btn--accent product-gallery__cta">Add to Cart</button>
         </div>
       </div>
       </template>
@@ -1729,7 +1751,7 @@ function kb(bytes: number) {
 
     <section id="modal-crop" class="showcase">
       <div class="showcase__header">
-        <span class="showcase__num" style="--accent: var(--magenta)">13</span>
+        <span class="showcase__num">13</span>
         <div>
           <h2 class="showcase__title">Modal Crop</h2>
           <p class="showcase__desc">The most common real-world pattern — open CropVue inside a modal overlay dialog with custom toolbar and actions.</p>
@@ -1808,7 +1830,7 @@ function kb(bytes: number) {
                 <template #actions="{ confirm, cancel }">
                   <div class="modal-crop__footer">
                     <button class="btn btn--ghost" @click="cancel">Cancel</button>
-                    <button class="btn btn--magenta" @click="confirm">Apply Crop</button>
+                    <button class="btn btn--accent" @click="confirm">Apply Crop</button>
                   </div>
                 </template>
               </CropVue>
@@ -1829,7 +1851,7 @@ function kb(bytes: number) {
 
     <section id="id-scanner" class="showcase">
       <div class="showcase__header">
-        <span class="showcase__num" style="--accent: var(--amber)">14</span>
+        <span class="showcase__num">14</span>
         <div>
           <h2 class="showcase__title">ID Scanner</h2>
           <p class="showcase__desc">Document scanning with strict ISO card ratio (1.586:1). Vertical sidebar toolbar + live <code>CropPreview</code> updating in real-time.</p>
@@ -1842,7 +1864,7 @@ function kb(bytes: number) {
 
       <template v-if="!showCode['id-scanner']">
       <div v-if="!scannerResult">
-        <label class="file-btn file-btn--amber">
+        <label class="file-btn file-btn--accent">
           <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
           Load Document
           <input ref="scannerFile" type="file" accept="image/*" @change="onScannerFileSelect" hidden />
@@ -1896,7 +1918,7 @@ function kb(bytes: number) {
                 <div class="scanner__id-line scanner__id-line--medium"></div>
                 <div class="scanner__id-line scanner__id-line--short"></div>
               </div>
-              <button class="btn btn--amber" style="margin-top: 12px; width: 100%" @click="exportScannerResult">Scan Document</button>
+              <button class="btn btn--accent" style="margin-top: 12px; width: 100%" @click="exportScannerResult">Scan Document</button>
             </div>
           </div>
         </template>
@@ -1905,12 +1927,12 @@ function kb(bytes: number) {
       <div v-else class="result">
         <img :src="scannerResult.url" alt="Scanned document" class="result__img" />
         <div class="result__meta">
-          <span class="pill pill--amber">{{ scannerResult.width }}&times;{{ scannerResult.height }}</span>
-          <span class="pill pill--amber">{{ scannerResult.blob.type }}</span>
-          <span class="pill pill--amber">{{ kb(scannerResult.blob.size) }}</span>
-          <span class="pill pill--amber">1.586:1 ratio</span>
+          <span class="pill pill--accent">{{ scannerResult.width }}&times;{{ scannerResult.height }}</span>
+          <span class="pill pill--accent">{{ scannerResult.blob.type }}</span>
+          <span class="pill pill--accent">{{ kb(scannerResult.blob.size) }}</span>
+          <span class="pill pill--accent">1.586:1 ratio</span>
         </div>
-        <button class="btn btn--amber" @click="resetScanner">Scan Another</button>
+        <button class="btn btn--accent" @click="resetScanner">Scan Another</button>
       </div>
       </template>
 
@@ -1925,7 +1947,7 @@ function kb(bytes: number) {
 
     <section id="before-after" class="showcase">
       <div class="showcase__header">
-        <span class="showcase__num" style="--accent: var(--cyan)">15</span>
+        <span class="showcase__num">15</span>
         <div>
           <h2 class="showcase__title">Before / After</h2>
           <p class="showcase__desc">Original vs cropped comparison with a draggable divider slider. Uses <code>reedit</code> and <code>restart</code> slots.</p>
@@ -1996,7 +2018,7 @@ function kb(bytes: number) {
         </div>
         <div class="compare__actions">
           <button class="btn btn--ghost" @click="onCompareRestart">Start Over</button>
-          <button class="btn btn--cyan" @click="onCompareReedit">Re-edit</button>
+          <button class="btn btn--accent" @click="onCompareReedit">Re-edit</button>
         </div>
       </template>
       </template>
@@ -2012,7 +2034,7 @@ function kb(bytes: number) {
 
     <section id="chat-attach" class="showcase">
       <div class="showcase__header">
-        <span class="showcase__num" style="--accent: var(--emerald)">16</span>
+        <span class="showcase__num">16</span>
         <div>
           <h2 class="showcase__title">Chat Attach</h2>
           <p class="showcase__desc">CropVue in a compact inline space with a floating toolbar overlay. Attach, crop, then send.</p>
@@ -2142,7 +2164,7 @@ function kb(bytes: number) {
                 <template #actions="{ confirm, cancel }">
                   <div class="chat-modal__footer">
                     <button class="btn btn--ghost" @click="cancel">Cancel</button>
-                    <button class="btn btn--emerald" @click="confirm">Use Photo</button>
+                    <button class="btn btn--accent" @click="confirm">Use Photo</button>
                   </div>
                 </template>
               </CropVue>
@@ -2163,7 +2185,7 @@ function kb(bytes: number) {
 
     <section id="wizard" class="showcase">
       <div class="showcase__header">
-        <span class="showcase__num" style="--accent: #a78bfa">17</span>
+        <span class="showcase__num">17</span>
         <div>
           <h2 class="showcase__title">Multi-Step Wizard</h2>
           <p class="showcase__desc">Full lifecycle control — standalone <code>CropDropzone</code>, <code>CropEditor</code>, and <code>CropToolbar</code> broken into discrete wizard steps.</p>
@@ -2216,8 +2238,8 @@ function kb(bytes: number) {
           <button
             v-for="p in wizardAspectPresets"
             :key="p.label"
-            class="pill-btn pill-btn--violet"
-            :class="{ 'pill-btn--violet-active': wizardAspect === p.value }"
+            class="pill-btn pill-btn--accent"
+            :class="{ 'pill-btn--accent-active': wizardAspect === p.value }"
             @click="setWizardAspect(p.value)"
           >{{ p.label }}</button>
         </div>
@@ -2243,7 +2265,7 @@ function kb(bytes: number) {
 
         <div class="wizard__nav-row">
           <button class="btn btn--ghost" @click="wizardBack">Back</button>
-          <button class="btn" style="background: #a78bfa; color: #0c0c0f; border-color: #a78bfa" @click="wizardExport">Continue to Review</button>
+          <button class="btn" style="background: var(--accent); color: #0b0f14; border-color: var(--accent)" @click="wizardExport">Continue to Review</button>
         </div>
       </div>
 
@@ -2260,7 +2282,7 @@ function kb(bytes: number) {
         <div class="wizard__nav-row">
           <button class="btn btn--ghost" @click="wizardReset">Start Over</button>
           <button class="btn btn--ghost" @click="wizardBack">Back to Edit</button>
-          <button class="btn" style="background: #a78bfa; color: #0c0c0f; border-color: #a78bfa" @click="wizardDownload">Download</button>
+          <button class="btn" style="background: var(--accent); color: #0b0f14; border-color: var(--accent)" @click="wizardDownload">Download</button>
         </div>
       </div>
       </template>
@@ -2281,29 +2303,24 @@ function kb(bytes: number) {
 </template>
 
 <style>
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Syne:wght@400..800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Outfit:wght@400;500;600;700;800&display=swap');
 
 :root {
-  --bg: #0c0c0f;
-  --surface: #14141a;
-  --surface-2: #1a1a22;
-  --surface-3: #22222c;
-  --border: #2a2a34;
-  --border-light: #34343f;
-  --text: #e8e8ed;
-  --text-dim: #8888a0;
-  --text-muted: #55556a;
+  --bg: #0b0f14;
+  --surface: #111920;
+  --surface-2: #171f28;
+  --surface-3: #1e2830;
+  --border: #253040;
+  --border-light: #304050;
+  --text: #e6edf3;
+  --text-dim: #8b949e;
+  --text-muted: #4b5563;
 
-  --cyan: #00d4ff;
-  --cyan-dim: rgba(0, 212, 255, 0.15);
-  --magenta: #ff2d8a;
-  --magenta-dim: rgba(255, 45, 138, 0.15);
-  --amber: #ffb020;
-  --amber-dim: rgba(255, 176, 32, 0.15);
-  --emerald: #10e080;
-  --emerald-dim: rgba(16, 224, 128, 0.15);
+  --accent: #10b981;
+  --accent-dim: rgba(16, 185, 129, 0.12);
+  --accent-bright: #34d399;
 
-  --font-display: 'Syne', sans-serif;
+  --font-display: 'Outfit', sans-serif;
   --font-body: 'DM Sans', sans-serif;
   --nav-h: 56px;
 }
@@ -2329,7 +2346,7 @@ code {
   padding: 2px 6px;
   background: var(--surface-2);
   border-radius: 4px;
-  color: var(--cyan);
+  color: var(--accent);
 }
 
 .app {
@@ -2353,8 +2370,8 @@ code {
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(rgba(0, 212, 255, 0.06) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 212, 255, 0.06) 1px, transparent 1px);
+    linear-gradient(rgba(16, 185, 129, 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(16, 185, 129, 0.05) 1px, transparent 1px);
   background-size: 48px 48px;
   mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, black 20%, transparent 70%);
   -webkit-mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, black 20%, transparent 70%);
@@ -2371,30 +2388,76 @@ code {
   animation: fadeSlideUp 0.8s ease-out;
 }
 
+.hero__brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 14px;
+  margin-bottom: 4px;
+}
+
+.hero__icon {
+  flex-shrink: 0;
+  filter: drop-shadow(0 0 12px rgba(16, 185, 129, 0.3));
+}
+
 .hero__title {
   font-family: var(--font-display);
-  font-size: clamp(3.5rem, 8vw, 5.5rem);
+  font-size: clamp(3.2rem, 8vw, 5rem);
   font-weight: 800;
   letter-spacing: -0.03em;
-  background: linear-gradient(135deg, var(--cyan) 0%, var(--magenta) 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  -webkit-text-fill-color: transparent;
+  color: var(--text);
   line-height: 1.1;
 }
 
 .hero__tagline {
-  font-family: var(--font-display);
-  font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+  font-size: clamp(1rem, 2.5vw, 1.25rem);
   font-weight: 400;
   color: var(--text-dim);
-  margin-top: 12px;
+  margin-top: 14px;
+  line-height: 1.5;
+}
+
+.hero__tagline strong {
+  color: var(--text);
+  font-weight: 600;
 }
 
 .hero__sub {
   font-size: 14px;
   color: var(--text-muted);
-  margin-top: 8px;
+  margin-top: 6px;
+}
+
+.hero__badges {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 8px;
+  margin-top: 20px;
+}
+
+.hero__badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-dim);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  transition: border-color 200ms ease;
+}
+
+.hero__badge:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.hero__badge svg {
+  color: var(--accent);
 }
 
 @keyframes fadeSlideUp {
@@ -2466,7 +2529,7 @@ code {
   flex-direction: column;
   gap: 2px;
   padding: 8px;
-  background: rgba(22, 22, 28, 0.85);
+  background: rgba(17, 25, 32, 0.85);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid var(--border);
@@ -2535,7 +2598,7 @@ code {
 }
 
 .toc__item--active .toc__num {
-  color: var(--cyan);
+  color: var(--accent);
   opacity: 1;
 }
 
@@ -2596,7 +2659,7 @@ code {
   padding: 2px 6px;
   background: var(--surface-2);
   border-radius: 4px;
-  color: var(--cyan);
+  color: var(--accent);
 }
 
 .showcase {
@@ -2620,8 +2683,8 @@ code {
   font-family: var(--font-display);
   font-size: 14px;
   font-weight: 700;
-  color: var(--accent, var(--cyan));
-  background: color-mix(in srgb, var(--accent, var(--cyan)) 12%, transparent);
+  color: var(--accent);
+  background: color-mix(in srgb, var(--accent) 12%, transparent);
   padding: 4px 10px;
   border-radius: 6px;
   line-height: 1.4;
@@ -2754,17 +2817,17 @@ code {
 .btn:hover { background: var(--surface-3); }
 .btn--sm { padding: 6px 12px; font-size: 12px; }
 
-.btn--cyan { background: var(--cyan); color: #0c0c0f; border-color: var(--cyan); }
-.btn--cyan:hover { background: #00b8db; }
+.btn--accent {
+  background: var(--accent);
+  color: #0b0f14;
+  border-color: var(--accent);
+  font-weight: 600;
+}
 
-.btn--magenta { background: var(--magenta); color: #fff; border-color: var(--magenta); }
-.btn--magenta:hover { background: #e0206e; }
-
-.btn--emerald { background: var(--emerald); color: #0c0c0f; border-color: var(--emerald); }
-.btn--emerald:hover { background: #0cc56d; }
-
-.btn--amber { background: var(--amber); color: #0c0c0f; border-color: var(--amber); }
-.btn--amber:hover { background: #e09a10; }
+.btn--accent:hover {
+  background: #0d9668;
+  border-color: #0d9668;
+}
 
 .btn--ghost { background: transparent; border-color: transparent; color: var(--text-dim); }
 .btn--ghost:hover { color: var(--text); background: var(--surface-2); }
@@ -2845,8 +2908,7 @@ code {
 }
 
 .pill--sm { padding: 2px 8px; font-size: 11px; }
-.pill--magenta { background: var(--magenta-dim); color: var(--magenta); }
-.pill--amber { background: var(--amber-dim); color: var(--amber); }
+.pill--accent { background: var(--accent-dim); color: var(--accent); }
 
 .status-text {
   color: var(--text-muted);
@@ -2865,7 +2927,7 @@ code {
   position: absolute;
   width: 24px;
   height: 24px;
-  border-color: var(--cyan);
+  border-color: var(--accent);
   border-style: solid;
   border-width: 0;
   opacity: 0.5;
@@ -2879,8 +2941,8 @@ code {
 .basics__corner--br { bottom: -4px; right: -4px; border-bottom-width: 2px; border-right-width: 2px; border-bottom-right-radius: 4px; }
 
 .avatar__card {
-  background: linear-gradient(135deg, rgba(255, 45, 138, 0.05) 0%, rgba(0, 212, 255, 0.03) 100%);
-  border: 1px solid rgba(255, 45, 138, 0.12);
+  background: linear-gradient(135deg, rgba(16, 185, 129, 0.05) 0%, rgba(16, 185, 129, 0.02) 100%);
+  border: 1px solid rgba(16, 185, 129, 0.12);
   border-radius: 16px;
   padding: 2px;
   backdrop-filter: blur(8px);
@@ -2898,14 +2960,14 @@ code {
 }
 
 .avatar__drop:hover .avatar__circle {
-  border-color: var(--magenta);
-  box-shadow: 0 0 24px rgba(255, 45, 138, 0.2);
+  border-color: var(--accent);
+  box-shadow: 0 0 24px rgba(16, 185, 129, 0.2);
 }
 
 .avatar__drop--active .avatar__circle {
-  border-color: var(--magenta);
-  box-shadow: 0 0 32px rgba(255, 45, 138, 0.3);
-  background: rgba(255, 45, 138, 0.06);
+  border-color: var(--accent);
+  box-shadow: 0 0 32px rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.06);
 }
 
 .avatar__drop-inner {
@@ -2966,7 +3028,7 @@ code {
 .avatar__result-ring {
   padding: 3px;
   border-radius: 50%;
-  background: linear-gradient(135deg, var(--cyan), var(--magenta));
+  background: linear-gradient(135deg, var(--accent), var(--accent-bright));
   margin-bottom: 16px;
 }
 
@@ -2989,7 +3051,7 @@ code {
 
 .terminal:hover,
 .terminal--active {
-  border-color: var(--emerald);
+  border-color: var(--accent);
 }
 
 .terminal__bar {
@@ -3026,7 +3088,7 @@ code {
 .terminal__line {
   font-family: 'DM Mono', 'SF Mono', monospace;
   font-size: 15px;
-  color: var(--emerald);
+  color: var(--accent);
   display: flex;
   align-items: center;
   gap: 10px;
@@ -3041,7 +3103,7 @@ code {
   display: inline-block;
   width: 8px;
   height: 18px;
-  background: var(--emerald);
+  background: var(--accent);
   animation: blink 1s step-end infinite;
 }
 
@@ -3061,8 +3123,8 @@ code {
   gap: 4px;
   padding: 8px 12px;
   margin: 8px 0;
-  background: rgba(16, 224, 128, 0.04);
-  border: 1px solid rgba(16, 224, 128, 0.1);
+  background: rgba(16, 185, 129, 0.04);
+  border: 1px solid rgba(16, 185, 129, 0.1);
   border-radius: 12px;
   backdrop-filter: blur(8px);
 }
@@ -3082,8 +3144,8 @@ code {
 }
 
 .dock__btn:hover {
-  background: rgba(16, 224, 128, 0.1);
-  color: var(--emerald);
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--accent);
 }
 
 .dock__btn--danger:hover {
@@ -3155,9 +3217,9 @@ code {
 }
 
 .pill-btn--active {
-  background: var(--amber);
-  color: #0c0c0f;
-  border-color: var(--amber);
+  background: var(--accent);
+  color: #0b0f14;
+  border-color: var(--accent);
 }
 
 .controls__slider {
@@ -3170,7 +3232,7 @@ code {
 .controls__value {
   font-family: 'DM Mono', 'SF Mono', monospace;
   font-size: 13px;
-  color: var(--amber);
+  color: var(--accent);
   min-width: 40px;
 }
 
@@ -3190,17 +3252,17 @@ code {
   appearance: none;
   width: 16px;
   height: 16px;
-  background: var(--amber);
+  background: var(--accent);
   border-radius: 50%;
   cursor: pointer;
   border: 2px solid var(--surface);
-  box-shadow: 0 0 8px rgba(255, 176, 32, 0.3);
+  box-shadow: 0 0 8px rgba(16, 185, 129, 0.3);
 }
 
 .range-input::-moz-range-thumb {
   width: 16px;
   height: 16px;
-  background: var(--amber);
+  background: var(--accent);
   border-radius: 50%;
   cursor: pointer;
   border: 2px solid var(--surface);
@@ -3208,8 +3270,8 @@ code {
 
 .showcase--blueprint {
   background:
-    linear-gradient(rgba(0, 212, 255, 0.02) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0, 212, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(rgba(16, 185, 129, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(16, 185, 129, 0.03) 1px, transparent 1px),
     var(--surface);
   background-size: 20px 20px, 20px 20px, 100%;
 }
@@ -3222,9 +3284,9 @@ code {
   font-family: var(--font-body);
   font-size: 14px;
   font-weight: 600;
-  color: var(--cyan);
-  background: var(--cyan-dim);
-  border: 1px solid rgba(0, 212, 255, 0.2);
+  color: var(--accent);
+  background: var(--accent-dim);
+  border: 1px solid rgba(16, 185, 129, 0.2);
   border-radius: 8px;
   cursor: pointer;
   transition: all 200ms ease;
@@ -3232,8 +3294,8 @@ code {
 }
 
 .file-btn:hover {
-  background: rgba(0, 212, 255, 0.2);
-  border-color: rgba(0, 212, 255, 0.35);
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.35);
 }
 
 .blueprint__controls {
@@ -3335,14 +3397,14 @@ code {
   padding: 2px;
   background: conic-gradient(
     from 0deg,
-    #ff0080, #ff8c00, #40e0d0, #7b68ee, #ff0080
+    var(--accent), var(--accent-bright), #065f46, var(--accent), var(--accent-bright)
   );
   cursor: pointer;
-  animation: rainbowSpin 4s linear infinite;
+  animation: rainbowSpin 6s linear infinite;
 }
 
 .rainbow-drop--active {
-  animation-duration: 1s;
+  animation-duration: 2s;
 }
 
 @keyframes rainbowSpin {
@@ -3415,8 +3477,8 @@ code {
 }
 
 .url-input:focus {
-  border-color: var(--emerald);
-  box-shadow: 0 0 0 3px rgba(16, 224, 128, 0.1);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
 
 .profile-editor {
@@ -3459,14 +3521,14 @@ code {
 }
 
 .profile-editor__drop:hover {
-  border-color: var(--cyan);
-  color: var(--cyan);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .profile-editor__drop--active {
-  border-color: var(--cyan);
-  background: rgba(6, 182, 212, 0.06);
-  color: var(--cyan);
+  border-color: var(--accent);
+  background: rgba(16, 185, 129, 0.06);
+  color: var(--accent);
 }
 
 .profile-editor__avatar-done {
@@ -3490,14 +3552,14 @@ code {
 }
 
 .profile-editor__avatar-img--clickable:hover {
-  border-color: var(--cyan);
+  border-color: var(--accent);
   opacity: 0.85;
 }
 
 .profile-editor__change-link {
   background: none;
   border: none;
-  color: var(--cyan);
+  color: var(--accent);
   font-family: var(--font-body);
   font-size: 13px;
   font-weight: 500;
@@ -3508,7 +3570,7 @@ code {
 }
 
 .profile-editor__change-link:hover {
-  color: #00b8db;
+  color: var(--accent-bright);
 }
 
 .profile-editor__form-col {
@@ -3543,8 +3605,8 @@ code {
 }
 
 .profile-editor__input:focus {
-  border-color: var(--cyan);
-  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
 }
 
 .profile-editor__textarea {
@@ -3586,13 +3648,13 @@ code {
 }
 
 .post-composer__drop:hover {
-  color: var(--magenta);
-  background: rgba(255, 45, 138, 0.03);
+  color: var(--accent);
+  background: rgba(16, 185, 129, 0.03);
 }
 
 .post-composer__drop--active {
-  color: var(--magenta);
-  background: rgba(255, 45, 138, 0.06);
+  color: var(--accent);
+  background: rgba(16, 185, 129, 0.06);
 }
 
 .post-composer__drop span {
@@ -3625,7 +3687,7 @@ code {
   height: 32px;
   border-radius: 50%;
   border: none;
-  background: rgba(12, 12, 15, 0.7);
+  background: rgba(11, 15, 20, 0.7);
   color: #fff;
   font-size: 18px;
   line-height: 1;
@@ -3638,7 +3700,7 @@ code {
 }
 
 .post-composer__remove:hover {
-  background: rgba(255, 45, 138, 0.8);
+  background: rgba(255, 80, 80, 0.8);
 }
 
 .post-composer__body {
@@ -3692,8 +3754,8 @@ code {
   padding: 4px 12px;
   font-size: 12px;
   font-weight: 500;
-  color: var(--magenta);
-  background: var(--magenta-dim);
+  color: var(--accent);
+  background: var(--accent-dim);
   border-radius: 999px;
 }
 
@@ -3736,7 +3798,7 @@ code {
 }
 
 .product-gallery__slot--drag-over {
-  border-color: var(--emerald);
+  border-color: var(--accent);
   border-style: dashed;
   background: rgba(16, 185, 129, 0.06);
 }
@@ -3776,7 +3838,7 @@ code {
 .product-gallery__overlay {
   position: absolute;
   inset: 0;
-  background: rgba(12, 12, 15, 0.7);
+  background: rgba(11, 15, 20, 0.7);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3849,7 +3911,7 @@ code {
   font-family: var(--font-display);
   font-size: 24px;
   font-weight: 700;
-  color: var(--emerald);
+  color: var(--accent);
   margin-top: 6px;
 }
 
@@ -3875,8 +3937,8 @@ code {
 }
 
 .modal-crop__card:hover {
-  border-color: var(--magenta);
-  box-shadow: 0 0 24px rgba(255, 45, 138, 0.1);
+  border-color: var(--accent);
+  box-shadow: 0 0 24px rgba(16, 185, 129, 0.1);
 }
 
 .modal-crop__placeholder {
@@ -3915,7 +3977,7 @@ code {
 .modal-crop__preview-overlay {
   position: absolute;
   inset: 0;
-  background: rgba(12, 12, 15, 0.6);
+  background: rgba(11, 15, 20, 0.6);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -3934,7 +3996,7 @@ code {
   position: fixed;
   inset: 0;
   z-index: 1000;
-  background: rgba(12, 12, 15, 0.8);
+  background: rgba(11, 15, 20, 0.8);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   display: flex;
@@ -4027,8 +4089,8 @@ code {
 }
 
 .modal-crop__tool-btn:hover {
-  background: rgba(255, 45, 138, 0.1);
-  color: var(--magenta);
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--accent);
 }
 
 .modal-crop__tool-sep {
@@ -4069,15 +4131,15 @@ code {
   transform: scale(0.95) translateY(10px);
 }
 
-.file-btn--amber {
-  color: var(--amber);
-  background: var(--amber-dim);
-  border-color: rgba(255, 176, 32, 0.2);
+.file-btn--accent {
+  color: var(--accent);
+  background: var(--accent-dim);
+  border-color: rgba(16, 185, 129, 0.2);
 }
 
-.file-btn--amber:hover {
-  background: rgba(255, 176, 32, 0.2);
-  border-color: rgba(255, 176, 32, 0.35);
+.file-btn--accent:hover {
+  background: rgba(16, 185, 129, 0.2);
+  border-color: rgba(16, 185, 129, 0.35);
 }
 
 .scanner__layout {
@@ -4114,8 +4176,8 @@ code {
 }
 
 .scanner__sidebar-btn:hover {
-  background: var(--amber-dim);
-  color: var(--amber);
+  background: var(--accent-dim);
+  color: var(--accent);
 }
 
 .scanner__sidebar-sep {
@@ -4172,7 +4234,7 @@ code {
 .scanner__id-line {
   height: 8px;
   border-radius: 4px;
-  background: var(--amber-dim);
+  background: var(--accent-dim);
 }
 
 .scanner__id-line--wide { width: 100%; }
@@ -4210,7 +4272,7 @@ code {
   text-transform: uppercase;
   letter-spacing: 0.06em;
   border-radius: 6px;
-  background: rgba(12, 12, 15, 0.7);
+  background: rgba(11, 15, 20, 0.7);
   color: var(--text-dim);
   backdrop-filter: blur(4px);
 }
@@ -4223,11 +4285,11 @@ code {
   top: 0;
   bottom: 0;
   width: 3px;
-  background: var(--cyan);
+  background: var(--accent);
   transform: translateX(-50%);
   cursor: ew-resize;
   z-index: 10;
-  box-shadow: 0 0 12px rgba(0, 212, 255, 0.4);
+  box-shadow: 0 0 12px rgba(16, 185, 129, 0.4);
 }
 
 .compare__handle {
@@ -4238,12 +4300,12 @@ code {
   width: 36px;
   height: 36px;
   border-radius: 50%;
-  background: var(--cyan);
+  background: var(--accent);
   border: 2px solid #fff;
   display: flex;
   align-items: center;
   justify-content: center;
-  color: #0c0c0f;
+  color: #0b0f14;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
 }
 
@@ -4262,8 +4324,8 @@ code {
 }
 
 .compare__pick:hover {
-  border-color: var(--cyan);
-  color: var(--cyan);
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .compare__pick-text {
@@ -4321,7 +4383,7 @@ code {
 
 .chat__bubble--me {
   align-self: flex-end;
-  background: rgba(16, 224, 128, 0.12);
+  background: rgba(16, 185, 129, 0.12);
   border-radius: 14px 14px 4px 14px;
 }
 
@@ -4342,7 +4404,7 @@ code {
   position: fixed;
   inset: 0;
   z-index: 1000;
-  background: rgba(12, 12, 15, 0.8);
+  background: rgba(11, 15, 20, 0.8);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   display: flex;
@@ -4436,8 +4498,8 @@ code {
 }
 
 .chat-modal__tool-btn:hover {
-  background: rgba(16, 224, 128, 0.1);
-  color: var(--emerald);
+  background: rgba(16, 185, 129, 0.1);
+  color: var(--accent);
 }
 
 .chat-modal__tool-sep {
@@ -4558,7 +4620,7 @@ code {
 
 .chat__popover-option svg {
   flex-shrink: 0;
-  color: var(--emerald);
+  color: var(--accent);
 }
 
 .chat__popover-text {
@@ -4611,8 +4673,8 @@ code {
   transition: all 150ms ease;
 }
 
-.chat__attach-btn:hover { color: var(--emerald); background: var(--emerald-dim); }
-.chat__send-btn:hover { color: var(--emerald); background: var(--emerald-dim); }
+.chat__attach-btn:hover { color: var(--accent); background: var(--accent-dim); }
+.chat__send-btn:hover { color: var(--accent); background: var(--accent-dim); }
 
 .chat__input {
   flex: 1;
@@ -4628,7 +4690,7 @@ code {
 }
 
 .chat__input::placeholder { color: var(--text-muted); }
-.chat__input:focus { border-color: var(--emerald); }
+.chat__input:focus { border-color: var(--accent); }
 
 .wizard__stepper {
   display: flex;
@@ -4650,13 +4712,13 @@ code {
 }
 
 .wizard__step--active {
-  border-color: #a78bfa;
-  background: rgba(167, 139, 250, 0.08);
+  border-color: var(--accent);
+  background: rgba(16, 185, 129, 0.08);
 }
 
 .wizard__step--done {
-  border-color: rgba(167, 139, 250, 0.3);
-  background: rgba(167, 139, 250, 0.04);
+  border-color: rgba(16, 185, 129, 0.3);
+  background: rgba(16, 185, 129, 0.04);
 }
 
 .wizard__step-num {
@@ -4674,13 +4736,13 @@ code {
 }
 
 .wizard__step--active .wizard__step-num {
-  background: #a78bfa;
-  color: #0c0c0f;
+  background: var(--accent);
+  color: #0b0f14;
 }
 
 .wizard__step--done .wizard__step-num {
-  background: rgba(167, 139, 250, 0.3);
-  color: #a78bfa;
+  background: rgba(16, 185, 129, 0.3);
+  color: var(--accent);
 }
 
 .wizard__step-label {
@@ -4702,7 +4764,7 @@ code {
 }
 
 .wizard__connector--done {
-  background: rgba(167, 139, 250, 0.4);
+  background: rgba(16, 185, 129, 0.4);
 }
 
 .wizard__body {
@@ -4724,14 +4786,14 @@ code {
 }
 
 .wizard__dropzone:hover {
-  border-color: #a78bfa;
-  color: #a78bfa;
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
 .wizard__dropzone--active {
-  border-color: #a78bfa;
-  background: rgba(167, 139, 250, 0.06);
-  color: #a78bfa;
+  border-color: var(--accent);
+  background: rgba(16, 185, 129, 0.06);
+  color: var(--accent);
 }
 
 .wizard__drop-text {
@@ -4759,19 +4821,19 @@ code {
   margin-right: 4px;
 }
 
-.pill-btn--violet {
-  border-color: rgba(167, 139, 250, 0.2);
+.pill-btn--accent {
+  border-color: rgba(16, 185, 129, 0.2);
 }
 
-.pill-btn--violet:hover {
-  border-color: #a78bfa;
-  color: #a78bfa;
+.pill-btn--accent:hover {
+  border-color: var(--accent);
+  color: var(--accent);
 }
 
-.pill-btn--violet-active {
-  background: #a78bfa;
-  color: #0c0c0f;
-  border-color: #a78bfa;
+.pill-btn--accent-active {
+  background: var(--accent);
+  color: #0b0f14;
+  border-color: var(--accent);
 }
 
 .wizard__nav-row {
