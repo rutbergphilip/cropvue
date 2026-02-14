@@ -11,3 +11,6 @@ playwright-report
 *test*.png
 *test*.svg
 docs/.vitepress/cache
+docs/.vitepress/dist
+.playwright-mcp/
+full-page.png
