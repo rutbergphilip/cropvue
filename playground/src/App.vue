@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
 import {
   CropVue,
   CropEditor,
@@ -336,10 +336,38 @@ function removePostCover() {
 const productImages = ref<(CropResult | null)[]>([null, null, null, null])
 const activeProductSlot = ref<number | null>(null)
 const showProductCropper = ref(false)
+const productCropperRef = ref<InstanceType<typeof CropVue> | null>(null)
+const productFileInput = ref<HTMLInputElement | null>(null)
+const productDragOver = ref<number | null>(null)
 
-function openProductSlot(index: number) {
+function triggerProductFileInput(index: number) {
   activeProductSlot.value = index
+  productFileInput.value?.click()
+}
+
+function handleProductFileChange(e: Event) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (file) loadProductFile(file)
+  input.value = ''
+}
+
+function handleProductDrop(e: DragEvent, index: number) {
+  productDragOver.value = null
+  const file = e.dataTransfer?.files?.[0]
+  if (file && file.type.startsWith('image/')) {
+    activeProductSlot.value = index
+    loadProductFile(file)
+  }
+}
+
+async function loadProductFile(file: File) {
   showProductCropper.value = true
+  await nextTick()
+  if (productCropperRef.value) {
+    await productCropperRef.value.cropper.loadFile(file)
+    productCropperRef.value.phase = 'editor'
+  }
 }
 
 function onProductCrop(result: CropResult) {
@@ -1131,7 +1159,7 @@ function kb(bytes: number) {
         <span class="showcase__num" style="--accent: var(--emerald)">10</span>
         <div>
           <h2 class="showcase__title">Product Gallery</h2>
-          <p class="showcase__desc">E-commerce product card with a shared CropVue instance — one cropper fills multiple image slots.</p>
+          <p class="showcase__desc">E-commerce product card — drop or click any slot to add an image, then crop before placing.</p>
         </div>
         <div class="showcase__toggle">
           <button class="toggle-btn" :class="{ 'toggle-btn--active': !showCode['product-gallery'] }" @click="showCode['product-gallery'] = false">Preview</button>
@@ -1141,21 +1169,32 @@ function kb(bytes: number) {
 
       <template v-if="!showCode['product-gallery']">
       <div class="product-gallery">
+        <input
+          ref="productFileInput"
+          type="file"
+          accept="image/*"
+          style="display: none"
+          @change="handleProductFileChange"
+        />
         <div class="product-gallery__images">
           <div
             class="product-gallery__slot product-gallery__slot--hero"
-            @click="!productImages[0] ? openProductSlot(0) : undefined"
+            :class="{ 'product-gallery__slot--drag-over': productDragOver === 0 }"
+            @dragover.prevent="productDragOver = 0"
+            @dragenter.prevent="productDragOver = 0"
+            @dragleave.prevent="productDragOver = productDragOver === 0 ? null : productDragOver"
+            @drop.prevent="(e) => handleProductDrop(e, 0)"
           >
             <template v-if="productImages[0]">
               <img :src="productImages[0].url" alt="Product main" class="product-gallery__slot-img" />
               <div class="product-gallery__overlay">
-                <button class="product-gallery__overlay-btn" @click.stop="openProductSlot(0)">Change</button>
+                <button class="product-gallery__overlay-btn" @click.stop="triggerProductFileInput(0)">Change</button>
                 <button class="product-gallery__overlay-btn product-gallery__overlay-btn--danger" @click.stop="removeProductImage(0)">Remove</button>
               </div>
             </template>
-            <div v-else class="product-gallery__placeholder">
+            <div v-else class="product-gallery__placeholder" @click="triggerProductFileInput(0)">
               <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
-              <span>Main photo</span>
+              <span>{{ productDragOver === 0 ? 'Drop image' : 'Main photo' }}</span>
             </div>
           </div>
           <div class="product-gallery__thumbs">
@@ -1163,16 +1202,20 @@ function kb(bytes: number) {
               v-for="i in [1, 2, 3]"
               :key="i"
               class="product-gallery__slot product-gallery__slot--thumb"
-              @click="!productImages[i] ? openProductSlot(i) : undefined"
+              :class="{ 'product-gallery__slot--drag-over': productDragOver === i }"
+              @dragover.prevent="productDragOver = i"
+              @dragenter.prevent="productDragOver = i"
+              @dragleave.prevent="productDragOver = productDragOver === i ? null : productDragOver"
+              @drop.prevent="(e) => handleProductDrop(e, i)"
             >
               <template v-if="productImages[i]">
                 <img :src="productImages[i]!.url" alt="Product thumbnail" class="product-gallery__slot-img" />
                 <div class="product-gallery__overlay">
-                  <button class="product-gallery__overlay-btn" @click.stop="openProductSlot(i)">Change</button>
+                  <button class="product-gallery__overlay-btn" @click.stop="triggerProductFileInput(i)">Change</button>
                   <button class="product-gallery__overlay-btn product-gallery__overlay-btn--danger" @click.stop="removeProductImage(i)">Remove</button>
                 </div>
               </template>
-              <div v-else class="product-gallery__placeholder">
+              <div v-else class="product-gallery__placeholder" @click="triggerProductFileInput(i)">
                 <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
               </div>
             </div>
@@ -1181,15 +1224,19 @@ function kb(bytes: number) {
 
         <div v-if="showProductCropper" class="product-gallery__cropper">
           <CropVue
+            ref="productCropperRef"
             stencil="rectangle"
             :aspect-ratio="1"
             output-format="webp"
             :output-quality="0.9"
             @done="onProductCrop"
           >
-            <template #actions="{ confirm, cancel }">
+            <template #dropzone>
+              <div class="product-gallery__cropper-loading">Loading...</div>
+            </template>
+            <template #actions="{ confirm }">
               <div class="product-gallery__cropper-actions">
-                <button class="btn btn--ghost" @click="() => { showProductCropper = false; cancel() }">Cancel</button>
+                <button class="btn btn--ghost" @click="() => { showProductCropper = false; activeProductSlot = null }">Cancel</button>
                 <button class="btn btn--emerald" @click="confirm">Use Photo</button>
               </div>
             </template>
@@ -2582,6 +2629,12 @@ code {
   border-color: var(--border-light);
 }
 
+.product-gallery__slot--drag-over {
+  border-color: var(--emerald);
+  border-style: dashed;
+  background: rgba(16, 185, 129, 0.06);
+}
+
 .product-gallery__slot--hero {
   width: 100%;
   aspect-ratio: 1;
@@ -2664,6 +2717,15 @@ code {
   gap: 8px;
   justify-content: flex-end;
   padding: 12px 0;
+}
+
+.product-gallery__cropper-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: var(--text-muted);
+  font-size: 14px;
 }
 
 .product-gallery__info {
