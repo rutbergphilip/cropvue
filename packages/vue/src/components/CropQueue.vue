@@ -159,4 +159,19 @@ defineExpose({ queue })
   border-radius: 50%;
   color: #fff;
 }
+
+@media (pointer: coarse) {
+  .cropvue-queue__remove {
+    opacity: 0.8;
+    width: 28px;
+    height: 28px;
+  }
+}
+
+@media (max-width: 768px) {
+  .cropvue-queue__remove {
+    min-width: 28px;
+    min-height: 28px;
+  }
+}
 </style>

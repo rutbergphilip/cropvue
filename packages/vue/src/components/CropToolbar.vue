@@ -140,4 +140,10 @@ function reset() { emit('reset') }
   margin: 0 var(--cropvue-toolbar-gap, 4px);
   background: var(--cropvue-toolbar-separator-color, #e5e7eb);
 }
+
+@media (max-width: 480px) {
+  .cropvue-toolbar__separator {
+    display: none;
+  }
+}
 </style>

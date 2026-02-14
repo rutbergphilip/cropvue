@@ -2336,6 +2336,7 @@ code {
   max-width: 960px;
   margin: 0 auto;
   padding: 0 20px 80px;
+  overflow-x: hidden;
 }
 
 .hero {
@@ -4809,7 +4810,7 @@ code {
     margin: 0 0 24px;
   }
   .nav__pill {
-    padding: 5px 10px;
+    padding: 7px 10px;
     font-size: 12px;
   }
 
@@ -4827,6 +4828,10 @@ code {
     margin-left: 0;
   }
 
+  .toggle-btn {
+    padding: 8px 14px;
+  }
+
   .theme-grid {
     grid-template-columns: 1fr;
   }
@@ -4835,8 +4840,26 @@ code {
     grid-template-columns: 1fr;
   }
 
+  .bento__item {
+    min-width: 0;
+    overflow: hidden;
+  }
+
   .bento__item--url {
     grid-column: 1;
+  }
+
+  .bento__item--url .cropvue-editor {
+    aspect-ratio: 3 / 2;
+  }
+
+  .bento__item--url .cropvue__actions {
+    flex-direction: column;
+    padding: 12px 0;
+  }
+
+  .bento__item--url .cropvue__actions .cropvue__btn {
+    width: 100%;
   }
 
   .controls__row {
@@ -4878,6 +4901,10 @@ code {
     padding: 12px 16px;
   }
 
+  .product-gallery {
+    max-width: none;
+  }
+
   .scanner__layout {
     grid-template-columns: 1fr;
   }
@@ -4888,15 +4915,47 @@ code {
     justify-content: center;
   }
 
+  .scanner__sidebar-btn {
+    width: 40px;
+    height: 40px;
+  }
+
   .scanner__sidebar-sep {
     width: 1px;
     height: 24px;
     margin: 0 4px;
   }
 
+  .dock__btn {
+    width: 40px;
+    height: 40px;
+  }
+
   .compare__viewport {
     aspect-ratio: auto;
     min-height: 200px;
+  }
+
+  .modal-crop__panel {
+    max-width: none;
+    border-radius: 12px;
+  }
+
+  .modal-crop__backdrop {
+    padding: 12px;
+  }
+
+  .chat-modal__panel {
+    max-width: none;
+  }
+
+  .chat-modal__backdrop {
+    padding: 12px;
+  }
+
+  .chat__popover {
+    left: 50%;
+    transform: translateX(-50%);
   }
 
   .wizard__stepper {
@@ -4914,6 +4973,45 @@ code {
 
   .wizard__step-label {
     font-size: 11px;
+  }
+}
+
+@media (max-width: 480px) {
+  .hero {
+    min-height: 200px;
+  }
+
+  .hero__title {
+    font-size: 2.5rem;
+  }
+
+  .showcase {
+    padding: 16px;
+  }
+
+  .nav__pill {
+    padding: 6px 8px;
+    font-size: 11px;
+  }
+
+  .nav {
+    gap: 2px;
+  }
+
+  .section-group {
+    margin: 40px 0 20px;
+  }
+
+  .wizard__step-label {
+    display: none;
+  }
+
+  .wizard__connector {
+    width: 12px;
+  }
+
+  .wizard__step {
+    padding: 6px 8px;
   }
 }
 </style>

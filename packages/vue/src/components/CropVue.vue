@@ -404,4 +404,23 @@ defineExpose({
   max-height: 400px;
   border-radius: var(--cropvue-preview-border-radius, 8px);
 }
+
+@media (max-width: 768px) {
+  .cropvue__dropzone {
+    min-height: 150px;
+    padding: 1.25rem;
+  }
+
+  .cropvue__actions {
+    flex-direction: column;
+  }
+
+  .cropvue__actions .cropvue__btn {
+    width: 100%;
+  }
+
+  .cropvue__result-image {
+    max-height: 300px;
+  }
+}
 </style>

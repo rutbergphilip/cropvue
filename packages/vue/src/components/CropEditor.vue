@@ -31,7 +31,7 @@ const emit = defineEmits<{
   'update:crop': [crop: CropState]
 }>()
 
-const HANDLE_HIT_THRESHOLD = 14 // px hit area around crop handles
+const HANDLE_HIT_THRESHOLD = 20 // px hit area around crop handles
 
 const editorRef = ref<HTMLElement | null>()
 const containerRef = ref<HTMLElement | null>()
@@ -479,5 +479,24 @@ defineExpose({ editorRef, displayScale })
   right: auto;
   left: 85.36%;
   transform: translate(-50%, -50%);
+}
+
+@media (max-width: 768px) {
+  .cropvue-editor__handle--nw { top: -8px; left: -8px; }
+  .cropvue-editor__handle--ne { top: -8px; right: -8px; }
+  .cropvue-editor__handle--sw { bottom: -8px; left: -8px; }
+  .cropvue-editor__handle--se { bottom: -8px; right: -8px; }
+}
+
+@media (pointer: coarse) {
+  .cropvue-editor__handle {
+    width: 20px;
+    height: 20px;
+  }
+
+  .cropvue-editor__handle--nw { top: -10px; left: -10px; }
+  .cropvue-editor__handle--ne { top: -10px; right: -10px; }
+  .cropvue-editor__handle--sw { bottom: -10px; left: -10px; }
+  .cropvue-editor__handle--se { bottom: -10px; right: -10px; }
 }
 </style>

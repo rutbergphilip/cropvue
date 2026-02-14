@@ -84,3 +84,15 @@
   --cropvue-stencil-bg: transparent;
   --cropvue-stencil-border: none;
 }
+
+@media (max-width: 768px) {
+  :root {
+    --cropvue-handle-size: 16px;
+    --cropvue-toolbar-btn-size: 44px;
+    --cropvue-toolbar-gap: 6px;
+    --cropvue-queue-thumb-size: 56px;
+    --cropvue-btn-padding: 10px 16px;
+    --cropvue-btn-font-size: 15px;
+    --cropvue-actions-gap: 10px;
+  }
+}

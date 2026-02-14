@@ -65,4 +65,11 @@ defineExpose({ open, files })
   padding: 2rem;
   color: #6b7280;
 }
+
+@media (max-width: 768px) {
+  .cropvue-dropzone__default {
+    min-height: 150px;
+    padding: 1.25rem;
+  }
+}
 </style>
