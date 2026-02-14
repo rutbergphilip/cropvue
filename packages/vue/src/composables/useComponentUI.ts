@@ -21,7 +21,7 @@ export function useComponentUI<K extends keyof CropVueTheme>(
 
     if (!propKeys.length && !themeKeys.length) return {} as Partial<UI>
     if (!propKeys.length) return themeUi
-    if (!themeKeys.length && !merger) return propUi
+    if (!themeKeys.length) return propUi
 
     const allKeys = new Set([...themeKeys, ...propKeys])
     const result: Record<string, string> = {}

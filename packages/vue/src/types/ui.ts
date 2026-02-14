@@ -42,6 +42,7 @@ export interface CropQueueUI {
   list?: string
   item?: string
   itemActive?: string
+  itemDone?: string
   thumbnail?: string
   removeButton?: string
   checkIcon?: string
