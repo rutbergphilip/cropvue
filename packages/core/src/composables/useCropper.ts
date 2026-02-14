@@ -39,11 +39,13 @@ export function useCropper(options: CropperOptions = {}) {
   // --- Image loading ---
 
   function initCropForImage(img: CropImageData) {
+    const stencil = crop.value.stencil ?? options.stencil ?? 'rectangle'
+    const aspectRatio = stencil === 'circle' ? 1 : (crop.value.aspectRatio ?? options.aspectRatio)
     crop.value = createCropState(
       { width: img.naturalWidth, height: img.naturalHeight },
       {
-        stencil: crop.value.stencil ?? options.stencil ?? 'rectangle',
-        aspectRatio: crop.value.aspectRatio ?? options.aspectRatio,
+        stencil,
+        aspectRatio,
         minWidth: options.minWidth,
         minHeight: options.minHeight,
         maxWidth: options.maxWidth,
@@ -110,7 +112,20 @@ export function useCropper(options: CropperOptions = {}) {
   }
 
   function setStencil(stencil: StencilType) {
-    crop.value = { ...crop.value, stencil }
+    const prev = crop.value
+    if (stencil === 'circle') {
+      // Enforce 1:1 aspect ratio and square crop area
+      const size = Math.min(prev.width, prev.height)
+      const x = prev.x + (prev.width - size) / 2
+      const y = prev.y + (prev.height - size) / 2
+      crop.value = { ...prev, stencil, aspectRatio: 1, x, y, width: size, height: size }
+    } else {
+      // Clear auto-set ratio when switching away from circle (only if it was 1)
+      const aspectRatio = prev.aspectRatio === 1 && prev.stencil === 'circle'
+        ? undefined
+        : prev.aspectRatio
+      crop.value = { ...prev, stencil, aspectRatio }
+    }
   }
 
   function setAspectRatio(ratio: number | null) {

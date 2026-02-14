@@ -22,7 +22,7 @@ export function createCropState(
   dimensions: { width: number; height: number },
   overrides: Partial<CropState> = {}
 ): CropState {
-  return {
+  const state: CropState = {
     x: 0,
     y: 0,
     width: dimensions.width,
@@ -30,6 +30,21 @@ export function createCropState(
     stencil: 'rectangle' as StencilType,
     ...overrides,
   }
+
+  // Circle stencil always requires 1:1 aspect ratio
+  if (state.stencil === 'circle') {
+    state.aspectRatio = 1
+    // Make initial crop square using smallest dimension
+    const size = Math.min(state.width, state.height)
+    if (state.width !== state.height) {
+      state.x = state.x + (state.width - size) / 2
+      state.y = state.y + (state.height - size) / 2
+      state.width = size
+      state.height = size
+    }
+  }
+
+  return state
 }
 
 function normalizeAngle(degrees: number): number {

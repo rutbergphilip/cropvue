@@ -8,6 +8,7 @@ import {
   handleCropResize,
   handleCropMove,
   handleKeyboard,
+  isPointInsideStencil,
 } from '@cropvue/core'
 import type { HandlePosition, PointerHandlerCleanup } from '@cropvue/core'
 
@@ -80,6 +81,44 @@ const cropStyle = computed(() => {
   }
 })
 
+const overlayStyle = computed(() => {
+  const c = props.crop
+  const s = displayScale.value
+  const offset = imageOffset.value
+
+  const cropX = c.x * s + offset.x
+  const cropY = c.y * s + offset.y
+  const cropW = c.width * s
+  const cropH = c.height * s
+
+  const cw = containerWidth.value
+  const ch = containerHeight.value
+
+  let holePath: string
+
+  if (c.stencil === 'circle') {
+    const r = Math.min(cropW, cropH) / 2
+    const cx = cropX + cropW / 2
+    const cy = cropY + cropH / 2
+    // SVG arc: move to left of circle, arc top half, arc bottom half
+    holePath = `M${cx - r},${cy} A${r},${r} 0 1,1 ${cx + r},${cy} A${r},${r} 0 1,1 ${cx - r},${cy} Z`
+  } else if (c.stencil === 'freeform' && c.points && c.points.length >= 3) {
+    const pts = c.points
+    const scaledPts = pts.map(p => `${p.x * s + offset.x},${p.y * s + offset.y}`)
+    holePath = `M${scaledPts[0]} ${scaledPts.slice(1).map(p => `L${p}`).join(' ')} Z`
+  } else {
+    // Rectangle
+    holePath = `M${cropX},${cropY} L${cropX + cropW},${cropY} L${cropX + cropW},${cropY + cropH} L${cropX},${cropY + cropH} Z`
+  }
+
+  // Outer rect (full container) + inner hole with evenodd fill-rule
+  const outerPath = `M0,0 L${cw},0 L${cw},${ch} L0,${ch} Z`
+  const clipPath = `path(evenodd, "${outerPath} ${holePath}")`
+
+  return { clipPath }
+})
+
+// For slot users who want the simple clip-path value
 const overlayClipPath = computed(() => {
   const c = props.crop
   const s = displayScale.value
@@ -167,6 +206,12 @@ function setupPointerHandler() {
       const py = e.clientY - rect.top
       const threshold = 14 // px hit area around corner
 
+      if (c.stencil === 'circle') {
+        // Circle: only NE handle
+        if (Math.abs(px - cropRight) < threshold && Math.abs(py - cropTop) < threshold) return 'ne'
+        return null
+      }
+
       if (Math.abs(px - cropLeft) < threshold && Math.abs(py - cropTop) < threshold) return 'nw'
       if (Math.abs(px - cropRight) < threshold && Math.abs(py - cropTop) < threshold) return 'ne'
       if (Math.abs(px - cropLeft) < threshold && Math.abs(py - cropBottom) < threshold) return 'sw'
@@ -178,10 +223,6 @@ function setupPointerHandler() {
       const s = displayScale.value
       const offset = imageOffset.value
       const c = props.crop
-      const cropLeft = c.x * s + offset.x
-      const cropTop = c.y * s + offset.y
-      const cropRight = cropLeft + c.width * s
-      const cropBottom = cropTop + c.height * s
 
       const viewportEl = editorRef.value
       if (!viewportEl) return false
@@ -189,20 +230,30 @@ function setupPointerHandler() {
       const px = e.clientX - rect.left
       const py = e.clientY - rect.top
 
-      return px >= cropLeft && px <= cropRight && py >= cropTop && py <= cropBottom
+      // Convert screen coords to image coords for stencil hit test
+      const imgX = (px - offset.x) / s
+      const imgY = (py - offset.y) / s
+
+      return isPointInsideStencil(imgX, imgY, c)
     },
     displayScale: () => displayScale.value,
   })
 }
 
+let resizeObserver: ResizeObserver | null = null
+
 onMounted(() => {
   updateContainerSize()
-  window.addEventListener('resize', updateContainerSize)
   setupPointerHandler()
+  if (containerRef.value) {
+    resizeObserver = new ResizeObserver(() => updateContainerSize())
+    resizeObserver.observe(containerRef.value)
+  }
 })
 
 onUnmounted(() => {
-  window.removeEventListener('resize', updateContainerSize)
+  resizeObserver?.disconnect()
+  resizeObserver = null
   if (pointerHandler) {
     pointerHandler.destroy()
     pointerHandler = null
@@ -251,7 +302,7 @@ defineExpose({ editorRef, displayScale })
         :crop="crop"
         :clip-path="overlayClipPath"
       >
-        <div class="cropvue-editor__overlay" />
+        <div class="cropvue-editor__overlay" :style="overlayStyle" />
       </slot>
 
       <slot
@@ -259,8 +310,12 @@ defineExpose({ editorRef, displayScale })
         :crop="crop"
         :style="cropStyle"
       >
-        <div class="cropvue-editor__crop-area" :style="cropStyle">
-          <slot name="grid" :crop="crop">
+        <div
+          class="cropvue-editor__crop-area"
+          :class="{ 'cropvue-editor__crop-area--circle': crop.stencil === 'circle' }"
+          :style="cropStyle"
+        >
+          <slot v-if="crop.stencil !== 'circle'" name="grid" :crop="crop">
             <div class="cropvue-editor__grid">
               <div class="cropvue-editor__grid-line cropvue-editor__grid-line--h1" />
               <div class="cropvue-editor__grid-line cropvue-editor__grid-line--h2" />
@@ -270,10 +325,15 @@ defineExpose({ editorRef, displayScale })
           </slot>
 
           <slot name="handles" :crop="crop">
-            <div class="cropvue-editor__handle cropvue-editor__handle--nw" data-handle="nw" />
-            <div class="cropvue-editor__handle cropvue-editor__handle--ne" data-handle="ne" />
-            <div class="cropvue-editor__handle cropvue-editor__handle--sw" data-handle="sw" />
-            <div class="cropvue-editor__handle cropvue-editor__handle--se" data-handle="se" />
+            <template v-if="crop.stencil === 'circle'">
+              <div class="cropvue-editor__handle cropvue-editor__handle--ne" data-handle="ne" />
+            </template>
+            <template v-else>
+              <div class="cropvue-editor__handle cropvue-editor__handle--nw" data-handle="nw" />
+              <div class="cropvue-editor__handle cropvue-editor__handle--ne" data-handle="ne" />
+              <div class="cropvue-editor__handle cropvue-editor__handle--sw" data-handle="sw" />
+              <div class="cropvue-editor__handle cropvue-editor__handle--se" data-handle="se" />
+            </template>
           </slot>
         </div>
       </slot>
@@ -286,7 +346,11 @@ defineExpose({ editorRef, displayScale })
   position: relative;
   overflow: hidden;
   width: 100%;
-  height: var(--cropvue-editor-height, 400px);
+  height: var(--cropvue-editor-height, auto);
+  aspect-ratio: var(--cropvue-editor-aspect-ratio, 4 / 3);
+  max-height: var(--cropvue-editor-max-height, none);
+  min-height: var(--cropvue-editor-min-height, 120px);
+  border-radius: var(--cropvue-editor-border-radius, 0);
   background: var(--cropvue-editor-bg, #1a1a1a);
   user-select: none;
   touch-action: none;
@@ -326,6 +390,10 @@ defineExpose({ editorRef, displayScale })
   box-sizing: border-box;
   pointer-events: auto;
   cursor: move;
+}
+
+.cropvue-editor__crop-area--circle {
+  border-radius: 50%;
 }
 
 .cropvue-editor__grid {

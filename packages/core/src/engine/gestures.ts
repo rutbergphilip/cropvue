@@ -47,6 +47,48 @@ export function handleCropResize(
 ): CropState {
   let { x, y, width, height } = crop
 
+  // Circle: only NE handle, 1:1 constraint, anchor at bottom-left
+  if (crop.stencil === 'circle') {
+    if (handle !== 'ne') return crop
+
+    // Average dx and -dy to get uniform delta
+    const delta = (dx + (-dy)) / 2
+    const anchorBottom = y + height
+    width += delta
+    height += delta
+    y = anchorBottom - height
+
+    // Enforce minimum
+    if (width < MIN_CROP) {
+      width = MIN_CROP
+      height = MIN_CROP
+      y = anchorBottom - MIN_CROP
+    }
+
+    // Enforce bounds
+    x = Math.max(0, x)
+    y = Math.max(0, y)
+    if (x + width > bounds.width) {
+      const maxSize = bounds.width - x
+      width = maxSize
+      height = maxSize
+      y = anchorBottom - height
+    }
+    if (y < 0) {
+      const maxSize = anchorBottom
+      width = maxSize
+      height = maxSize
+      y = 0
+    }
+    if (y + height > bounds.height) {
+      const maxSize = bounds.height - y
+      width = maxSize
+      height = maxSize
+    }
+
+    return { ...crop, x, y, width, height }
+  }
+
   switch (handle) {
     case 'se':
       width += dx
