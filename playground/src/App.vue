@@ -401,8 +401,17 @@ const modalCropperRef = ref<InstanceType<typeof CropVue> | null>(null)
 const modalFileInput = ref<HTMLInputElement | null>(null)
 
 function openCropModal() {
-  modalResult.value = null
+  modalFileInput.value?.click()
+}
+
+async function handleModalFile(e: Event) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+  input.value = ''
   showCropModal.value = true
+  await nextTick()
+  modalCropperRef.value?.cropper.loadFile(file)
 }
 
 function closeCropModal() {
@@ -1567,11 +1576,12 @@ function kb(bytes: number) {
       </div>
 
       <template v-if="!showCode['modal-crop']">
+      <input ref="modalFileInput" type="file" accept="image/*" hidden @change="handleModalFile" />
       <div class="modal-crop__card" @click="openCropModal">
         <div v-if="modalResult" class="modal-crop__preview">
           <img :src="modalResult.url" alt="Cropped result" class="modal-crop__preview-img" />
           <div class="modal-crop__preview-overlay">
-            <span>Click to re-crop</span>
+            <span>Click to change image</span>
           </div>
         </div>
         <div v-else class="modal-crop__placeholder">
@@ -1580,7 +1590,7 @@ function kb(bytes: number) {
             <circle cx="8.5" cy="8.5" r="1.5"/>
             <polyline points="21 15 16 10 5 21"/>
           </svg>
-          <span class="modal-crop__placeholder-text">Click to crop an image</span>
+          <span class="modal-crop__placeholder-text">Click to upload & crop</span>
           <span class="modal-crop__placeholder-hint">Opens in a modal overlay</span>
         </div>
       </div>
@@ -1599,6 +1609,9 @@ function kb(bytes: number) {
                 :output-quality="0.9"
                 @done="onModalCrop"
               >
+                <template #dropzone>
+                  <div class="modal-crop__loading">Loading image...</div>
+                </template>
                 <template #toolbar="{ rotateLeft, rotateRight, flipX, flipY, zoomIn, zoomOut, reset }">
                   <div class="modal-crop__toolbar">
                     <button class="modal-crop__tool-btn" @click="rotateLeft" title="Rotate left">
@@ -3742,6 +3755,15 @@ code {
 .modal-crop__panel-body {
   overflow-y: auto;
   flex: 1;
+}
+
+.modal-crop__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: var(--text-muted);
+  font-size: 14px;
 }
 
 .modal-crop__toolbar {
