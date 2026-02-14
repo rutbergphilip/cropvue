@@ -61,7 +61,13 @@
     "@cropvue/core": "workspace:*"
   },
   "peerDependencies": {
-    "vue": "^3.5.0"
+    "vue": "^3.5.0",
+    "tailwind-merge": "^2.0.0 || ^3.0.0"
+  },
+  "peerDependenciesMeta": {
+    "tailwind-merge": {
+      "optional": true
+    }
   },
   "devDependencies": {
     "@vitejs/plugin-vue": "^5.2.0",
