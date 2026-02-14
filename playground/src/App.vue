@@ -3121,6 +3121,7 @@ code {
   border: 1px solid var(--border);
   border-radius: 14px;
   overflow: hidden;
+  max-width: 560px;
 }
 
 .profile-editor__grid {
@@ -3261,6 +3262,7 @@ code {
   border: 1px solid var(--border);
   border-radius: 14px;
   overflow: hidden;
+  max-width: 480px;
 }
 
 .post-composer__cover-area {
@@ -3405,6 +3407,7 @@ code {
   border: 1px solid var(--border);
   border-radius: 14px;
   overflow: hidden;
+  max-width: 340px;
 }
 
 .product-gallery__images {
@@ -3565,6 +3568,7 @@ code {
   overflow: hidden;
   cursor: pointer;
   transition: border-color 250ms ease, box-shadow 250ms ease;
+  max-width: 360px;
 }
 
 .modal-crop__card:hover {
@@ -3775,9 +3779,10 @@ code {
 
 .scanner__layout {
   display: grid;
-  grid-template-columns: 48px 1fr 220px;
+  grid-template-columns: 48px 1fr 200px;
   gap: 12px;
   margin-top: 16px;
+  max-width: 640px;
 }
 
 .scanner__sidebar {
@@ -3879,6 +3884,7 @@ code {
   user-select: none;
   border: 1px solid var(--border);
   aspect-ratio: 16 / 10;
+  max-height: 360px;
 }
 
 .compare__layer {
@@ -3989,7 +3995,7 @@ code {
   overflow: hidden;
   display: flex;
   flex-direction: column;
-  max-height: 600px;
+  max-height: 480px;
 }
 
 .chat__messages {
