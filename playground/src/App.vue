@@ -411,7 +411,10 @@ async function handleModalFile(e: Event) {
   input.value = ''
   showCropModal.value = true
   await nextTick()
-  modalCropperRef.value?.cropper.loadFile(file)
+  if (modalCropperRef.value) {
+    await modalCropperRef.value.cropper.loadFile(file)
+    modalCropperRef.value.phase = 'editor'
+  }
 }
 
 function closeCropModal() {
