@@ -31,25 +31,45 @@ async function copyCode(sectionId: string) {
   }
 }
 
-const sections = [
-  { id: 'basics', label: 'The Basics' },
-  { id: 'avatar', label: 'Avatar Studio' },
-  { id: 'full-control', label: 'Full Control' },
-  { id: 'shape-shifter', label: 'Shape Shifter' },
-  { id: 'composable', label: 'Under the Hood' },
-  { id: 'themes', label: 'Theme Gallery' },
-  { id: 'tailwind-skins', label: 'Tailwind Skins' },
-  { id: 'tailwind-editor', label: 'Tailwind Editor' },
-  { id: 'standalone', label: 'Standalone' },
-  { id: 'profile-editor', label: 'Profile Editor' },
-  { id: 'post-composer', label: 'Post Composer' },
-  { id: 'product-gallery', label: 'Product Gallery' },
-  { id: 'modal-crop', label: 'Modal Crop' },
-  { id: 'id-scanner', label: 'ID Scanner' },
-  { id: 'before-after', label: 'Before / After' },
-  { id: 'chat-attach', label: 'Chat Attach' },
-  { id: 'wizard', label: 'Wizard' },
+const sectionGroups = [
+  {
+    id: 'group-core',
+    label: 'Core',
+    sections: [
+      { id: 'basics', label: 'The Basics' },
+      { id: 'avatar', label: 'Avatar Studio' },
+      { id: 'full-control', label: 'Full Control' },
+      { id: 'shape-shifter', label: 'Shape Shifter' },
+      { id: 'composable', label: 'Under the Hood' },
+    ],
+  },
+  {
+    id: 'group-theming',
+    label: 'Theming',
+    sections: [
+      { id: 'themes', label: 'Theme Gallery' },
+      { id: 'tailwind-skins', label: 'Tailwind Skins' },
+      { id: 'tailwind-editor', label: 'Tailwind Editor' },
+    ],
+  },
+  {
+    id: 'group-recipes',
+    label: 'Recipes',
+    sections: [
+      { id: 'standalone', label: 'Standalone Parts' },
+      { id: 'profile-editor', label: 'Profile Editor' },
+      { id: 'post-composer', label: 'Post Composer' },
+      { id: 'product-gallery', label: 'Product Gallery' },
+      { id: 'modal-crop', label: 'Modal Crop' },
+      { id: 'id-scanner', label: 'ID Scanner' },
+      { id: 'before-after', label: 'Before / After' },
+      { id: 'chat-attach', label: 'Chat Attach' },
+      { id: 'wizard', label: 'Wizard' },
+    ],
+  },
 ]
+
+const sections = sectionGroups.flatMap(g => g.sections)
 
 const activeSection = ref('basics')
 const navRef = ref<HTMLElement | null>(null)
@@ -716,34 +736,47 @@ function kb(bytes: number) {
       <div class="hero__content">
         <h1 class="hero__title">CropVue</h1>
         <p class="hero__tagline">Image cropping for Vue, reimagined.</p>
-        <p class="hero__sub">15 interactive demos showcasing what's possible.</p>
+        <p class="hero__sub">17 interactive demos showcasing what's possible.</p>
       </div>
     </header>
 
     <nav ref="navRef" class="nav">
-      <a
-        v-for="s in sections"
-        :key="s.id"
-        :href="`#${s.id}`"
-        class="nav__pill"
-        :class="{ 'nav__pill--active': activeSection === s.id }"
-      >{{ s.label }}</a>
+      <div v-for="group in sectionGroups" :key="group.label" class="nav__group">
+        <span class="nav__group-label">{{ group.label }}</span>
+        <div class="nav__pills">
+          <a
+            v-for="s in group.sections"
+            :key="s.id"
+            :href="`#${s.id}`"
+            class="nav__pill"
+            :class="{ 'nav__pill--active': activeSection === s.id }"
+          >{{ s.label }}</a>
+        </div>
+      </div>
     </nav>
 
     <Transition name="toc">
       <aside v-if="showSidebar" class="toc">
-        <a
-          v-for="(s, i) in sections"
-          :key="s.id"
-          :href="`#${s.id}`"
-          class="toc__item"
-          :class="{ 'toc__item--active': activeSection === s.id }"
-        >
-          <span class="toc__num">{{ String(i + 1).padStart(2, '0') }}</span>
-          <span class="toc__label">{{ s.label }}</span>
-        </a>
+        <template v-for="group in sectionGroups" :key="group.label">
+          <span class="toc__group-label">{{ group.label }}</span>
+          <a
+            v-for="s in group.sections"
+            :key="s.id"
+            :href="`#${s.id}`"
+            class="toc__item"
+            :class="{ 'toc__item--active': activeSection === s.id }"
+          >
+            <span class="toc__num">{{ String(sections.indexOf(s) + 1).padStart(2, '0') }}</span>
+            <span class="toc__label">{{ s.label }}</span>
+          </a>
+        </template>
       </aside>
     </Transition>
+
+    <div id="group-core" class="section-group">
+      <h2 class="section-group__title">Core</h2>
+      <p class="section-group__desc">Fundamentals — drop-in cropping, slot customization, reactive props, and the headless composable.</p>
+    </div>
 
     <section id="basics" class="showcase">
       <div class="showcase__header">
@@ -1134,6 +1167,11 @@ function kb(bytes: number) {
       </div>
     </section>
 
+    <div id="group-theming" class="section-group">
+      <h2 class="section-group__title">Theming</h2>
+      <p class="section-group__desc">CSS custom properties, Tailwind utility classes, and the <code>ui</code> prop.</p>
+    </div>
+
     <section id="themes" class="showcase">
       <div class="showcase__header">
         <span class="showcase__num" style="--accent: #a78bfa">06</span>
@@ -1312,6 +1350,11 @@ function kb(bytes: number) {
         <div class="snippet__body" v-html="highlightedCode('tailwind-editor')"></div>
       </div>
     </section>
+
+    <div id="group-recipes" class="section-group">
+      <h2 class="section-group__title">Recipes</h2>
+      <p class="section-group__desc">Standalone parts, real-world integrations, and production-ready patterns.</p>
+    </div>
 
     <section id="standalone" class="showcase">
       <div class="showcase__header">
@@ -2361,11 +2404,34 @@ code {
 .nav {
   display: flex;
   flex-wrap: wrap;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  gap: 4px;
+  gap: 16px;
   padding: 10px 0;
   margin: 0 0 32px;
+}
+
+.nav__group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+
+.nav__group-label {
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--text-muted);
+  opacity: 0.5;
+}
+
+.nav__pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  justify-content: center;
 }
 
 .nav__pill {
@@ -2411,6 +2477,21 @@ code {
 }
 
 .toc::-webkit-scrollbar { display: none; }
+
+.toc__group-label {
+  display: block;
+  font-size: 9px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: var(--text-muted);
+  opacity: 0.4;
+  padding: 8px 10px 2px;
+}
+
+.toc__group-label:first-child {
+  padding-top: 2px;
+}
 
 .toc__item {
   display: flex;
@@ -2477,6 +2558,44 @@ code {
 .toc-leave-to {
   opacity: 0;
   transform: translateY(-50%) translateX(-12px);
+}
+
+.section-group {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin: 64px 0 32px;
+  padding: 0 16px;
+  text-align: center;
+  scroll-margin-top: calc(var(--nav-h) + 16px);
+}
+
+.section-group:first-of-type {
+  margin-top: 0;
+}
+
+.section-group__title {
+  font-family: var(--font-display);
+  font-size: clamp(1.6rem, 3vw, 2rem);
+  font-weight: 700;
+  letter-spacing: -0.02em;
+  color: var(--text);
+}
+
+.section-group__desc {
+  font-size: 15px;
+  color: var(--text-muted);
+  max-width: 520px;
+  line-height: 1.5;
+}
+
+.section-group__desc code {
+  font-size: 13px;
+  padding: 2px 6px;
+  background: var(--surface-2);
+  border-radius: 4px;
+  color: var(--cyan);
 }
 
 .showcase {
