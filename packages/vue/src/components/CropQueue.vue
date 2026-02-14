@@ -1,6 +1,14 @@
 <script setup lang="ts">
 import { useImageQueue } from '@cropvue/core'
 import type { QueueItem } from '@cropvue/core'
+import type { CropQueueUI } from '../types/ui'
+import { useComponentUI } from '../composables/useComponentUI'
+
+const props = defineProps<{
+  ui?: CropQueueUI
+}>()
+
+const mergedUi = useComponentUI('CropQueue', () => props.ui)
 
 const emit = defineEmits<{
   select: [item: QueueItem]
@@ -29,7 +37,7 @@ defineExpose({ queue })
 </script>
 
 <template>
-  <div class="cropvue-queue">
+  <div class="cropvue-queue" :class="mergedUi.root">
     <slot
       :items="queue.images.value"
       :current-index="queue.current.value"
@@ -37,25 +45,32 @@ defineExpose({ queue })
       :remove="removeItem"
       :add="queue.add"
     >
-      <div class="cropvue-queue__list">
+      <div class="cropvue-queue__list" :class="mergedUi.list">
         <div
           v-for="(item, index) in queue.images.value"
           :key="item.id"
           class="cropvue-queue__item"
-          :class="{
-            'cropvue-queue__item--active': queue.current.value === index,
-            'cropvue-queue__item--done': item.status === 'done',
-          }"
+          :class="[
+            mergedUi.item,
+            {
+              'cropvue-queue__item--active': queue.current.value === index,
+              'cropvue-queue__item--done': item.status === 'done',
+            },
+            queue.current.value === index && mergedUi.itemActive,
+            item.status === 'done' && mergedUi.itemDone,
+          ]"
           @click="selectItem(index)"
         >
           <img
             :src="item.thumbnail"
             :alt="`Queue item ${index + 1}`"
             class="cropvue-queue__thumbnail"
+            :class="mergedUi.thumbnail"
           />
           <button
             type="button"
             class="cropvue-queue__remove"
+            :class="mergedUi.removeButton"
             title="Remove"
             @click.stop="removeItem(index)"
           >
@@ -63,7 +78,7 @@ defineExpose({ queue })
               <line x1="18" y1="6" x2="6" y2="18" /><line x1="6" y1="6" x2="18" y2="18" />
             </svg>
           </button>
-          <div v-if="item.status === 'done'" class="cropvue-queue__check">
+          <div v-if="item.status === 'done'" class="cropvue-queue__check" :class="mergedUi.checkIcon">
             <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="3">
               <polyline points="20 6 9 17 4 12" />
             </svg>

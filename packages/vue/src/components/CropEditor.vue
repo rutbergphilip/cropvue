@@ -11,15 +11,20 @@ import {
   isPointInsideStencil,
 } from '@cropvue/core'
 import type { HandlePosition, PointerHandlerCleanup } from '@cropvue/core'
+import type { CropEditorUI } from '../types/ui'
+import { useComponentUI } from '../composables/useComponentUI'
 
 const props = withDefaults(defineProps<{
   image: CropImageData | null
   transform: TransformState
   crop: CropState
   pannable?: boolean
+  ui?: CropEditorUI
 }>(), {
   pannable: true,
 })
+
+const mergedUi = useComponentUI('CropEditor', () => props.ui)
 
 const emit = defineEmits<{
   'update:transform': [transform: TransformState]
@@ -298,11 +303,11 @@ defineExpose({ editorRef, displayScale })
 </script>
 
 <template>
-  <div ref="containerRef" class="cropvue-editor">
+  <div ref="containerRef" class="cropvue-editor" :class="mergedUi.root">
     <div
       ref="editorRef"
       class="cropvue-editor__viewport"
-      :class="{ 'cropvue-editor__viewport--panning': isPanning }"
+      :class="[mergedUi.viewport, { 'cropvue-editor__viewport--panning': isPanning }]"
       tabindex="0"
       @pointerup="onViewportPointerUp"
     >
@@ -316,6 +321,7 @@ defineExpose({ editorRef, displayScale })
           v-if="image"
           :src="image.element.src"
           class="cropvue-editor__image"
+          :class="mergedUi.image"
           :style="imageStyle"
           draggable="false"
           alt=""
@@ -327,7 +333,7 @@ defineExpose({ editorRef, displayScale })
         :crop="crop"
         :clip-path="overlayClipPath"
       >
-        <div class="cropvue-editor__overlay" :style="overlayStyle" />
+        <div class="cropvue-editor__overlay" :class="mergedUi.overlay" :style="overlayStyle" />
       </slot>
 
       <slot
@@ -337,27 +343,27 @@ defineExpose({ editorRef, displayScale })
       >
         <div
           class="cropvue-editor__crop-area"
-          :class="{ 'cropvue-editor__crop-area--circle': crop.stencil === 'circle' }"
+          :class="[mergedUi.cropArea, { 'cropvue-editor__crop-area--circle': crop.stencil === 'circle' }]"
           :style="cropStyle"
         >
           <slot v-if="crop.stencil !== 'circle'" name="grid" :crop="crop">
-            <div class="cropvue-editor__grid">
-              <div class="cropvue-editor__grid-line cropvue-editor__grid-line--h1" />
-              <div class="cropvue-editor__grid-line cropvue-editor__grid-line--h2" />
-              <div class="cropvue-editor__grid-line cropvue-editor__grid-line--v1" />
-              <div class="cropvue-editor__grid-line cropvue-editor__grid-line--v2" />
+            <div class="cropvue-editor__grid" :class="mergedUi.grid">
+              <div class="cropvue-editor__grid-line cropvue-editor__grid-line--h1" :class="mergedUi.gridLine" />
+              <div class="cropvue-editor__grid-line cropvue-editor__grid-line--h2" :class="mergedUi.gridLine" />
+              <div class="cropvue-editor__grid-line cropvue-editor__grid-line--v1" :class="mergedUi.gridLine" />
+              <div class="cropvue-editor__grid-line cropvue-editor__grid-line--v2" :class="mergedUi.gridLine" />
             </div>
           </slot>
 
           <slot name="handles" :crop="crop">
             <template v-if="crop.stencil === 'circle'">
-              <div class="cropvue-editor__handle cropvue-editor__handle--ne" data-handle="ne" />
+              <div class="cropvue-editor__handle cropvue-editor__handle--ne" :class="mergedUi.handle" data-handle="ne" />
             </template>
             <template v-else>
-              <div class="cropvue-editor__handle cropvue-editor__handle--nw" data-handle="nw" />
-              <div class="cropvue-editor__handle cropvue-editor__handle--ne" data-handle="ne" />
-              <div class="cropvue-editor__handle cropvue-editor__handle--sw" data-handle="sw" />
-              <div class="cropvue-editor__handle cropvue-editor__handle--se" data-handle="se" />
+              <div class="cropvue-editor__handle cropvue-editor__handle--nw" :class="mergedUi.handle" data-handle="nw" />
+              <div class="cropvue-editor__handle cropvue-editor__handle--ne" :class="mergedUi.handle" data-handle="ne" />
+              <div class="cropvue-editor__handle cropvue-editor__handle--sw" :class="mergedUi.handle" data-handle="sw" />
+              <div class="cropvue-editor__handle cropvue-editor__handle--se" :class="mergedUi.handle" data-handle="se" />
             </template>
           </slot>
         </div>

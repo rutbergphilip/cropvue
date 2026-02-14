@@ -9,6 +9,8 @@ import type {
   UploadFn,
   QueueItem,
 } from '@cropvue/core'
+import type { CropVueUI } from '../types/ui'
+import { useComponentUI } from '../composables/useComponentUI'
 import CropEditor from './CropEditor.vue'
 import CropToolbar from './CropToolbar.vue'
 import CropPreview from './CropPreview.vue'
@@ -31,6 +33,7 @@ const props = withDefaults(defineProps<{
   src?: string | null
   modelValue?: CropResult | null
   pannable?: boolean
+  ui?: CropVueUI
 }>(), {
   stencil: 'rectangle',
   aspectRatio: null,
@@ -50,6 +53,8 @@ const props = withDefaults(defineProps<{
   modelValue: null,
   pannable: true,
 })
+
+const mergedUi = useComponentUI('CropVue', () => props.ui)
 
 const emit = defineEmits<{
   ready: [dimensions: { width: number; height: number }]
@@ -209,7 +214,7 @@ defineExpose({
 </script>
 
 <template>
-  <div class="cropvue">
+  <div class="cropvue" :class="mergedUi.root">
     <!-- Dropzone Phase -->
     <div v-if="phase === 'dropzone'" ref="dropzoneRef">
       <slot
@@ -219,7 +224,7 @@ defineExpose({
       >
         <div
           class="cropvue__dropzone"
-          :class="{ 'cropvue__dropzone--active': dropzone.isDragging.value }"
+          :class="[mergedUi.dropzone, { 'cropvue__dropzone--active': dropzone.isDragging.value }, dropzone.isDragging.value && mergedUi.dropzoneActive]"
           @click="dropzone.open"
         >
           <slot name="dropzone-content" :open="dropzone.open" :is-dragging="dropzone.isDragging.value">
@@ -296,9 +301,9 @@ defineExpose({
         :is-uploading="isUploading"
         :progress="uploadProgress"
       >
-        <div class="cropvue__actions">
-          <button type="button" class="cropvue__btn cropvue__btn--cancel" @click="cancel">Cancel</button>
-          <button type="button" class="cropvue__btn cropvue__btn--confirm" :disabled="isUploading" @click="confirm">
+        <div class="cropvue__actions" :class="mergedUi.actions">
+          <button type="button" class="cropvue__btn cropvue__btn--cancel" :class="mergedUi.cancelButton" @click="cancel">Cancel</button>
+          <button type="button" class="cropvue__btn cropvue__btn--confirm" :class="mergedUi.confirmButton" :disabled="isUploading" @click="confirm">
             {{ isUploading ? 'Uploading...' : 'Confirm' }}
           </button>
         </div>
@@ -308,8 +313,8 @@ defineExpose({
     <!-- Done Phase -->
     <template v-if="phase === 'done'">
       <slot name="done" :result="result" :restart="restart" :reedit="reedit" :remove="remove">
-        <div class="cropvue__done">
-          <img v-if="result" :src="result.url" alt="Cropped result" class="cropvue__result-image" />
+        <div class="cropvue__done" :class="mergedUi.done">
+          <img v-if="result" :src="result.url" alt="Cropped result" class="cropvue__result-image" :class="mergedUi.resultImage" />
           <button type="button" class="cropvue__btn" @click="restart">Crop another</button>
         </div>
       </slot>
