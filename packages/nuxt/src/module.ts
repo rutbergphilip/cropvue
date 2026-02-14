@@ -25,7 +25,7 @@ export default defineNuxtModule<CropVueModuleOptions>({
       addComponent({
         name,
         export: name,
-        filePath: 'cropvue',
+        filePath: '@cropvue/vue',
         mode: 'client',
       })
     }
@@ -41,6 +41,6 @@ export default defineNuxtModule<CropVueModuleOptions>({
     }
 
     // Add CSS
-    nuxt.options.css.push('cropvue/styles')
+    nuxt.options.css.push('@cropvue/vue/styles')
   },
 })

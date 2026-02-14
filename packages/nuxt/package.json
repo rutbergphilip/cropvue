@@ -38,7 +38,7 @@
     "dev": "unbuild --stub"
   },
   "dependencies": {
-    "cropvue": "workspace:*",
+    "@cropvue/vue": "workspace:*",
     "@cropvue/core": "workspace:*"
   },
   "peerDependencies": {

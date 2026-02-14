@@ -1,11 +1,11 @@
-# cropvue
+# @cropvue/vue
 
 Renderless Vue 3 components for image cropping and upload. Fully customizable via scoped slots and CSS custom properties.
 
 ## Installation
 
 ```sh
-pnpm add cropvue @cropvue/core
+pnpm add @cropvue/vue
 ```
 
 ## Components
@@ -22,8 +22,8 @@ pnpm add cropvue @cropvue/core
 
 ```vue
 <script setup>
-import { CropVue } from 'cropvue'
-import 'cropvue/styles'
+import { CropVue } from '@cropvue/vue'
+import '@cropvue/vue/styles'
 </script>
 
 <template>

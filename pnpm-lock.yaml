@@ -44,7 +44,7 @@ importers:
       '@cropvue/core':
         specifier: workspace:*
         version: link:../core
-      cropvue:
+      '@cropvue/vue':
         specifier: workspace:*
         version: link:../vue
       nuxt:
@@ -82,7 +82,7 @@ importers:
       '@cropvue/core':
         specifier: workspace:*
         version: link:../packages/core
-      cropvue:
+      '@cropvue/vue':
         specifier: workspace:*
         version: link:../packages/vue
       shiki:

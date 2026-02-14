@@ -3,7 +3,7 @@
   "changelog": "@changesets/cli/changelog",
   "commit": false,
   "fixed": [],
-  "linked": [["@cropvue/core", "cropvue", "@cropvue/nuxt"]],
+  "linked": [["@cropvue/core", "@cropvue/vue", "@cropvue/nuxt"]],
   "access": "public",
   "baseBranch": "main",
   "updateInternalDependencies": "patch",

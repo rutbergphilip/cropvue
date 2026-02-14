@@ -5,15 +5,15 @@
 ::: code-group
 
 ```sh [pnpm]
-pnpm add cropvue @cropvue/core
+pnpm add @cropvue/vue
 ```
 
 ```sh [npm]
-npm install cropvue @cropvue/core
+npm install @cropvue/vue
 ```
 
 ```sh [yarn]
-yarn add cropvue @cropvue/core
+yarn add @cropvue/vue
 ```
 
 :::
@@ -24,8 +24,8 @@ The simplest way to use CropVue is with the `CropVue` component:
 
 ```vue
 <script setup>
-import { CropVue } from 'cropvue'
-import 'cropvue/styles'
+import { CropVue } from '@cropvue/vue'
+import '@cropvue/vue/styles'
 
 const handleDone = (result) => {
   console.log(result.blob)   // Blob

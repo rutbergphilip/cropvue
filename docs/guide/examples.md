@@ -16,8 +16,8 @@ A circle-stencil cropper that outputs a square WebP image, perfect for profile p
 
 ```vue
 <script setup>
-import { CropVue } from 'cropvue' // [!code focus:2]
-import 'cropvue/styles'
+import { CropVue } from '@cropvue/vue' // [!code focus:2]
+import '@cropvue/vue/styles'
 
 const handleDone = (result) => { // [!code focus:5]
   // result.blob  → WebP Blob
@@ -51,8 +51,8 @@ A 16:9 cropper that loads an image from a URL on mount, no file picker needed.
 
 ```vue
 <script setup>
-import { CropVue } from 'cropvue'
-import 'cropvue/styles'
+import { CropVue } from '@cropvue/vue'
+import '@cropvue/vue/styles'
 
 const coverUrl = 'https://images.unsplash.com/photo-1506744038136-46273834b3fb' // [!code highlight]
 
@@ -86,8 +86,8 @@ Full control over the file-selection UI while keeping all CropVue internals.
 
 ```vue
 <script setup>
-import { CropVue } from 'cropvue'
-import 'cropvue/styles'
+import { CropVue } from '@cropvue/vue'
+import '@cropvue/vue/styles'
 
 const handleDone = (result) => {
   console.log(result.blob)
@@ -133,8 +133,8 @@ A minimal toolbar with just rotate and zoom — skip controls you don't need.
 
 ```vue [Custom Toolbar]
 <script setup>
-import { CropVue } from 'cropvue'
-import 'cropvue/styles'
+import { CropVue } from '@cropvue/vue'
+import '@cropvue/vue/styles'
 
 const handleDone = (result) => {
   console.log(result.blob)
@@ -160,8 +160,8 @@ const handleDone = (result) => {
 
 ```vue [Default Events]
 <script setup>
-import { CropVue } from 'cropvue'
-import 'cropvue/styles'
+import { CropVue } from '@cropvue/vue'
+import '@cropvue/vue/styles'
 
 // Without a custom toolbar, the default toolbar emits these events:
 // @rotate-left, @rotate-right, @flip-x, @flip-y
@@ -196,8 +196,8 @@ Full manual control — build your own UI from scratch using only the composable
 ```vue
 <script setup>
 import { useCropper, useDropzone } from '@cropvue/core' // [!code focus:2]
-import { CropEditor } from 'cropvue'
-import 'cropvue/styles'
+import { CropEditor } from '@cropvue/vue'
+import '@cropvue/vue/styles'
 
 const cropper = useCropper({ // [!code focus:5]
   stencil: 'rectangle',
@@ -253,8 +253,8 @@ Two approaches: a simple prop-based upload or a composable with progress trackin
 
 ```vue [Upload Prop]
 <script setup>
-import { CropVue } from 'cropvue'
-import 'cropvue/styles'
+import { CropVue } from '@cropvue/vue'
+import '@cropvue/vue/styles'
 
 async function uploadHandler(file, { onProgress, signal }) { // [!code focus:8]
   const form = new FormData()
@@ -375,9 +375,9 @@ Exhaustive error handling with TypeScript-friendly discriminated unions.
 
 ```vue
 <script setup>
-import { CropVue } from 'cropvue'
-import type { CropVueError } from 'cropvue' // [!code focus]
-import 'cropvue/styles'
+import { CropVue } from '@cropvue/vue'
+import type { CropVueError } from '@cropvue/vue' // [!code focus]
+import '@cropvue/vue/styles'
 
 function handleError(error: CropVueError) { // [!code focus:16]
   switch (error.type) {

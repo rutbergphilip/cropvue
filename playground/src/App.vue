@@ -6,10 +6,10 @@ import {
   CropDropzone,
   CropToolbar,
   CropPreview,
-} from 'cropvue'
+} from '@cropvue/vue'
 import { useCropper } from '@cropvue/core'
 import type { CropResult, CropVueError, StencilType, OutputFormat, TransformState } from '@cropvue/core'
-import 'cropvue/styles'
+import '@cropvue/vue/styles'
 import { createHighlighter } from 'shiki'
 import { codeSnippets } from './snippets'
 

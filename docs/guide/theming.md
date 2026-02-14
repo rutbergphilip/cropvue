@@ -5,7 +5,7 @@ CropVue uses CSS custom properties for theming. Override any variable to customi
 ## Import Default Styles
 
 ```ts
-import 'cropvue/styles'
+import '@cropvue/vue/styles'
 ```
 
 ## CSS Variables

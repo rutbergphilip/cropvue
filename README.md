@@ -1,6 +1,6 @@
 # CropVue
 
-[![npm version](https://img.shields.io/npm/v/cropvue)](https://www.npmjs.com/package/cropvue)
+[![npm version](https://img.shields.io/npm/v/@cropvue/vue)](https://www.npmjs.com/package/@cropvue/vue)
 [![CI](https://github.com/rutbergphilip/cropvue/actions/workflows/ci.yml/badge.svg)](https://github.com/rutbergphilip/cropvue/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
@@ -20,19 +20,19 @@ Headless, fully customizable image cropping and upload library for Vue 3 + Nuxt.
 | Package | Description |
 |---------|-------------|
 | [`@cropvue/core`](./packages/core) | Headless composables and pure logic |
-| [`cropvue`](./packages/vue) | Vue 3 renderless components |
+| [`@cropvue/vue`](./packages/vue) | Vue 3 renderless components |
 | [`@cropvue/nuxt`](./packages/nuxt) | Nuxt module with auto-imports |
 
 ## Quick Start
 
 ```sh
-pnpm add cropvue @cropvue/core
+pnpm add @cropvue/vue
 ```
 
 ```vue
 <script setup>
-import { CropVue } from 'cropvue'
-import 'cropvue/styles'
+import { CropVue } from '@cropvue/vue'
+import '@cropvue/vue/styles'
 
 const handleDone = (result) => {
   console.log(result.blob, result.file, result.url)
