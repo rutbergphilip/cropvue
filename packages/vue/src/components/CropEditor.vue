@@ -12,11 +12,14 @@ import {
 } from '@cropvue/core'
 import type { HandlePosition, PointerHandlerCleanup } from '@cropvue/core'
 
-const props = defineProps<{
+const props = withDefaults(defineProps<{
   image: CropImageData | null
   transform: TransformState
   crop: CropState
-}>()
+  pannable?: boolean
+}>(), {
+  pannable: true,
+})
 
 const emit = defineEmits<{
   'update:transform': [transform: TransformState]
@@ -163,10 +166,12 @@ function setupPointerHandler() {
 
   pointerHandler = usePointerHandler(viewport, {
     onPan(dx, dy) {
+      if (!props.pannable) return
       isPanning.value = true
       emit('update:transform', handlePan(props.transform, dx, dy))
     },
     onZoom(delta, centerX, centerY) {
+      if (!props.pannable) return
       emit('update:transform', handleZoom(props.transform, delta, centerX, centerY))
     },
     onCropResize(handle, dx, dy) {
@@ -184,6 +189,7 @@ function setupPointerHandler() {
       emit('update:crop', handleCropMove(props.crop, dx, dy, bounds))
     },
     onKeyboard(key, shiftKey) {
+      if (!props.pannable) return
       emit('update:transform', handleKeyboard(props.transform, key, shiftKey))
     },
     getHandleAtPoint(e: PointerEvent) {

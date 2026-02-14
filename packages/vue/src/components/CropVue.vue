@@ -30,6 +30,7 @@ const props = withDefaults(defineProps<{
   upload?: UploadFn | null
   src?: string | null
   modelValue?: CropResult | null
+  pannable?: boolean
 }>(), {
   stencil: 'rectangle',
   aspectRatio: null,
@@ -47,6 +48,7 @@ const props = withDefaults(defineProps<{
   upload: null,
   src: null,
   modelValue: null,
+  pannable: true,
 })
 
 const emit = defineEmits<{
@@ -226,11 +228,13 @@ defineExpose({
         :reset="cropper.reset"
         :confirm="confirm"
         :cancel="cancel"
+        :pannable="pannable"
       >
         <CropEditor
           :image="cropper.image.value"
           :transform="cropper.transform.value"
           :crop="cropper.crop.value"
+          :pannable="pannable"
           @update:transform="t => cropper.transform.value = t"
           @update:crop="c => cropper.crop.value = c"
         />
