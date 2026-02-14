@@ -7,8 +7,9 @@
     "build": "vite build"
   },
   "dependencies": {
-    "cropvue": "workspace:*",
     "@cropvue/core": "workspace:*",
+    "cropvue": "workspace:*",
+    "shiki": "^3.22.0",
     "vue": "^3.5.0"
   },
   "devDependencies": {

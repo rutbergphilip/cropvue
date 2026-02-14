@@ -9,6 +9,29 @@ import {
 import { useCropper } from '@cropvue/core'
 import type { CropResult, CropVueError, StencilType, OutputFormat, TransformState } from '@cropvue/core'
 import 'cropvue/styles'
+import { createHighlighter } from 'shiki'
+import { codeSnippets } from './snippets'
+
+// ============================================================
+// Code Tabs — Shiki highlighter + toggle state
+// ============================================================
+const highlighter = ref<any>(null)
+const showCode = ref<Record<string, boolean>>({})
+
+function highlightedCode(sectionId: string) {
+  if (!highlighter.value || !codeSnippets[sectionId]) return ''
+  return highlighter.value.codeToHtml(codeSnippets[sectionId], {
+    lang: 'vue',
+    theme: 'vitesse-dark',
+  })
+}
+
+async function copyCode(sectionId: string) {
+  const code = codeSnippets[sectionId]
+  if (code) {
+    await navigator.clipboard.writeText(code)
+  }
+}
 
 // ============================================================
 // Navigation — IntersectionObserver tracks active section
@@ -26,7 +49,12 @@ const sections = [
 const activeSection = ref('basics')
 let observer: IntersectionObserver | null = null
 
-onMounted(() => {
+onMounted(async () => {
+  highlighter.value = await createHighlighter({
+    themes: ['vitesse-dark'],
+    langs: ['vue'],
+  })
+
   observer = new IntersectionObserver(
     (entries) => {
       for (const entry of entries) {
@@ -278,8 +306,13 @@ function kb(bytes: number) {
           <h2 class="showcase__title">The Basics</h2>
           <p class="showcase__desc">Zero-config defaults with CSS variable theming. No custom slots — just drop and crop.</p>
         </div>
+        <div class="showcase__toggle">
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': !showCode['basics'] }" @click="showCode['basics'] = false">Preview</button>
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': showCode['basics'] }" @click="showCode['basics'] = true">Code</button>
+        </div>
       </div>
 
+      <template v-if="!showCode['basics']">
       <div class="basics__frame">
         <div class="basics__corner basics__corner--tl"></div>
         <div class="basics__corner basics__corner--tr"></div>
@@ -306,6 +339,15 @@ function kb(bytes: number) {
           </CropVue>
         </div>
       </div>
+      </template>
+
+      <div v-else class="snippet">
+        <div class="snippet__header">
+          <span class="snippet__filename">BasicExample.vue</span>
+          <button class="snippet__copy" @click="copyCode('basics')">Copy</button>
+        </div>
+        <div class="snippet__body" v-html="highlightedCode('basics')"></div>
+      </div>
     </section>
 
     <!-- ═══════════════════════════════════════════════════════ -->
@@ -318,8 +360,13 @@ function kb(bytes: number) {
           <h2 class="showcase__title">Avatar Studio</h2>
           <p class="showcase__desc">Circle stencil with 1:1 lock. Custom dropzone and result display via scoped slots.</p>
         </div>
+        <div class="showcase__toggle">
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': !showCode['avatar'] }" @click="showCode['avatar'] = false">Preview</button>
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': showCode['avatar'] }" @click="showCode['avatar'] = true">Code</button>
+        </div>
       </div>
 
+      <template v-if="!showCode['avatar']">
       <div class="avatar__card">
         <CropVue
           stencil="circle"
@@ -368,6 +415,15 @@ function kb(bytes: number) {
           </template>
         </CropVue>
       </div>
+      </template>
+
+      <div v-else class="snippet">
+        <div class="snippet__header">
+          <span class="snippet__filename">AvatarStudio.vue</span>
+          <button class="snippet__copy" @click="copyCode('avatar')">Copy</button>
+        </div>
+        <div class="snippet__body" v-html="highlightedCode('avatar')"></div>
+      </div>
     </section>
 
     <!-- ═══════════════════════════════════════════════════════ -->
@@ -380,8 +436,13 @@ function kb(bytes: number) {
           <h2 class="showcase__title">Full Control</h2>
           <p class="showcase__desc">Every slot overridden — custom dropzone, toolbar, actions, and result view.</p>
         </div>
+        <div class="showcase__toggle">
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': !showCode['full-control'] }" @click="showCode['full-control'] = false">Preview</button>
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': showCode['full-control'] }" @click="showCode['full-control'] = true">Code</button>
+        </div>
       </div>
 
+      <template v-if="!showCode['full-control']">
       <CropVue
         stencil="rectangle"
         :aspect-ratio="16 / 9"
@@ -457,6 +518,15 @@ function kb(bytes: number) {
           </div>
         </template>
       </CropVue>
+      </template>
+
+      <div v-else class="snippet">
+        <div class="snippet__header">
+          <span class="snippet__filename">FullControl.vue</span>
+          <button class="snippet__copy" @click="copyCode('full-control')">Copy</button>
+        </div>
+        <div class="snippet__body" v-html="highlightedCode('full-control')"></div>
+      </div>
     </section>
 
     <!-- ═══════════════════════════════════════════════════════ -->
@@ -469,8 +539,13 @@ function kb(bytes: number) {
           <h2 class="showcase__title">Shape Shifter</h2>
           <p class="showcase__desc">Reactive props — change stencil, aspect ratio, format and quality in real-time.</p>
         </div>
+        <div class="showcase__toggle">
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': !showCode['shape-shifter'] }" @click="showCode['shape-shifter'] = false">Preview</button>
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': showCode['shape-shifter'] }" @click="showCode['shape-shifter'] = true">Code</button>
+        </div>
       </div>
 
+      <template v-if="!showCode['shape-shifter']">
       <div class="controls">
         <div class="controls__row">
           <span class="controls__label">Stencil</span>
@@ -537,6 +612,15 @@ function kb(bytes: number) {
           </div>
         </template>
       </CropVue>
+      </template>
+
+      <div v-else class="snippet">
+        <div class="snippet__header">
+          <span class="snippet__filename">ShapeShifter.vue</span>
+          <button class="snippet__copy" @click="copyCode('shape-shifter')">Copy</button>
+        </div>
+        <div class="snippet__body" v-html="highlightedCode('shape-shifter')"></div>
+      </div>
     </section>
 
     <!-- ═══════════════════════════════════════════════════════ -->
@@ -549,8 +633,13 @@ function kb(bytes: number) {
           <h2 class="showcase__title">Under the Hood</h2>
           <p class="showcase__desc">The <code>useCropper()</code> composable with manual <code>CropEditor</code> wiring. Full programmatic control.</p>
         </div>
+        <div class="showcase__toggle">
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': !showCode['composable'] }" @click="showCode['composable'] = false">Preview</button>
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': showCode['composable'] }" @click="showCode['composable'] = true">Code</button>
+        </div>
       </div>
 
+      <template v-if="!showCode['composable']">
       <label class="file-btn">
         <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
         Choose File
@@ -600,6 +689,15 @@ function kb(bytes: number) {
       </template>
 
       <p v-else class="status-text">{{ composableStatus || 'Select a file to begin' }}</p>
+      </template>
+
+      <div v-else class="snippet">
+        <div class="snippet__header">
+          <span class="snippet__filename">ComposableExample.vue</span>
+          <button class="snippet__copy" @click="copyCode('composable')">Copy</button>
+        </div>
+        <div class="snippet__body" v-html="highlightedCode('composable')"></div>
+      </div>
     </section>
 
     <!-- ═══════════════════════════════════════════════════════ -->
@@ -612,8 +710,13 @@ function kb(bytes: number) {
           <h2 class="showcase__title">Theme Gallery</h2>
           <p class="showcase__desc">Three radically different themes — all CSS custom properties, zero code changes.</p>
         </div>
+        <div class="showcase__toggle">
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': !showCode['themes'] }" @click="showCode['themes'] = false">Preview</button>
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': showCode['themes'] }" @click="showCode['themes'] = true">Code</button>
+        </div>
       </div>
 
+      <template v-if="!showCode['themes']">
       <div class="theme-grid">
         <div
           v-for="(theme, key) in themeConfigs"
@@ -639,6 +742,15 @@ function kb(bytes: number) {
           </div>
         </div>
       </div>
+      </template>
+
+      <div v-else class="snippet">
+        <div class="snippet__header">
+          <span class="snippet__filename">ThemeExample.vue</span>
+          <button class="snippet__copy" @click="copyCode('themes')">Copy</button>
+        </div>
+        <div class="snippet__body" v-html="highlightedCode('themes')"></div>
+      </div>
     </section>
 
     <!-- ═══════════════════════════════════════════════════════ -->
@@ -651,8 +763,13 @@ function kb(bytes: number) {
           <h2 class="showcase__title">Standalone Parts</h2>
           <p class="showcase__desc">Individual components used independently — dropzone, toolbar, and URL loading.</p>
         </div>
+        <div class="showcase__toggle">
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': !showCode['standalone'] }" @click="showCode['standalone'] = false">Preview</button>
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': showCode['standalone'] }" @click="showCode['standalone'] = true">Code</button>
+        </div>
       </div>
 
+      <template v-if="!showCode['standalone']">
       <div class="bento">
         <!-- Standalone Dropzone -->
         <div class="bento__item">
@@ -726,6 +843,15 @@ function kb(bytes: number) {
             </template>
           </CropVue>
         </div>
+      </div>
+      </template>
+
+      <div v-else class="snippet">
+        <div class="snippet__header">
+          <span class="snippet__filename">StandaloneParts.vue</span>
+          <button class="snippet__copy" @click="copyCode('standalone')">Copy</button>
+        </div>
+        <div class="snippet__body" v-html="highlightedCode('standalone')"></div>
       </div>
     </section>
 
@@ -953,6 +1079,103 @@ code {
   font-size: 14px;
   margin-top: 4px;
   line-height: 1.5;
+}
+
+/* =========================================================
+   SHOWCASE: PREVIEW/CODE TOGGLE
+   ========================================================= */
+.showcase__toggle {
+  margin-left: auto;
+  display: flex;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  flex-shrink: 0;
+  align-self: center;
+}
+
+.toggle-btn {
+  padding: 6px 14px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+  transition: all 180ms ease;
+}
+
+.toggle-btn:hover {
+  color: var(--text-dim);
+}
+
+.toggle-btn--active {
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+/* =========================================================
+   CODE SNIPPET DISPLAY
+   ========================================================= */
+.snippet {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+}
+
+.snippet__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 14px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+
+.snippet__filename {
+  font-family: 'DM Mono', 'SF Mono', monospace;
+  font-size: 12px;
+  color: var(--text-dim);
+}
+
+.snippet__copy {
+  padding: 3px 10px;
+  font-family: var(--font-body);
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--surface-3);
+  border: 1px solid var(--border);
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.snippet__copy:hover {
+  color: var(--text);
+  border-color: var(--border-light);
+}
+
+.snippet__body {
+  overflow-x: auto;
+}
+
+.snippet__body pre {
+  padding: 16px !important;
+  margin: 0 !important;
+  background: var(--surface) !important;
+  font-family: 'DM Mono', 'SF Mono', monospace !important;
+  font-size: 13px !important;
+  line-height: 1.6 !important;
+}
+
+.snippet__body code {
+  background: none !important;
+  padding: 0 !important;
+  border-radius: 0 !important;
+  color: inherit !important;
 }
 
 /* =========================================================
@@ -1724,8 +1947,12 @@ code {
   }
 
   .showcase__header {
-    flex-direction: column;
+    flex-wrap: wrap;
     gap: 8px;
+  }
+
+  .showcase__toggle {
+    margin-left: 0;
   }
 
   .theme-grid {
