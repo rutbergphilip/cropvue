@@ -1,4 +1,4 @@
-import { ref, onMounted, onUnmounted, type Ref } from 'vue'
+import { ref, watch, onMounted, onUnmounted, type Ref } from 'vue'
 import type { CropVueError, DropzoneOptions } from '../types'
 
 export function validateFile(
@@ -91,20 +91,39 @@ export function useDropzone(options: DropzoneOptions = {}) {
     }
   }
 
-  onMounted(() => {
-    const el = dropzoneRef.value
-    if (!el) return
+  let currentEl: HTMLElement | null = null
+
+  function attachListeners(el: HTMLElement) {
     el.addEventListener('dragover', onDragOver)
     el.addEventListener('dragleave', onDragLeave)
     el.addEventListener('drop', onDrop)
-  })
+  }
 
-  onUnmounted(() => {
-    const el = dropzoneRef.value
-    if (!el) return
+  function detachListeners(el: HTMLElement) {
     el.removeEventListener('dragover', onDragOver)
     el.removeEventListener('dragleave', onDragLeave)
     el.removeEventListener('drop', onDrop)
+  }
+
+  watch(dropzoneRef, (newEl, oldEl) => {
+    if (oldEl) detachListeners(oldEl)
+    if (newEl) attachListeners(newEl)
+    currentEl = newEl
+  }, { flush: 'post' })
+
+  onMounted(() => {
+    const el = dropzoneRef.value
+    if (el && el !== currentEl) {
+      attachListeners(el)
+      currentEl = el
+    }
+  })
+
+  onUnmounted(() => {
+    if (currentEl) {
+      detachListeners(currentEl)
+      currentEl = null
+    }
   })
 
   return { isDragging, files, dropzoneRef, open }

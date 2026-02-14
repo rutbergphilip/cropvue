@@ -82,6 +82,7 @@ const dropzone = useDropzone({
   onFiles: handleFiles,
   onError: (e) => emit('error', e),
 })
+const dropzoneRef = dropzone.dropzoneRef
 
 const result = ref<CropResult | null>(null)
 const isUploading = ref(false)
@@ -186,14 +187,13 @@ defineExpose({
 <template>
   <div class="cropvue">
     <!-- Dropzone Phase -->
-    <template v-if="phase === 'dropzone'">
+    <div v-if="phase === 'dropzone'" ref="dropzoneRef">
       <slot
         name="dropzone"
         :open="dropzone.open"
         :is-dragging="dropzone.isDragging.value"
       >
         <div
-          ref="dropzoneRef"
           class="cropvue__dropzone"
           :class="{ 'cropvue__dropzone--active': dropzone.isDragging.value }"
           @click="dropzone.open"
@@ -203,7 +203,7 @@ defineExpose({
           </slot>
         </div>
       </slot>
-    </template>
+    </div>
 
     <!-- Editor Phase -->
     <template v-if="phase === 'editor'">
