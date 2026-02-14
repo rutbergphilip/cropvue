@@ -4,6 +4,15 @@
   "type": "module",
   "license": "MIT",
   "description": "Headless, fully customizable image cropping and upload components for Vue 3",
+  "author": "Philip Rutberg",
+  "keywords": ["vue", "vue3", "cropper", "image-crop", "headless", "upload", "component"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rutbergphilip/cropvue.git",
+    "directory": "packages/vue"
+  },
+  "homepage": "https://github.com/rutbergphilip/cropvue",
+  "bugs": "https://github.com/rutbergphilip/cropvue/issues",
   "main": "./dist/cropvue.cjs",
   "module": "./dist/cropvue.mjs",
   "types": "./dist/index.d.ts",

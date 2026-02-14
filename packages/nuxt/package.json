@@ -4,6 +4,15 @@
   "type": "module",
   "license": "MIT",
   "description": "Nuxt module for CropVue - auto-imports and SSR handling",
+  "author": "Philip Rutberg",
+  "keywords": ["nuxt", "nuxt-module", "vue", "cropper", "image-crop", "headless"],
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/rutbergphilip/cropvue.git",
+    "directory": "packages/nuxt"
+  },
+  "homepage": "https://github.com/rutbergphilip/cropvue",
+  "bugs": "https://github.com/rutbergphilip/cropvue/issues",
   "main": "./dist/module.cjs",
   "module": "./dist/module.mjs",
   "types": "./dist/module.d.ts",
