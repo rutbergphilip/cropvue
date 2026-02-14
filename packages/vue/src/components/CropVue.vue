@@ -55,6 +55,8 @@ const emit = defineEmits<{
   ready: [dimensions: { width: number; height: number }]
   change: [crop: { x: number; y: number; width: number; height: number }]
   done: [result: CropResult]
+  cancel: []
+  remove: []
   uploaded: [result: unknown]
   error: [error: CropVueError]
   'queue-change': [items: QueueItem[]]
@@ -165,12 +167,26 @@ async function confirm() {
 }
 
 function cancel() {
+  emit('cancel')
+  if (result.value) {
+    // Re-editing: return to done state with previous result
+    phase.value = 'done'
+  } else {
+    // Initial editing: go back to dropzone
+    phase.value = 'dropzone'
+    cropper.reset()
+  }
+}
+
+function restart() {
   phase.value = 'dropzone'
   result.value = null
   cropper.reset()
 }
 
-function restart() {
+function remove() {
+  emit('remove')
+  emit('update:modelValue', null)
   phase.value = 'dropzone'
   result.value = null
   cropper.reset()
@@ -187,6 +203,7 @@ defineExpose({
   cancel,
   restart,
   reedit,
+  remove,
   result,
 })
 </script>
@@ -228,6 +245,7 @@ defineExpose({
         :reset="cropper.reset"
         :confirm="confirm"
         :cancel="cancel"
+        :remove="remove"
         :pannable="pannable"
       >
         <CropEditor
@@ -274,6 +292,7 @@ defineExpose({
         name="actions"
         :confirm="confirm"
         :cancel="cancel"
+        :remove="remove"
         :is-uploading="isUploading"
         :progress="uploadProgress"
       >
@@ -288,7 +307,7 @@ defineExpose({
 
     <!-- Done Phase -->
     <template v-if="phase === 'done'">
-      <slot name="done" :result="result" :restart="restart" :reedit="reedit">
+      <slot name="done" :result="result" :restart="restart" :reedit="reedit" :remove="remove">
         <div class="cropvue__done">
           <img v-if="result" :src="result.url" alt="Cropped result" class="cropvue__result-image" />
           <button type="button" class="cropvue__btn" @click="restart">Crop another</button>

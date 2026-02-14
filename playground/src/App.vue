@@ -993,7 +993,7 @@ function kb(bytes: number) {
                     <span>{{ isDragging ? 'Drop photo' : 'Upload photo' }}</span>
                   </div>
                 </template>
-                <template #done="{ result, reedit, restart }">
+                <template #done="{ result, reedit, remove }">
                   <div class="profile-editor__avatar-done">
                     <img
                       :src="result?.url"
@@ -1001,7 +1001,7 @@ function kb(bytes: number) {
                       class="profile-editor__avatar-img profile-editor__avatar-img--clickable"
                       @click="reedit"
                     />
-                    <button class="profile-editor__change-link" @click="restart">Change photo</button>
+                    <button class="profile-editor__change-link" @click="remove">Change photo</button>
                   </div>
                 </template>
               </CropVue>
