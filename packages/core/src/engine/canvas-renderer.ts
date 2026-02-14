@@ -63,29 +63,29 @@ export function renderCrop(
 
   const scaleX = outWidth / crop.width
   const scaleY = outHeight / crop.height
+  const imgW = image.naturalWidth
+  const imgH = image.naturalHeight
 
   ctx.save()
-  ctx.translate(outWidth / 2, outHeight / 2)
-  ctx.rotate((transform.rotation * Math.PI) / 180)
-  ctx.scale(transform.flipX ? -1 : 1, transform.flipY ? -1 : 1)
 
-  const imgDrawWidth = image.naturalWidth * transform.scale * scaleX
-  const imgDrawHeight = image.naturalHeight * transform.scale * scaleY
+  // 1. Map canvas output pixels → crop region in image space
+  ctx.scale(scaleX, scaleY)
+  ctx.translate(-crop.x, -crop.y)
 
-  // Compensate for crop center offset from image center
-  const cropOffsetX = (crop.x + crop.width / 2 - image.naturalWidth / 2) * scaleX
-  const cropOffsetY = (crop.y + crop.height / 2 - image.naturalHeight / 2) * scaleY
+  // 2. Move origin to image center (matches CSS transform-origin: center center)
+  ctx.translate(imgW / 2, imgH / 2)
 
-  const drawX = transform.x * scaleX - cropOffsetX - imgDrawWidth / 2
-  const drawY = transform.y * scaleY - cropOffsetY - imgDrawHeight / 2
-
-  ctx.drawImage(
-    image,
-    drawX,
-    drawY,
-    imgDrawWidth,
-    imgDrawHeight
+  // 3. Apply transforms in SAME order as CSS: translate → scale → rotate
+  ctx.translate(transform.x, transform.y)
+  ctx.scale(
+    transform.flipX ? -transform.scale : transform.scale,
+    transform.flipY ? -transform.scale : transform.scale
   )
+  ctx.rotate((transform.rotation * Math.PI) / 180)
+
+  // 4. Move back from center, draw image at its natural position
+  ctx.translate(-imgW / 2, -imgH / 2)
+  ctx.drawImage(image, 0, 0)
 
   ctx.restore()
 }
