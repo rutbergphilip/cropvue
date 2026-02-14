@@ -38,6 +38,8 @@ const sections = [
   { id: 'shape-shifter', label: 'Shape Shifter' },
   { id: 'composable', label: 'Under the Hood' },
   { id: 'themes', label: 'Theme Gallery' },
+  { id: 'tailwind-skins', label: 'Tailwind Skins' },
+  { id: 'tailwind-editor', label: 'Tailwind Editor' },
   { id: 'standalone', label: 'Standalone' },
   { id: 'profile-editor', label: 'Profile Editor' },
   { id: 'post-composer', label: 'Post Composer' },
@@ -243,6 +245,58 @@ const themeConfigs = {
 } as const
 
 type ThemeKey = keyof typeof themeConfigs
+
+// Tailwind Skins example
+const tailwindSkinResult = ref<Record<string, CropResult | null>>({
+  ocean: null,
+  rose: null,
+  mint: null,
+})
+
+const tailwindSkins = {
+  ocean: {
+    name: 'Ocean',
+    accent: '#0ea5e9',
+    ui: {
+      dropzone: 'rounded-2xl border-2 border-dashed border-sky-400/40 bg-sky-950/30 hover:bg-sky-900/40 min-h-48 transition-colors',
+      dropzoneActive: 'border-sky-400 bg-sky-900/50',
+      actions: 'gap-3 pt-3',
+      cancelButton: 'rounded-lg px-5 py-2 text-sm font-medium text-sky-300 bg-sky-950 border border-sky-800 hover:bg-sky-900 transition-colors cursor-pointer',
+      confirmButton: 'rounded-lg px-5 py-2 text-sm font-medium text-white bg-sky-600 border-sky-600 hover:bg-sky-500 transition-colors cursor-pointer',
+      done: 'flex flex-col items-center gap-4 py-6',
+      resultImage: 'rounded-xl max-h-64 shadow-lg',
+    },
+  },
+  rose: {
+    name: 'Rose',
+    accent: '#f43f5e',
+    ui: {
+      dropzone: 'rounded-3xl border-2 border-dashed border-rose-400/40 bg-rose-950/30 hover:bg-rose-900/40 min-h-48 transition-colors',
+      dropzoneActive: 'border-rose-400 bg-rose-900/50',
+      actions: 'gap-3 pt-3',
+      cancelButton: 'rounded-full px-5 py-2 text-sm font-medium text-rose-300 bg-rose-950 border border-rose-800 hover:bg-rose-900 transition-colors cursor-pointer',
+      confirmButton: 'rounded-full px-5 py-2 text-sm font-medium text-white bg-rose-600 border-rose-600 hover:bg-rose-500 transition-colors cursor-pointer',
+      done: 'flex flex-col items-center gap-4 py-6',
+      resultImage: 'rounded-full max-h-64 shadow-lg',
+    },
+  },
+  mint: {
+    name: 'Mint',
+    accent: '#34d399',
+    ui: {
+      dropzone: 'rounded-xl border-2 border-dashed border-emerald-400/40 bg-emerald-950/30 hover:bg-emerald-900/40 min-h-48 transition-colors',
+      dropzoneActive: 'border-emerald-400 bg-emerald-900/50',
+      actions: 'gap-3 pt-3',
+      cancelButton: 'rounded-md px-5 py-2 text-sm font-medium text-emerald-300 bg-emerald-950 border border-emerald-800 hover:bg-emerald-900 transition-colors cursor-pointer',
+      confirmButton: 'rounded-md px-5 py-2 text-sm font-medium text-white bg-emerald-600 border-emerald-600 hover:bg-emerald-500 transition-colors cursor-pointer',
+      done: 'flex flex-col items-center gap-4 py-6',
+      resultImage: 'rounded-xl max-h-64 shadow-lg',
+    },
+  },
+}
+
+// Tailwind Editor example
+const tailwindEditorResult = ref<CropResult | null>(null)
 
 const standaloneFiles = ref<File[]>([])
 const urlInput = ref('https://picsum.photos/id/1040/800/600')
@@ -1130,9 +1184,138 @@ function kb(bytes: number) {
       </div>
     </section>
 
+    <section id="tailwind-skins" class="showcase">
+      <div class="showcase__header">
+        <span class="showcase__num" style="--accent: #0ea5e9">07</span>
+        <div>
+          <h2 class="showcase__title">Tailwind Skins</h2>
+          <p class="showcase__desc">Three Tailwind-powered skins using the <code>ui</code> prop — zero CSS variables, pure utility classes.</p>
+        </div>
+        <div class="showcase__toggle">
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': !showCode['tailwind-skins'] }" @click="showCode['tailwind-skins'] = false">Preview</button>
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': showCode['tailwind-skins'] }" @click="showCode['tailwind-skins'] = true">Code</button>
+        </div>
+      </div>
+
+      <template v-if="!showCode['tailwind-skins']">
+      <div class="theme-grid">
+        <div
+          v-for="(skin, key) in tailwindSkins"
+          :key="key"
+          class="theme-card"
+          :style="{ '--card-accent': skin.accent }"
+        >
+          <div class="theme-card__accent"></div>
+          <h3 class="theme-card__name">{{ skin.name }}</h3>
+          <div class="theme-card__body">
+            <CropVue
+              stencil="rectangle"
+              :ui="skin.ui"
+              @done="(r: CropResult) => tailwindSkinResult[key as string] = r"
+            >
+              <template #done="{ result, restart }">
+                <div class="flex flex-col items-center gap-3 py-4">
+                  <img v-if="result" :src="result.url" alt="Result" class="max-h-40 rounded-lg" />
+                  <button class="btn btn--sm btn--outline" @click="restart">Redo</button>
+                </div>
+              </template>
+            </CropVue>
+          </div>
+        </div>
+      </div>
+      </template>
+
+      <div v-else class="snippet">
+        <div class="snippet__header">
+          <span class="snippet__filename">TailwindSkins.vue</span>
+          <button class="snippet__copy" @click="copyCode('tailwind-skins')">Copy</button>
+        </div>
+        <div class="snippet__body" v-html="highlightedCode('tailwind-skins')"></div>
+      </div>
+    </section>
+
+    <section id="tailwind-editor" class="showcase">
+      <div class="showcase__header">
+        <span class="showcase__num" style="--accent: #a78bfa">08</span>
+        <div>
+          <h2 class="showcase__title">Tailwind Editor</h2>
+          <p class="showcase__desc">Fine-grained editor customization — handles, grid, overlay, toolbar — all via <code>ui</code> props.</p>
+        </div>
+        <div class="showcase__toggle">
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': !showCode['tailwind-editor'] }" @click="showCode['tailwind-editor'] = false">Preview</button>
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': showCode['tailwind-editor'] }" @click="showCode['tailwind-editor'] = true">Code</button>
+        </div>
+      </div>
+
+      <template v-if="!showCode['tailwind-editor']">
+        <CropVue
+          stencil="rectangle"
+          :aspect-ratio="16 / 9"
+          :ui="{
+            root: 'max-w-2xl mx-auto',
+            dropzone: 'rounded-2xl border-2 border-dashed border-violet-400/40 bg-violet-950/20 hover:bg-violet-950/40 min-h-48 transition-colors',
+            dropzoneActive: 'border-violet-400 bg-violet-900/40',
+            actions: 'gap-3 pt-4',
+            cancelButton: 'rounded-xl px-6 py-2.5 text-sm font-medium text-violet-300 bg-violet-950/80 border border-violet-700 hover:bg-violet-900 transition-colors cursor-pointer',
+            confirmButton: 'rounded-xl px-6 py-2.5 text-sm font-medium text-white bg-violet-600 border-violet-600 hover:bg-violet-500 transition-colors cursor-pointer',
+            done: 'flex flex-col items-center gap-4 py-8',
+            resultImage: 'rounded-2xl max-h-80 shadow-xl shadow-violet-500/10',
+          }"
+          @done="(r: CropResult) => tailwindEditorResult = r"
+        >
+          <template #toolbar="{ rotateLeft, rotateRight, flipX, flipY, zoomIn, zoomOut, reset }">
+            <div class="flex items-center justify-center gap-1 py-3">
+              <button class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-violet-400 hover:bg-violet-900/50 hover:text-violet-200 transition-colors cursor-pointer" title="Rotate left" @click="rotateLeft">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 2v6h6M2.66 12a9 9 0 1 0 1.18-4.5" /></svg>
+              </button>
+              <button class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-violet-400 hover:bg-violet-900/50 hover:text-violet-200 transition-colors cursor-pointer" title="Rotate right" @click="rotateRight">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6M21.34 12a9 9 0 1 1-1.18-4.5" /></svg>
+              </button>
+              <span class="w-px h-5 bg-violet-800 mx-1"></span>
+              <button class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-violet-400 hover:bg-violet-900/50 hover:text-violet-200 transition-colors cursor-pointer" title="Flip H" @click="flipX">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3M16 3h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-3M12 20V4" /></svg>
+              </button>
+              <button class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-violet-400 hover:bg-violet-900/50 hover:text-violet-200 transition-colors cursor-pointer" title="Flip V" @click="flipY">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3M3 16v3a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-3M20 12H4" /></svg>
+              </button>
+              <span class="w-px h-5 bg-violet-800 mx-1"></span>
+              <button class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-violet-400 hover:bg-violet-900/50 hover:text-violet-200 transition-colors cursor-pointer" title="Zoom out" @click="zoomOut">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /><line x1="8" y1="11" x2="14" y2="11" /></svg>
+              </button>
+              <button class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-violet-400 hover:bg-violet-900/50 hover:text-violet-200 transition-colors cursor-pointer" title="Zoom in" @click="zoomIn">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8" /><line x1="21" y1="21" x2="16.65" y2="16.65" /><line x1="11" y1="8" x2="11" y2="14" /><line x1="8" y1="11" x2="14" y2="11" /></svg>
+              </button>
+              <span class="w-px h-5 bg-violet-800 mx-1"></span>
+              <button class="inline-flex items-center justify-center w-9 h-9 rounded-lg text-violet-400 hover:bg-violet-900/50 hover:text-violet-200 transition-colors cursor-pointer" title="Reset" @click="reset">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><polyline points="1 4 1 10 7 10" /><polyline points="23 20 23 14 17 14" /><path d="M20.49 9A9 9 0 0 0 5.64 5.64L1 10M23 14l-4.64 4.36A9 9 0 0 1 3.51 15" /></svg>
+              </button>
+            </div>
+          </template>
+
+          <template #done="{ result, restart, reedit }">
+            <div class="flex flex-col items-center gap-4 py-8">
+              <img v-if="result" :src="result.url" alt="Cropped" class="rounded-2xl max-h-80 shadow-xl shadow-violet-500/10" />
+              <div class="flex gap-2">
+                <button class="rounded-xl px-5 py-2 text-sm font-medium text-violet-300 bg-violet-950/80 border border-violet-700 hover:bg-violet-900 transition-colors cursor-pointer" @click="reedit">Edit again</button>
+                <button class="rounded-xl px-5 py-2 text-sm font-medium text-white bg-violet-600 hover:bg-violet-500 transition-colors cursor-pointer" @click="restart">New image</button>
+              </div>
+            </div>
+          </template>
+        </CropVue>
+      </template>
+
+      <div v-else class="snippet">
+        <div class="snippet__header">
+          <span class="snippet__filename">TailwindEditor.vue</span>
+          <button class="snippet__copy" @click="copyCode('tailwind-editor')">Copy</button>
+        </div>
+        <div class="snippet__body" v-html="highlightedCode('tailwind-editor')"></div>
+      </div>
+    </section>
+
     <section id="standalone" class="showcase">
       <div class="showcase__header">
-        <span class="showcase__num" style="--accent: var(--emerald)">07</span>
+        <span class="showcase__num" style="--accent: var(--emerald)">09</span>
         <div>
           <h2 class="showcase__title">Standalone Parts</h2>
           <p class="showcase__desc">Individual components used independently — dropzone, toolbar, and URL loading.</p>
@@ -1231,7 +1414,7 @@ function kb(bytes: number) {
 
     <section id="profile-editor" class="showcase">
       <div class="showcase__header">
-        <span class="showcase__num" style="--accent: var(--cyan)">08</span>
+        <span class="showcase__num" style="--accent: var(--cyan)">10</span>
         <div>
           <h2 class="showcase__title">Profile Editor</h2>
           <p class="showcase__desc">A realistic settings card — circular avatar crop alongside form fields. See how CropVue blends into app UI.</p>
@@ -1316,7 +1499,7 @@ function kb(bytes: number) {
 
     <section id="post-composer" class="showcase">
       <div class="showcase__header">
-        <span class="showcase__num" style="--accent: var(--magenta)">09</span>
+        <span class="showcase__num" style="--accent: var(--magenta)">11</span>
         <div>
           <h2 class="showcase__title">Post Composer</h2>
           <p class="showcase__desc">Blog/social post creator with a 16:9 cover image area. Crop replaces the placeholder inline.</p>
@@ -1396,7 +1579,7 @@ function kb(bytes: number) {
 
     <section id="product-gallery" class="showcase">
       <div class="showcase__header">
-        <span class="showcase__num" style="--accent: var(--emerald)">10</span>
+        <span class="showcase__num" style="--accent: var(--emerald)">12</span>
         <div>
           <h2 class="showcase__title">Product Gallery</h2>
           <p class="showcase__desc">E-commerce product card — drop or click any slot to add an image, then crop before placing.</p>
@@ -1503,7 +1686,7 @@ function kb(bytes: number) {
 
     <section id="modal-crop" class="showcase">
       <div class="showcase__header">
-        <span class="showcase__num" style="--accent: var(--magenta)">11</span>
+        <span class="showcase__num" style="--accent: var(--magenta)">13</span>
         <div>
           <h2 class="showcase__title">Modal Crop</h2>
           <p class="showcase__desc">The most common real-world pattern — open CropVue inside a modal overlay dialog with custom toolbar and actions.</p>
@@ -1603,7 +1786,7 @@ function kb(bytes: number) {
 
     <section id="id-scanner" class="showcase">
       <div class="showcase__header">
-        <span class="showcase__num" style="--accent: var(--amber)">12</span>
+        <span class="showcase__num" style="--accent: var(--amber)">14</span>
         <div>
           <h2 class="showcase__title">ID Scanner</h2>
           <p class="showcase__desc">Document scanning with strict ISO card ratio (1.586:1). Vertical sidebar toolbar + live <code>CropPreview</code> updating in real-time.</p>
@@ -1699,7 +1882,7 @@ function kb(bytes: number) {
 
     <section id="before-after" class="showcase">
       <div class="showcase__header">
-        <span class="showcase__num" style="--accent: var(--cyan)">13</span>
+        <span class="showcase__num" style="--accent: var(--cyan)">15</span>
         <div>
           <h2 class="showcase__title">Before / After</h2>
           <p class="showcase__desc">Original vs cropped comparison with a draggable divider slider. Uses <code>reedit</code> and <code>restart</code> slots.</p>
@@ -1786,7 +1969,7 @@ function kb(bytes: number) {
 
     <section id="chat-attach" class="showcase">
       <div class="showcase__header">
-        <span class="showcase__num" style="--accent: var(--emerald)">14</span>
+        <span class="showcase__num" style="--accent: var(--emerald)">16</span>
         <div>
           <h2 class="showcase__title">Chat Attach</h2>
           <p class="showcase__desc">CropVue in a compact inline space with a floating toolbar overlay. Attach, crop, then send.</p>
@@ -1937,7 +2120,7 @@ function kb(bytes: number) {
 
     <section id="wizard" class="showcase">
       <div class="showcase__header">
-        <span class="showcase__num" style="--accent: #a78bfa">15</span>
+        <span class="showcase__num" style="--accent: #a78bfa">17</span>
         <div>
           <h2 class="showcase__title">Multi-Step Wizard</h2>
           <p class="showcase__desc">Full lifecycle control — standalone <code>CropDropzone</code>, <code>CropEditor</code>, and <code>CropToolbar</code> broken into discrete wizard steps.</p>
