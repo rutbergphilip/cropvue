@@ -8,9 +8,21 @@ coverage
 test-results
 playwright-report
 *.log
-*test*.png
-*test*.svg
 docs/.vitepress/cache
 docs/.vitepress/dist
 .playwright-mcp/
 full-page.png
+*.tgz
+
+# Editor/tool configs
+.claude/
+.idea/
+.vscode/
+
+# Environment
+.env
+.env.*
+
+# Test output (not fixtures)
+/test-*.png
+/test-*.svg
