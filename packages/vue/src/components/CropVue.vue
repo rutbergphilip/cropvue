@@ -174,12 +174,17 @@ function restart() {
   cropper.reset()
 }
 
+function reedit() {
+  phase.value = 'editor'
+}
+
 defineExpose({
   cropper,
   phase,
   confirm,
   cancel,
   restart,
+  reedit,
   result,
 })
 </script>
@@ -279,7 +284,7 @@ defineExpose({
 
     <!-- Done Phase -->
     <template v-if="phase === 'done'">
-      <slot name="done" :result="result" :restart="restart">
+      <slot name="done" :result="result" :restart="restart" :reedit="reedit">
         <div class="cropvue__done">
           <img v-if="result" :src="result.url" alt="Cropped result" class="cropvue__result-image" />
           <button type="button" class="cropvue__btn" @click="restart">Crop another</button>

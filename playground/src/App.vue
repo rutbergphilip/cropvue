@@ -974,7 +974,6 @@ function kb(bytes: number) {
           <div class="profile-editor__avatar-col">
             <div :style="profileTheme" style="width: 100%">
               <CropVue
-                v-if="!profileAvatar"
                 stencil="circle"
                 :aspect-ratio="1"
                 output-format="webp"
@@ -994,11 +993,18 @@ function kb(bytes: number) {
                     <span>{{ isDragging ? 'Drop photo' : 'Upload photo' }}</span>
                   </div>
                 </template>
+                <template #done="{ result, reedit, restart }">
+                  <div class="profile-editor__avatar-done">
+                    <img
+                      :src="result?.url"
+                      alt="Avatar"
+                      class="profile-editor__avatar-img profile-editor__avatar-img--clickable"
+                      @click="reedit"
+                    />
+                    <button class="profile-editor__change-link" @click="restart">Change photo</button>
+                  </div>
+                </template>
               </CropVue>
-              <div v-else class="profile-editor__avatar-done">
-                <img :src="profileAvatar.url" alt="Avatar" class="profile-editor__avatar-img" />
-                <button class="profile-editor__change-link" @click="profileAvatar = null">Change photo</button>
-              </div>
             </div>
           </div>
           <div class="profile-editor__form-col">
@@ -2319,6 +2325,16 @@ code {
   border-radius: 50%;
   object-fit: cover;
   border: 3px solid var(--border);
+}
+
+.profile-editor__avatar-img--clickable {
+  cursor: pointer;
+  transition: border-color 200ms ease, opacity 200ms ease;
+}
+
+.profile-editor__avatar-img--clickable:hover {
+  border-color: var(--cyan);
+  opacity: 0.85;
 }
 
 .profile-editor__change-link {
