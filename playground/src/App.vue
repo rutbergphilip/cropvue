@@ -5,6 +5,7 @@ import {
   CropEditor,
   CropDropzone,
   CropToolbar,
+  CropPreview,
 } from 'cropvue'
 import { useCropper } from '@cropvue/core'
 import type { CropResult, CropVueError, StencilType, OutputFormat, TransformState } from '@cropvue/core'
@@ -47,6 +48,11 @@ const sections = [
   { id: 'profile-editor', label: 'Profile Editor' },
   { id: 'post-composer', label: 'Post Composer' },
   { id: 'product-gallery', label: 'Product Gallery' },
+  { id: 'modal-crop', label: 'Modal Crop' },
+  { id: 'id-scanner', label: 'ID Scanner' },
+  { id: 'before-after', label: 'Before / After' },
+  { id: 'chat-attach', label: 'Chat Attach' },
+  { id: 'wizard', label: 'Wizard' },
 ]
 
 const activeSection = ref('basics')
@@ -387,6 +393,289 @@ function removeProductImage(index: number) {
 }
 
 // ============================================================
+// Section 11: Modal Crop — CropVue in a modal overlay
+// ============================================================
+const showCropModal = ref(false)
+const modalResult = ref<CropResult | null>(null)
+const modalCropperRef = ref<InstanceType<typeof CropVue> | null>(null)
+const modalFileInput = ref<HTMLInputElement | null>(null)
+
+function openCropModal() {
+  modalResult.value = null
+  showCropModal.value = true
+}
+
+function closeCropModal() {
+  showCropModal.value = false
+}
+
+function onModalCrop(result: CropResult) {
+  modalResult.value = result
+  showCropModal.value = false
+}
+
+// ============================================================
+// Section 12: ID Scanner — document scanning with CropPreview
+// ============================================================
+const scannerCropper = useCropper({ stencil: 'rectangle', aspectRatio: 1.586 })
+const scannerResult = ref<CropResult | null>(null)
+const scannerFile = ref<HTMLInputElement | null>(null)
+
+async function onScannerFileSelect(event: Event) {
+  const input = event.target as HTMLInputElement
+  if (input.files?.[0]) {
+    await scannerCropper.loadFile(input.files[0])
+  }
+}
+
+async function exportScannerResult() {
+  const result = await scannerCropper.getResult({ format: 'png', quality: 1 })
+  scannerResult.value = result
+}
+
+function resetScanner() {
+  scannerResult.value = null
+  scannerCropper.reset()
+}
+
+// ============================================================
+// Section 13: Before / After — comparison slider
+// ============================================================
+const compareOriginalUrl = ref('')
+const compareResult = ref<CropResult | null>(null)
+const compareCropperRef = ref<InstanceType<typeof CropVue> | null>(null)
+const compareFileInput = ref<HTMLInputElement | null>(null)
+const dividerPos = ref(50)
+const isDraggingCompare = ref(false)
+const comparePhase = ref<'pick' | 'crop' | 'compare'>('pick')
+const compareFile = ref<File | null>(null)
+
+function triggerCompareFile() {
+  compareFileInput.value?.click()
+}
+
+function handleCompareFile(e: Event) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (file) {
+    compareFile.value = file
+    compareOriginalUrl.value = URL.createObjectURL(file)
+    comparePhase.value = 'crop'
+    nextTick(async () => {
+      if (compareCropperRef.value) {
+        await compareCropperRef.value.cropper.loadFile(file)
+        compareCropperRef.value.phase = 'editor'
+      }
+    })
+  }
+  input.value = ''
+}
+
+function onCompareDone(result: CropResult) {
+  compareResult.value = result
+  comparePhase.value = 'compare'
+  dividerPos.value = 50
+}
+
+function onCompareReedit() {
+  compareResult.value = null
+  comparePhase.value = 'crop'
+  if (compareFile.value) {
+    nextTick(async () => {
+      if (compareCropperRef.value) {
+        await compareCropperRef.value.cropper.loadFile(compareFile.value!)
+        compareCropperRef.value.phase = 'editor'
+      }
+    })
+  }
+}
+
+function onCompareRestart() {
+  compareResult.value = null
+  compareOriginalUrl.value = ''
+  compareFile.value = null
+  comparePhase.value = 'pick'
+}
+
+function startDrag() {
+  isDraggingCompare.value = true
+}
+
+function onDrag(e: MouseEvent) {
+  if (!isDraggingCompare.value) return
+  const container = (e.currentTarget as HTMLElement)
+  const rect = container.getBoundingClientRect()
+  const x = e.clientX - rect.left
+  dividerPos.value = Math.min(100, Math.max(0, (x / rect.width) * 100))
+}
+
+function stopDrag() {
+  isDraggingCompare.value = false
+}
+
+// ============================================================
+// Section 14: Chat Attach — compact inline cropper
+// ============================================================
+interface ChatMessage {
+  id: number
+  from: 'them' | 'me'
+  text?: string
+  image?: string
+}
+
+const chatMessages = ref<ChatMessage[]>([
+  { id: 1, from: 'them', text: 'Hey! Can you send me that photo from the trip?' },
+  { id: 2, from: 'me', text: 'Sure, give me a sec to crop it.' },
+])
+const chatText = ref('')
+const chatAttachment = ref<CropResult | null>(null)
+const showChatCropper = ref(false)
+const showAttachPopover = ref(false)
+const chatCropperRef = ref<InstanceType<typeof CropVue> | null>(null)
+const chatFileInput = ref<HTMLInputElement | null>(null)
+const chatDirectFileInput = ref<HTMLInputElement | null>(null)
+let chatMsgId = 3
+let chatAttachMode: 'crop' | 'direct' = 'crop'
+
+function toggleAttachPopover() {
+  showAttachPopover.value = !showAttachPopover.value
+  if (showAttachPopover.value) {
+    setTimeout(() => {
+      document.addEventListener('click', closePopoverOutside, { once: true })
+    }, 0)
+  }
+}
+
+function closePopoverOutside(e: Event) {
+  showAttachPopover.value = false
+}
+
+function triggerChatCrop() {
+  showAttachPopover.value = false
+  chatAttachMode = 'crop'
+  chatFileInput.value?.click()
+}
+
+function triggerChatDirect() {
+  showAttachPopover.value = false
+  chatAttachMode = 'direct'
+  chatDirectFileInput.value?.click()
+}
+
+function handleChatFile(e: Event) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (file) {
+    showChatCropper.value = true
+    nextTick(async () => {
+      if (chatCropperRef.value) {
+        await chatCropperRef.value.cropper.loadFile(file)
+        chatCropperRef.value.phase = 'editor'
+      }
+    })
+  }
+  input.value = ''
+}
+
+function handleChatDirectFile(e: Event) {
+  const input = e.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (file) {
+    const url = URL.createObjectURL(file)
+    chatAttachment.value = {
+      url,
+      blob: file,
+      width: 0,
+      height: 0,
+      originalWidth: 0,
+      originalHeight: 0,
+    } as CropResult
+  }
+  input.value = ''
+}
+
+function onChatCrop(result: CropResult) {
+  chatAttachment.value = result
+  showChatCropper.value = false
+}
+
+function removeChatAttachment() {
+  chatAttachment.value = null
+}
+
+function sendMessage() {
+  if (!chatText.value.trim() && !chatAttachment.value) return
+  chatMessages.value.push({
+    id: chatMsgId++,
+    from: 'me',
+    text: chatText.value.trim() || undefined,
+    image: chatAttachment.value?.url || undefined,
+  })
+  chatText.value = ''
+  chatAttachment.value = null
+}
+
+// ============================================================
+// Section 15: Multi-Step Wizard — full lifecycle control
+// ============================================================
+const wizardStep = ref(1)
+const wizardCropper = useCropper({ stencil: 'rectangle' })
+const wizardResult = ref<CropResult | null>(null)
+const wizardOriginalFile = ref<File | null>(null)
+const wizardAspect = ref<number | null>(null)
+
+const wizardAspectPresets = [
+  { label: 'Free', value: null },
+  { label: '1:1', value: 1 },
+  { label: '4:3', value: 4 / 3 },
+  { label: '16:9', value: 16 / 9 },
+  { label: '3:2', value: 3 / 2 },
+]
+
+function onWizardFiles(files: File[]) {
+  if (files[0]) {
+    wizardOriginalFile.value = files[0]
+    wizardCropper.loadFile(files[0])
+    wizardStep.value = 2
+  }
+}
+
+function setWizardAspect(value: number | null) {
+  wizardAspect.value = value
+  wizardCropper.setAspectRatio(value)
+}
+
+async function wizardExport() {
+  wizardResult.value = await wizardCropper.getResult({ format: 'webp', quality: 0.9 })
+  wizardStep.value = 3
+}
+
+function wizardBack() {
+  if (wizardStep.value === 3) {
+    wizardResult.value = null
+    wizardStep.value = 2
+  } else if (wizardStep.value === 2) {
+    wizardStep.value = 1
+  }
+}
+
+function wizardReset() {
+  wizardStep.value = 1
+  wizardResult.value = null
+  wizardOriginalFile.value = null
+  wizardAspect.value = null
+  wizardCropper.reset()
+}
+
+function wizardDownload() {
+  if (!wizardResult.value) return
+  const a = document.createElement('a')
+  a.href = wizardResult.value.url
+  a.download = `cropped-${wizardResult.value.width}x${wizardResult.value.height}.webp`
+  a.click()
+}
+
+// ============================================================
 // Helpers
 // ============================================================
 function kb(bytes: number) {
@@ -404,7 +693,7 @@ function kb(bytes: number) {
       <div class="hero__content">
         <h1 class="hero__title">CropVue</h1>
         <p class="hero__tagline">Image cropping for Vue, reimagined.</p>
-        <p class="hero__sub">10 interactive demos showcasing what's possible.</p>
+        <p class="hero__sub">15 interactive demos showcasing what's possible.</p>
       </div>
     </header>
 
@@ -1258,6 +1547,571 @@ function kb(bytes: number) {
           <button class="snippet__copy" @click="copyCode('product-gallery')">Copy</button>
         </div>
         <div class="snippet__body" v-html="highlightedCode('product-gallery')"></div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- 11 · MODAL CROP                                       -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <section id="modal-crop" class="showcase">
+      <div class="showcase__header">
+        <span class="showcase__num" style="--accent: var(--magenta)">11</span>
+        <div>
+          <h2 class="showcase__title">Modal Crop</h2>
+          <p class="showcase__desc">The most common real-world pattern — open CropVue inside a modal overlay dialog with custom toolbar and actions.</p>
+        </div>
+        <div class="showcase__toggle">
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': !showCode['modal-crop'] }" @click="showCode['modal-crop'] = false">Preview</button>
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': showCode['modal-crop'] }" @click="showCode['modal-crop'] = true">Code</button>
+        </div>
+      </div>
+
+      <template v-if="!showCode['modal-crop']">
+      <div class="modal-crop__card" @click="openCropModal">
+        <div v-if="modalResult" class="modal-crop__preview">
+          <img :src="modalResult.url" alt="Cropped result" class="modal-crop__preview-img" />
+          <div class="modal-crop__preview-overlay">
+            <span>Click to re-crop</span>
+          </div>
+        </div>
+        <div v-else class="modal-crop__placeholder">
+          <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5">
+            <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+            <circle cx="8.5" cy="8.5" r="1.5"/>
+            <polyline points="21 15 16 10 5 21"/>
+          </svg>
+          <span class="modal-crop__placeholder-text">Click to crop an image</span>
+          <span class="modal-crop__placeholder-hint">Opens in a modal overlay</span>
+        </div>
+      </div>
+
+      <Transition name="modal-fade">
+        <div v-if="showCropModal" class="modal-crop__backdrop" @click.self="closeCropModal">
+          <div class="modal-crop__panel">
+            <div class="modal-crop__panel-header">
+              <h3 class="modal-crop__panel-title">Crop Image</h3>
+              <button class="modal-crop__close" @click="closeCropModal">&times;</button>
+            </div>
+            <div class="modal-crop__panel-body">
+              <CropVue
+                ref="modalCropperRef"
+                stencil="rectangle"
+                :output-quality="0.9"
+                @done="onModalCrop"
+              >
+                <template #toolbar="{ rotateLeft, rotateRight, flipX, flipY, zoomIn, zoomOut, reset }">
+                  <div class="modal-crop__toolbar">
+                    <button class="modal-crop__tool-btn" @click="rotateLeft" title="Rotate left">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 2v6h6"/><path d="M2.66 12.5a9 9 0 1 0 1.34-5L2.5 8"/></svg>
+                    </button>
+                    <button class="modal-crop__tool-btn" @click="rotateRight" title="Rotate right">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6"/><path d="M21.34 12.5a9 9 0 1 1-1.34-5L21.5 8"/></svg>
+                    </button>
+                    <span class="modal-crop__tool-sep"></span>
+                    <button class="modal-crop__tool-btn" @click="flipX" title="Flip horizontal">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3"/><path d="M16 3h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-3"/><line x1="12" y1="20" x2="12" y2="4"/></svg>
+                    </button>
+                    <button class="modal-crop__tool-btn" @click="flipY" title="Flip vertical">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3"/><path d="M3 16v3a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-3"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
+                    </button>
+                    <span class="modal-crop__tool-sep"></span>
+                    <button class="modal-crop__tool-btn" @click="zoomOut" title="Zoom out">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+                    </button>
+                    <button class="modal-crop__tool-btn" @click="zoomIn" title="Zoom in">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+                    </button>
+                    <span class="modal-crop__tool-sep"></span>
+                    <button class="modal-crop__tool-btn" @click="reset" title="Reset">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                    </button>
+                  </div>
+                </template>
+                <template #actions="{ confirm, cancel }">
+                  <div class="modal-crop__footer">
+                    <button class="btn btn--ghost" @click="cancel">Cancel</button>
+                    <button class="btn btn--magenta" @click="confirm">Apply Crop</button>
+                  </div>
+                </template>
+              </CropVue>
+            </div>
+          </div>
+        </div>
+      </Transition>
+      </template>
+
+      <div v-else class="snippet">
+        <div class="snippet__header">
+          <span class="snippet__filename">ModalCrop.vue</span>
+          <button class="snippet__copy" @click="copyCode('modal-crop')">Copy</button>
+        </div>
+        <div class="snippet__body" v-html="highlightedCode('modal-crop')"></div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- 12 · ID SCANNER                                        -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <section id="id-scanner" class="showcase">
+      <div class="showcase__header">
+        <span class="showcase__num" style="--accent: var(--amber)">12</span>
+        <div>
+          <h2 class="showcase__title">ID Scanner</h2>
+          <p class="showcase__desc">Document scanning with strict ISO card ratio (1.586:1). Vertical sidebar toolbar + live <code>CropPreview</code> updating in real-time.</p>
+        </div>
+        <div class="showcase__toggle">
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': !showCode['id-scanner'] }" @click="showCode['id-scanner'] = false">Preview</button>
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': showCode['id-scanner'] }" @click="showCode['id-scanner'] = true">Code</button>
+        </div>
+      </div>
+
+      <template v-if="!showCode['id-scanner']">
+      <div v-if="!scannerResult">
+        <label class="file-btn file-btn--amber">
+          <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+          Load Document
+          <input ref="scannerFile" type="file" accept="image/*" @change="onScannerFileSelect" hidden />
+        </label>
+
+        <template v-if="scannerCropper.isReady.value">
+          <div class="scanner__layout">
+            <div class="scanner__sidebar">
+              <button class="scanner__sidebar-btn" @click="scannerCropper.rotateLeft()" title="Rotate left">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 2v6h6"/><path d="M2.66 12.5a9 9 0 1 0 1.34-5L2.5 8"/></svg>
+              </button>
+              <button class="scanner__sidebar-btn" @click="scannerCropper.rotateRight()" title="Rotate right">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6"/><path d="M21.34 12.5a9 9 0 1 1-1.34-5L21.5 8"/></svg>
+              </button>
+              <span class="scanner__sidebar-sep"></span>
+              <button class="scanner__sidebar-btn" @click="scannerCropper.flipX()" title="Flip H">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3"/><path d="M16 3h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-3"/><line x1="12" y1="20" x2="12" y2="4"/></svg>
+              </button>
+              <button class="scanner__sidebar-btn" @click="scannerCropper.flipY()" title="Flip V">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3"/><path d="M3 16v3a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-3"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
+              </button>
+              <span class="scanner__sidebar-sep"></span>
+              <button class="scanner__sidebar-btn" @click="scannerCropper.zoomBy(0.1)" title="Zoom in">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+              </button>
+              <button class="scanner__sidebar-btn" @click="scannerCropper.zoomBy(-0.1)" title="Zoom out">
+                <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+              </button>
+            </div>
+            <div class="scanner__editor">
+              <CropEditor
+                :image="scannerCropper.image.value"
+                :transform="scannerCropper.transform.value"
+                :crop="scannerCropper.crop.value"
+                @update:transform="t => scannerCropper.transform.value = t"
+                @update:crop="c => scannerCropper.crop.value = c"
+              />
+            </div>
+            <div class="scanner__preview-col">
+              <h4 class="scanner__preview-label">Live Preview</h4>
+              <div class="scanner__preview-frame">
+                <CropPreview
+                  :image="scannerCropper.image.value"
+                  :transform="scannerCropper.transform.value"
+                  :crop="scannerCropper.crop.value"
+                  class="scanner__preview-component"
+                />
+              </div>
+              <div class="scanner__id-mock">
+                <div class="scanner__id-line scanner__id-line--wide"></div>
+                <div class="scanner__id-line scanner__id-line--medium"></div>
+                <div class="scanner__id-line scanner__id-line--short"></div>
+              </div>
+              <button class="btn btn--amber" style="margin-top: 12px; width: 100%" @click="exportScannerResult">Scan Document</button>
+            </div>
+          </div>
+        </template>
+        <p v-else class="status-text">Select a document image to begin scanning</p>
+      </div>
+      <div v-else class="result">
+        <img :src="scannerResult.url" alt="Scanned document" class="result__img" />
+        <div class="result__meta">
+          <span class="pill pill--amber">{{ scannerResult.width }}&times;{{ scannerResult.height }}</span>
+          <span class="pill pill--amber">{{ scannerResult.blob.type }}</span>
+          <span class="pill pill--amber">{{ kb(scannerResult.blob.size) }}</span>
+          <span class="pill pill--amber">1.586:1 ratio</span>
+        </div>
+        <button class="btn btn--amber" @click="resetScanner">Scan Another</button>
+      </div>
+      </template>
+
+      <div v-else class="snippet">
+        <div class="snippet__header">
+          <span class="snippet__filename">IDScanner.vue</span>
+          <button class="snippet__copy" @click="copyCode('id-scanner')">Copy</button>
+        </div>
+        <div class="snippet__body" v-html="highlightedCode('id-scanner')"></div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- 13 · BEFORE / AFTER                                    -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <section id="before-after" class="showcase">
+      <div class="showcase__header">
+        <span class="showcase__num" style="--accent: var(--cyan)">13</span>
+        <div>
+          <h2 class="showcase__title">Before / After</h2>
+          <p class="showcase__desc">Original vs cropped comparison with a draggable divider slider. Uses <code>reedit</code> and <code>restart</code> slots.</p>
+        </div>
+        <div class="showcase__toggle">
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': !showCode['before-after'] }" @click="showCode['before-after'] = false">Preview</button>
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': showCode['before-after'] }" @click="showCode['before-after'] = true">Code</button>
+        </div>
+      </div>
+
+      <template v-if="!showCode['before-after']">
+      <input
+        ref="compareFileInput"
+        type="file"
+        accept="image/*"
+        style="display: none"
+        @change="handleCompareFile"
+      />
+
+      <!-- Pick phase -->
+      <div v-if="comparePhase === 'pick'" class="compare__pick" @click="triggerCompareFile">
+        <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+          <circle cx="8.5" cy="8.5" r="1.5"/>
+          <polyline points="21 15 16 10 5 21"/>
+        </svg>
+        <span class="compare__pick-text">Select an image to crop & compare</span>
+        <span class="compare__pick-hint">Upload, crop, then drag the slider to compare</span>
+      </div>
+
+      <!-- Crop phase -->
+      <template v-if="comparePhase === 'crop'">
+        <CropVue
+          ref="compareCropperRef"
+          stencil="rectangle"
+          :output-quality="0.9"
+          @done="onCompareDone"
+        >
+          <template #dropzone>
+            <div class="compare__loading">Loading...</div>
+          </template>
+        </CropVue>
+      </template>
+
+      <!-- Compare phase -->
+      <template v-if="comparePhase === 'compare' && compareResult">
+        <div
+          class="compare__viewport"
+          @mousemove="onDrag"
+          @mouseup="stopDrag"
+          @mouseleave="stopDrag"
+        >
+          <div class="compare__layer compare__layer--original">
+            <img :src="compareOriginalUrl" alt="Original" />
+            <span class="compare__label-tag compare__label-tag--left">Original</span>
+          </div>
+          <div class="compare__layer compare__layer--cropped" :style="{ clipPath: `inset(0 0 0 ${dividerPos}%)` }">
+            <img :src="compareResult.url" alt="Cropped" />
+            <span class="compare__label-tag compare__label-tag--right">Cropped</span>
+          </div>
+          <div
+            class="compare__divider"
+            :style="{ left: dividerPos + '%' }"
+            @mousedown.prevent="startDrag"
+          >
+            <div class="compare__handle">
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="15 18 9 12 15 6"/></svg>
+              <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><polyline points="9 18 15 12 9 6"/></svg>
+            </div>
+          </div>
+        </div>
+        <div class="compare__actions">
+          <button class="btn btn--ghost" @click="onCompareRestart">Start Over</button>
+          <button class="btn btn--cyan" @click="onCompareReedit">Re-edit</button>
+        </div>
+      </template>
+      </template>
+
+      <div v-else class="snippet">
+        <div class="snippet__header">
+          <span class="snippet__filename">BeforeAfter.vue</span>
+          <button class="snippet__copy" @click="copyCode('before-after')">Copy</button>
+        </div>
+        <div class="snippet__body" v-html="highlightedCode('before-after')"></div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- 14 · CHAT ATTACH                                       -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <section id="chat-attach" class="showcase">
+      <div class="showcase__header">
+        <span class="showcase__num" style="--accent: var(--emerald)">14</span>
+        <div>
+          <h2 class="showcase__title">Chat Attach</h2>
+          <p class="showcase__desc">CropVue in a compact inline space with a floating toolbar overlay. Attach, crop, then send.</p>
+        </div>
+        <div class="showcase__toggle">
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': !showCode['chat-attach'] }" @click="showCode['chat-attach'] = false">Preview</button>
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': showCode['chat-attach'] }" @click="showCode['chat-attach'] = true">Code</button>
+        </div>
+      </div>
+
+      <template v-if="!showCode['chat-attach']">
+      <div class="chat">
+        <div class="chat__messages">
+          <div
+            v-for="msg in chatMessages"
+            :key="msg.id"
+            class="chat__bubble"
+            :class="{ 'chat__bubble--me': msg.from === 'me' }"
+          >
+            <p v-if="msg.text" class="chat__text">{{ msg.text }}</p>
+            <img v-if="msg.image" :src="msg.image" alt="Sent image" class="chat__img" />
+          </div>
+        </div>
+
+        <input
+          ref="chatFileInput"
+          type="file"
+          accept="image/*"
+          style="display: none"
+          @change="handleChatFile"
+        />
+        <input
+          ref="chatDirectFileInput"
+          type="file"
+          accept="image/*"
+          style="display: none"
+          @change="handleChatDirectFile"
+        />
+
+        <div v-if="chatAttachment" class="chat__attachment-preview">
+          <img :src="chatAttachment.url" alt="Attachment" class="chat__attachment-img" />
+          <button class="chat__attachment-remove" @click="removeChatAttachment">&times;</button>
+        </div>
+
+        <div class="chat__compose">
+          <div class="chat__attach-wrap">
+            <button class="chat__attach-btn" @click="toggleAttachPopover" title="Attach image">
+              <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.44 11.05l-9.19 9.19a6 6 0 0 1-8.49-8.49l9.19-9.19a4 4 0 0 1 5.66 5.66l-9.2 9.19a2 2 0 0 1-2.83-2.83l8.49-8.48"/></svg>
+            </button>
+            <Transition name="popover">
+              <div v-if="showAttachPopover" class="chat__popover">
+                <button class="chat__popover-option" @click="triggerChatCrop">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M6.13 1L6 16a2 2 0 0 0 2 2h15"/><path d="M1 6.13L16 6a2 2 0 0 1 2 2v15"/></svg>
+                  <div class="chat__popover-text">
+                    <span class="chat__popover-label">Upload & Crop</span>
+                    <span class="chat__popover-hint">Edit before sending</span>
+                  </div>
+                </button>
+                <button class="chat__popover-option" @click="triggerChatDirect">
+                  <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>
+                  <div class="chat__popover-text">
+                    <span class="chat__popover-label">Upload as-is</span>
+                    <span class="chat__popover-hint">Send without editing</span>
+                  </div>
+                </button>
+              </div>
+            </Transition>
+          </div>
+          <input
+            v-model="chatText"
+            type="text"
+            class="chat__input"
+            placeholder="Type a message..."
+            @keydown.enter="sendMessage"
+          />
+          <button class="chat__send-btn" @click="sendMessage" title="Send">
+            <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+          </button>
+        </div>
+      </div>
+
+      <Transition name="modal-fade">
+        <div v-if="showChatCropper" class="chat-modal__backdrop" @click.self="showChatCropper = false">
+          <div class="chat-modal__panel">
+            <div class="chat-modal__header">
+              <h3 class="chat-modal__title">Crop Image</h3>
+              <button class="chat-modal__close" @click="showChatCropper = false">&times;</button>
+            </div>
+            <div class="chat-modal__body">
+              <CropVue
+                ref="chatCropperRef"
+                stencil="rectangle"
+                :output-quality="0.85"
+                @done="onChatCrop"
+              >
+                <template #dropzone>
+                  <div class="chat-modal__loading">Loading...</div>
+                </template>
+                <template #toolbar="{ rotateLeft, rotateRight, flipX, flipY, zoomIn, zoomOut, reset }">
+                  <div class="chat-modal__toolbar">
+                    <button class="chat-modal__tool-btn" @click="rotateLeft" title="Rotate left">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 2v6h6"/><path d="M2.66 12.5a9 9 0 1 0 1.34-5L2.5 8"/></svg>
+                    </button>
+                    <button class="chat-modal__tool-btn" @click="rotateRight" title="Rotate right">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6"/><path d="M21.34 12.5a9 9 0 1 1-1.34-5L21.5 8"/></svg>
+                    </button>
+                    <span class="chat-modal__tool-sep"></span>
+                    <button class="chat-modal__tool-btn" @click="flipX" title="Flip horizontal">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3"/><path d="M16 3h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-3"/><line x1="12" y1="20" x2="12" y2="4"/></svg>
+                    </button>
+                    <button class="chat-modal__tool-btn" @click="flipY" title="Flip vertical">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3"/><path d="M3 16v3a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-3"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
+                    </button>
+                    <span class="chat-modal__tool-sep"></span>
+                    <button class="chat-modal__tool-btn" @click="zoomOut" title="Zoom out">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+                    </button>
+                    <button class="chat-modal__tool-btn" @click="zoomIn" title="Zoom in">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+                    </button>
+                    <span class="chat-modal__tool-sep"></span>
+                    <button class="chat-modal__tool-btn" @click="reset" title="Reset">
+                      <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+                    </button>
+                  </div>
+                </template>
+                <template #actions="{ confirm, cancel }">
+                  <div class="chat-modal__footer">
+                    <button class="btn btn--ghost" @click="cancel">Cancel</button>
+                    <button class="btn btn--emerald" @click="confirm">Use Photo</button>
+                  </div>
+                </template>
+              </CropVue>
+            </div>
+          </div>
+        </div>
+      </Transition>
+      </template>
+
+      <div v-else class="snippet">
+        <div class="snippet__header">
+          <span class="snippet__filename">ChatAttach.vue</span>
+          <button class="snippet__copy" @click="copyCode('chat-attach')">Copy</button>
+        </div>
+        <div class="snippet__body" v-html="highlightedCode('chat-attach')"></div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- 15 · MULTI-STEP WIZARD                                 -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <section id="wizard" class="showcase">
+      <div class="showcase__header">
+        <span class="showcase__num" style="--accent: #a78bfa">15</span>
+        <div>
+          <h2 class="showcase__title">Multi-Step Wizard</h2>
+          <p class="showcase__desc">Full lifecycle control — standalone <code>CropDropzone</code>, <code>CropEditor</code>, and <code>CropToolbar</code> broken into discrete wizard steps.</p>
+        </div>
+        <div class="showcase__toggle">
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': !showCode['wizard'] }" @click="showCode['wizard'] = false">Preview</button>
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': showCode['wizard'] }" @click="showCode['wizard'] = true">Code</button>
+        </div>
+      </div>
+
+      <template v-if="!showCode['wizard']">
+      <!-- Stepper -->
+      <div class="wizard__stepper">
+        <div class="wizard__step" :class="{ 'wizard__step--active': wizardStep >= 1, 'wizard__step--done': wizardStep > 1 }">
+          <span class="wizard__step-num">1</span>
+          <span class="wizard__step-label">Upload</span>
+        </div>
+        <div class="wizard__connector" :class="{ 'wizard__connector--done': wizardStep > 1 }"></div>
+        <div class="wizard__step" :class="{ 'wizard__step--active': wizardStep >= 2, 'wizard__step--done': wizardStep > 2 }">
+          <span class="wizard__step-num">2</span>
+          <span class="wizard__step-label">Crop & Adjust</span>
+        </div>
+        <div class="wizard__connector" :class="{ 'wizard__connector--done': wizardStep > 2 }"></div>
+        <div class="wizard__step" :class="{ 'wizard__step--active': wizardStep >= 3 }">
+          <span class="wizard__step-num">3</span>
+          <span class="wizard__step-label">Review & Export</span>
+        </div>
+      </div>
+
+      <!-- Step 1: Upload -->
+      <div v-if="wizardStep === 1" class="wizard__body">
+        <CropDropzone @files="onWizardFiles">
+          <template #default="{ open, isDragging }">
+            <div
+              class="wizard__dropzone"
+              :class="{ 'wizard__dropzone--active': isDragging }"
+              @click="open"
+            >
+              <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5">
+                <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+              </svg>
+              <span class="wizard__drop-text">{{ isDragging ? 'Drop to upload' : 'Drop an image or click to browse' }}</span>
+              <span class="wizard__drop-hint">Supports JPG, PNG, WebP</span>
+            </div>
+          </template>
+        </CropDropzone>
+      </div>
+
+      <!-- Step 2: Crop & Adjust -->
+      <div v-if="wizardStep === 2 && wizardCropper.isReady.value" class="wizard__body">
+        <div class="wizard__aspect-bar">
+          <span class="wizard__aspect-label">Aspect Ratio:</span>
+          <button
+            v-for="p in wizardAspectPresets"
+            :key="p.label"
+            class="pill-btn pill-btn--violet"
+            :class="{ 'pill-btn--violet-active': wizardAspect === p.value }"
+            @click="setWizardAspect(p.value)"
+          >{{ p.label }}</button>
+        </div>
+
+        <CropEditor
+          :image="wizardCropper.image.value"
+          :transform="wizardCropper.transform.value"
+          :crop="wizardCropper.crop.value"
+          @update:transform="t => wizardCropper.transform.value = t"
+          @update:crop="c => wizardCropper.crop.value = c"
+        />
+
+        <CropToolbar
+          :transform="wizardCropper.transform.value"
+          @rotate-left="wizardCropper.rotateLeft()"
+          @rotate-right="wizardCropper.rotateRight()"
+          @flip-x="wizardCropper.flipX()"
+          @flip-y="wizardCropper.flipY()"
+          @zoom-in="wizardCropper.zoomBy(0.1)"
+          @zoom-out="wizardCropper.zoomBy(-0.1)"
+          @reset="wizardCropper.reset()"
+        />
+
+        <div class="wizard__nav-row">
+          <button class="btn btn--ghost" @click="wizardBack">Back</button>
+          <button class="btn" style="background: #a78bfa; color: #0c0c0f; border-color: #a78bfa" @click="wizardExport">Continue to Review</button>
+        </div>
+      </div>
+
+      <!-- Step 3: Review & Export -->
+      <div v-if="wizardStep === 3 && wizardResult" class="wizard__body">
+        <div class="result">
+          <img :src="wizardResult.url" alt="Final result" class="result__img" />
+          <table class="result__table">
+            <tr><td>Dimensions</td><td>{{ wizardResult.width }} &times; {{ wizardResult.height }}</td></tr>
+            <tr><td>Format</td><td>{{ wizardResult.blob.type }}</td></tr>
+            <tr><td>File Size</td><td>{{ kb(wizardResult.blob.size) }}</td></tr>
+            <tr><td>Original</td><td>{{ wizardResult.originalWidth }} &times; {{ wizardResult.originalHeight }}</td></tr>
+          </table>
+        </div>
+        <div class="wizard__nav-row">
+          <button class="btn btn--ghost" @click="wizardReset">Start Over</button>
+          <button class="btn btn--ghost" @click="wizardBack">Back to Edit</button>
+          <button class="btn" style="background: #a78bfa; color: #0c0c0f; border-color: #a78bfa" @click="wizardDownload">Download</button>
+        </div>
+      </div>
+      </template>
+
+      <div v-else class="snippet">
+        <div class="snippet__header">
+          <span class="snippet__filename">MultiStepWizard.vue</span>
+          <button class="snippet__copy" @click="copyCode('wizard')">Copy</button>
+        </div>
+        <div class="snippet__body" v-html="highlightedCode('wizard')"></div>
       </div>
     </section>
 
@@ -2760,6 +3614,929 @@ code {
 }
 
 /* =========================================================
+   11 · MODAL CROP — overlay dialog
+   ========================================================= */
+.modal-crop__card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 250ms ease, box-shadow 250ms ease;
+}
+
+.modal-crop__card:hover {
+  border-color: var(--magenta);
+  box-shadow: 0 0 24px rgba(255, 45, 138, 0.1);
+}
+
+.modal-crop__placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px 32px;
+  color: var(--text-muted);
+  background: var(--surface-2);
+}
+
+.modal-crop__placeholder-text {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-dim);
+}
+
+.modal-crop__placeholder-hint {
+  font-size: 13px;
+  color: var(--text-muted);
+}
+
+.modal-crop__preview {
+  position: relative;
+}
+
+.modal-crop__preview-img {
+  display: block;
+  width: 100%;
+  max-height: 300px;
+  object-fit: cover;
+}
+
+.modal-crop__preview-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(12, 12, 15, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  opacity: 0;
+  transition: opacity 200ms ease;
+  color: #fff;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.modal-crop__card:hover .modal-crop__preview-overlay {
+  opacity: 1;
+}
+
+.modal-crop__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(12, 12, 15, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.modal-crop__panel {
+  width: 100%;
+  max-width: 640px;
+  max-height: 90vh;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.modal-crop__panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 16px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-crop__panel-title {
+  font-family: var(--font-display);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.modal-crop__close {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: var(--surface-2);
+  color: var(--text-dim);
+  border-radius: 8px;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.modal-crop__close:hover {
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+.modal-crop__panel-body {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.modal-crop__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+
+.modal-crop__tool-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 150ms ease;
+}
+
+.modal-crop__tool-btn:hover {
+  background: rgba(255, 45, 138, 0.1);
+  color: var(--magenta);
+}
+
+.modal-crop__tool-sep {
+  width: 1px;
+  height: 18px;
+  background: var(--border);
+  margin: 0 4px;
+}
+
+.modal-crop__footer {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+}
+
+/* Modal transitions */
+.modal-fade-enter-active,
+.modal-fade-leave-active {
+  transition: opacity 250ms ease;
+}
+
+.modal-fade-enter-active .modal-crop__panel,
+.modal-fade-leave-active .modal-crop__panel {
+  transition: transform 250ms ease;
+}
+
+.modal-fade-enter-from,
+.modal-fade-leave-to {
+  opacity: 0;
+}
+
+.modal-fade-enter-from .modal-crop__panel {
+  transform: scale(0.95) translateY(10px);
+}
+
+.modal-fade-leave-to .modal-crop__panel {
+  transform: scale(0.95) translateY(10px);
+}
+
+/* =========================================================
+   12 · ID SCANNER — document scanning
+   ========================================================= */
+.file-btn--amber {
+  color: var(--amber);
+  background: var(--amber-dim);
+  border-color: rgba(255, 176, 32, 0.2);
+}
+
+.file-btn--amber:hover {
+  background: rgba(255, 176, 32, 0.2);
+  border-color: rgba(255, 176, 32, 0.35);
+}
+
+.scanner__layout {
+  display: grid;
+  grid-template-columns: 48px 1fr 220px;
+  gap: 12px;
+  margin-top: 16px;
+}
+
+.scanner__sidebar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 4px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+}
+
+.scanner__sidebar-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  border-radius: 8px;
+  transition: all 150ms ease;
+}
+
+.scanner__sidebar-btn:hover {
+  background: var(--amber-dim);
+  color: var(--amber);
+}
+
+.scanner__sidebar-sep {
+  width: 24px;
+  height: 1px;
+  background: var(--border);
+  margin: 4px 0;
+}
+
+.scanner__editor {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  min-height: 300px;
+}
+
+.scanner__preview-col {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.scanner__preview-label {
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+}
+
+.scanner__preview-frame {
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  overflow: hidden;
+  aspect-ratio: 1.586;
+  background: var(--surface-2);
+}
+
+.scanner__preview-component {
+  width: 100%;
+  height: 100%;
+}
+
+.scanner__id-mock {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 12px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+}
+
+.scanner__id-line {
+  height: 8px;
+  border-radius: 4px;
+  background: var(--amber-dim);
+}
+
+.scanner__id-line--wide { width: 100%; }
+.scanner__id-line--medium { width: 70%; }
+.scanner__id-line--short { width: 40%; }
+
+/* =========================================================
+   13 · BEFORE / AFTER — comparison slider
+   ========================================================= */
+.compare__viewport {
+  position: relative;
+  border-radius: 12px;
+  overflow: hidden;
+  cursor: ew-resize;
+  user-select: none;
+  border: 1px solid var(--border);
+  aspect-ratio: 16 / 10;
+}
+
+.compare__layer {
+  position: absolute;
+  inset: 0;
+}
+
+.compare__layer img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.compare__label-tag {
+  position: absolute;
+  top: 12px;
+  padding: 4px 10px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-radius: 6px;
+  background: rgba(12, 12, 15, 0.7);
+  color: var(--text-dim);
+  backdrop-filter: blur(4px);
+}
+
+.compare__label-tag--left { left: 12px; }
+.compare__label-tag--right { right: 12px; }
+
+.compare__divider {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background: var(--cyan);
+  transform: translateX(-50%);
+  cursor: ew-resize;
+  z-index: 10;
+  box-shadow: 0 0 12px rgba(0, 212, 255, 0.4);
+}
+
+.compare__handle {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--cyan);
+  border: 2px solid #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #0c0c0f;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+}
+
+.compare__pick {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px 32px;
+  border: 2px dashed var(--border-light);
+  border-radius: 12px;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: all 250ms ease;
+}
+
+.compare__pick:hover {
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+
+.compare__pick-text {
+  font-size: 15px;
+  font-weight: 500;
+  color: var(--text-dim);
+}
+
+.compare__pick-hint {
+  font-size: 13px;
+}
+
+.compare__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: var(--text-muted);
+}
+
+.compare__actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 12px;
+}
+
+/* =========================================================
+   14 · CHAT ATTACH — messaging interface
+   ========================================================= */
+.chat {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  max-height: 600px;
+}
+
+.chat__messages {
+  flex: 1;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  overflow-y: auto;
+  min-height: 160px;
+}
+
+.chat__bubble {
+  max-width: 75%;
+  padding: 10px 14px;
+  border-radius: 14px 14px 14px 4px;
+  background: var(--surface-3);
+  align-self: flex-start;
+}
+
+.chat__bubble--me {
+  align-self: flex-end;
+  background: rgba(16, 224, 128, 0.12);
+  border-radius: 14px 14px 4px 14px;
+}
+
+.chat__text {
+  font-size: 14px;
+  line-height: 1.5;
+  color: var(--text);
+}
+
+.chat__img {
+  display: block;
+  max-width: 200px;
+  border-radius: 8px;
+  margin-top: 4px;
+}
+
+/* Chat crop modal */
+.chat-modal__backdrop {
+  position: fixed;
+  inset: 0;
+  z-index: 1000;
+  background: rgba(12, 12, 15, 0.8);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+}
+
+.chat-modal__panel {
+  width: 100%;
+  max-width: 560px;
+  max-height: 85vh;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+.chat-modal__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+}
+
+.chat-modal__title {
+  font-family: var(--font-display);
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.chat-modal__close {
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: none;
+  background: var(--surface-2);
+  color: var(--text-dim);
+  border-radius: 8px;
+  font-size: 20px;
+  cursor: pointer;
+  transition: all 150ms ease;
+}
+
+.chat-modal__close:hover {
+  background: var(--surface-3);
+  color: var(--text);
+}
+
+.chat-modal__body {
+  overflow-y: auto;
+  flex: 1;
+}
+
+.chat-modal__loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: var(--text-muted);
+  font-size: 14px;
+}
+
+.chat-modal__toolbar {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 8px 12px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+
+.chat-modal__tool-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  border: none;
+  background: transparent;
+  color: var(--text-dim);
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 150ms ease;
+}
+
+.chat-modal__tool-btn:hover {
+  background: rgba(16, 224, 128, 0.1);
+  color: var(--emerald);
+}
+
+.chat-modal__tool-sep {
+  width: 1px;
+  height: 18px;
+  background: var(--border);
+  margin: 0 4px;
+}
+
+.chat-modal__footer {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+}
+
+/* Chat modal transitions */
+.modal-fade-enter-active .chat-modal__panel,
+.modal-fade-leave-active .chat-modal__panel {
+  transition: transform 250ms ease;
+}
+
+.modal-fade-enter-from .chat-modal__panel {
+  transform: scale(0.95) translateY(10px);
+}
+
+.modal-fade-leave-to .chat-modal__panel {
+  transform: scale(0.95) translateY(10px);
+}
+
+.chat__attachment-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.chat__attachment-img {
+  width: 48px;
+  height: 48px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--border);
+}
+
+.chat__attachment-remove {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 80, 80, 0.2);
+  color: #ff6060;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 150ms ease;
+}
+
+.chat__attachment-remove:hover {
+  background: rgba(255, 80, 80, 0.4);
+}
+
+.chat__compose {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 16px;
+  border-top: 1px solid var(--border);
+  background: var(--surface);
+}
+
+.chat__attach-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.chat__popover {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  left: 0;
+  width: 200px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(0, 0, 0, 0.4);
+  transform-origin: bottom left;
+  z-index: 20;
+}
+
+.chat__popover-option {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 10px 14px;
+  border: none;
+  background: transparent;
+  color: var(--text);
+  cursor: pointer;
+  font-family: var(--font-body);
+  font-size: 13px;
+  text-align: left;
+  transition: background 150ms ease;
+}
+
+.chat__popover-option:hover {
+  background: var(--surface-3);
+}
+
+.chat__popover-option + .chat__popover-option {
+  border-top: 1px solid var(--border);
+}
+
+.chat__popover-option svg {
+  flex-shrink: 0;
+  color: var(--emerald);
+}
+
+.chat__popover-text {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.chat__popover-label {
+  font-weight: 600;
+  font-size: 13px;
+}
+
+.chat__popover-hint {
+  font-size: 11px;
+  color: var(--text-muted);
+}
+
+/* Popover transitions */
+.popover-enter-active {
+  transition: opacity 200ms ease, transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.popover-leave-active {
+  transition: opacity 150ms ease, transform 150ms ease;
+}
+
+.popover-enter-from {
+  opacity: 0;
+  transform: scale(0.9) translateY(4px);
+}
+
+.popover-leave-to {
+  opacity: 0;
+  transform: scale(0.95) translateY(2px);
+}
+
+.chat__attach-btn,
+.chat__send-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border: none;
+  background: transparent;
+  color: var(--text-muted);
+  cursor: pointer;
+  border-radius: 8px;
+  flex-shrink: 0;
+  transition: all 150ms ease;
+}
+
+.chat__attach-btn:hover { color: var(--emerald); background: var(--emerald-dim); }
+.chat__send-btn:hover { color: var(--emerald); background: var(--emerald-dim); }
+
+.chat__input {
+  flex: 1;
+  padding: 8px 14px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--text);
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 999px;
+  outline: none;
+  transition: border-color 200ms ease;
+}
+
+.chat__input::placeholder { color: var(--text-muted); }
+.chat__input:focus { border-color: var(--emerald); }
+
+/* =========================================================
+   15 · MULTI-STEP WIZARD — progress stepper
+   ========================================================= */
+.wizard__stepper {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0;
+  margin-bottom: 24px;
+}
+
+.wizard__step {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  border-radius: 999px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  transition: all 250ms ease;
+}
+
+.wizard__step--active {
+  border-color: #a78bfa;
+  background: rgba(167, 139, 250, 0.08);
+}
+
+.wizard__step--done {
+  border-color: rgba(167, 139, 250, 0.3);
+  background: rgba(167, 139, 250, 0.04);
+}
+
+.wizard__step-num {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: var(--surface-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--text-muted);
+  transition: all 250ms ease;
+}
+
+.wizard__step--active .wizard__step-num {
+  background: #a78bfa;
+  color: #0c0c0f;
+}
+
+.wizard__step--done .wizard__step-num {
+  background: rgba(167, 139, 250, 0.3);
+  color: #a78bfa;
+}
+
+.wizard__step-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  transition: color 250ms ease;
+}
+
+.wizard__step--active .wizard__step-label {
+  color: var(--text);
+}
+
+.wizard__connector {
+  width: 40px;
+  height: 2px;
+  background: var(--border);
+  transition: background 250ms ease;
+}
+
+.wizard__connector--done {
+  background: rgba(167, 139, 250, 0.4);
+}
+
+.wizard__body {
+  min-height: 200px;
+}
+
+.wizard__dropzone {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+  padding: 48px 32px;
+  border: 2px dashed var(--border-light);
+  border-radius: 12px;
+  cursor: pointer;
+  color: var(--text-muted);
+  transition: all 250ms ease;
+}
+
+.wizard__dropzone:hover {
+  border-color: #a78bfa;
+  color: #a78bfa;
+}
+
+.wizard__dropzone--active {
+  border-color: #a78bfa;
+  background: rgba(167, 139, 250, 0.06);
+  color: #a78bfa;
+}
+
+.wizard__drop-text {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.wizard__drop-hint {
+  font-size: 13px;
+  opacity: 0.6;
+}
+
+.wizard__aspect-bar {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 12px;
+  flex-wrap: wrap;
+}
+
+.wizard__aspect-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-right: 4px;
+}
+
+.pill-btn--violet {
+  border-color: rgba(167, 139, 250, 0.2);
+}
+
+.pill-btn--violet:hover {
+  border-color: #a78bfa;
+  color: #a78bfa;
+}
+
+.pill-btn--violet-active {
+  background: #a78bfa;
+  color: #0c0c0f;
+  border-color: #a78bfa;
+}
+
+.wizard__nav-row {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 16px;
+}
+
+/* =========================================================
    FOOTER
    ========================================================= */
 .footer {
@@ -2862,6 +4639,44 @@ code {
 
   .post-composer__actions {
     padding: 12px 16px;
+  }
+
+  .scanner__layout {
+    grid-template-columns: 1fr;
+  }
+
+  .scanner__sidebar {
+    flex-direction: row;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .scanner__sidebar-sep {
+    width: 1px;
+    height: 24px;
+    margin: 0 4px;
+  }
+
+  .compare__viewport {
+    aspect-ratio: auto;
+    min-height: 200px;
+  }
+
+  .wizard__stepper {
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+
+  .wizard__connector {
+    width: 20px;
+  }
+
+  .wizard__step {
+    padding: 6px 10px;
+  }
+
+  .wizard__step-label {
+    font-size: 11px;
   }
 }
 </style>
