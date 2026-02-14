@@ -13,9 +13,6 @@ import 'cropvue/styles'
 import { createHighlighter } from 'shiki'
 import { codeSnippets } from './snippets'
 
-// ============================================================
-// Code Tabs — Shiki highlighter + toggle state
-// ============================================================
 const highlighter = ref<any>(null)
 const showCode = ref<Record<string, boolean>>({})
 
@@ -34,9 +31,6 @@ async function copyCode(sectionId: string) {
   }
 }
 
-// ============================================================
-// Navigation — IntersectionObserver tracks active section
-// ============================================================
 const sections = [
   { id: 'basics', label: 'The Basics' },
   { id: 'avatar', label: 'Avatar Studio' },
@@ -67,7 +61,6 @@ onMounted(async () => {
     langs: ['vue'],
   })
 
-  // Track which section is in view
   sectionObserver = new IntersectionObserver(
     (entries) => {
       for (const entry of entries) {
@@ -83,7 +76,6 @@ onMounted(async () => {
     if (el) sectionObserver!.observe(el)
   }
 
-  // Show sidebar when top nav scrolls out of view
   if (navRef.value) {
     navObserver = new IntersectionObserver(
       ([entry]) => { showSidebar.value = !entry.isIntersecting },
@@ -98,9 +90,6 @@ onUnmounted(() => {
   navObserver?.disconnect()
 })
 
-// ============================================================
-// Section 1: The Basics — zero-config with CSS var theming
-// ============================================================
 const basicsResult = ref<CropResult | null>(null)
 
 const basicsTheme: Record<string, string> = {
@@ -128,19 +117,10 @@ const basicsTheme: Record<string, string> = {
   '--cropvue-btn-confirm-hover-bg': '#00b8db',
 }
 
-// ============================================================
-// Section 2: Avatar Studio — circle stencil + custom dropzone
-// ============================================================
 const avatarResult = ref<CropResult | null>(null)
 
-// ============================================================
-// Section 3: Full Control — all slots overridden
-// ============================================================
 const fullControlResult = ref<CropResult | null>(null)
 
-// ============================================================
-// Section 4: Shape Shifter — dynamic reactive controls
-// ============================================================
 const shifterStencil = ref<StencilType>('rectangle')
 const shifterAspect = ref<number | null>(null)
 const shifterFormat = ref<OutputFormat>('auto')
@@ -155,9 +135,6 @@ const aspectPresets = [
   { label: '3:2', value: 3 / 2 },
 ]
 
-// ============================================================
-// Section 5: Under the Hood — composable API
-// ============================================================
 const cropper = useCropper({ stencil: 'rectangle', outputQuality: 0.85 })
 const composableResult = ref<CropResult | null>(null)
 const composableStatus = ref('')
@@ -178,9 +155,6 @@ async function exportResult() {
   composableStatus.value = `Done: ${result.width}\u00d7${result.height}, ${kb(result.blob.size)}`
 }
 
-// ============================================================
-// Section 6: Theme Gallery — three themed CropVue instances
-// ============================================================
 const themeImageUrls: Record<string, string> = {
   midnight: 'https://picsum.photos/id/1015/400/300',
   violet: 'https://picsum.photos/id/1025/400/300',
@@ -270,9 +244,6 @@ const themeConfigs = {
 
 type ThemeKey = keyof typeof themeConfigs
 
-// ============================================================
-// Section 7: Standalone Parts — bento grid
-// ============================================================
 const standaloneFiles = ref<File[]>([])
 const urlInput = ref('https://picsum.photos/id/1040/800/600')
 const urlResult = ref<CropResult | null>(null)
@@ -286,9 +257,6 @@ function logAction(action: string) {
   if (toolbarLog.value.length > 6) toolbarLog.value.pop()
 }
 
-// ============================================================
-// Section 8: Profile Editor — avatar + form card
-// ============================================================
 const profileAvatar = ref<CropResult | null>(null)
 const profileName = ref('Alex Johnson')
 const profileEmail = ref('alex@example.com')
@@ -334,9 +302,6 @@ function saveProfile() {
   setTimeout(() => { profileSaved.value = false }, 2000)
 }
 
-// ============================================================
-// Section 9: Post Composer — cover image + text
-// ============================================================
 const postCover = ref<CropResult | null>(null)
 const postTitle = ref('')
 const postBody = ref('')
@@ -352,9 +317,6 @@ function removePostCover() {
   postCover.value = null
 }
 
-// ============================================================
-// Section 10: Product Gallery — multi-slot images
-// ============================================================
 const productImages = ref<(CropResult | null)[]>([null, null, null, null])
 const activeProductSlot = ref<number | null>(null)
 const showProductCropper = ref(false)
@@ -408,9 +370,6 @@ function removeProductImage(index: number) {
   productImages.value = imgs
 }
 
-// ============================================================
-// Section 11: Modal Crop — CropVue in a modal overlay
-// ============================================================
 const showCropModal = ref(false)
 const modalResult = ref<CropResult | null>(null)
 const modalCropperRef = ref<InstanceType<typeof CropVue> | null>(null)
@@ -442,9 +401,6 @@ function onModalCrop(result: CropResult) {
   showCropModal.value = false
 }
 
-// ============================================================
-// Section 12: ID Scanner — document scanning with CropPreview
-// ============================================================
 const scannerCropper = useCropper({ stencil: 'rectangle', aspectRatio: 1.586 })
 const scannerResult = ref<CropResult | null>(null)
 const scannerFile = ref<HTMLInputElement | null>(null)
@@ -466,9 +422,6 @@ function resetScanner() {
   scannerCropper.reset()
 }
 
-// ============================================================
-// Section 13: Before / After — comparison slider
-// ============================================================
 const compareOriginalUrl = ref('')
 const compareResult = ref<CropResult | null>(null)
 const compareCropperRef = ref<InstanceType<typeof CropVue> | null>(null)
@@ -541,9 +494,6 @@ function stopDrag() {
   isDraggingCompare.value = false
 }
 
-// ============================================================
-// Section 14: Chat Attach — compact inline cropper
-// ============================================================
 interface ChatMessage {
   id: number
   from: 'them' | 'me'
@@ -643,9 +593,6 @@ function sendMessage() {
   chatAttachment.value = null
 }
 
-// ============================================================
-// Section 15: Multi-Step Wizard — full lifecycle control
-// ============================================================
 const wizardStep = ref(1)
 const wizardCropper = useCropper({ stencil: 'rectangle' })
 const wizardResult = ref<CropResult | null>(null)
@@ -703,9 +650,6 @@ function wizardDownload() {
   a.click()
 }
 
-// ============================================================
-// Helpers
-// ============================================================
 function kb(bytes: number) {
   return `${(bytes / 1024).toFixed(1)} KB`
 }
@@ -713,9 +657,6 @@ function kb(bytes: number) {
 
 <template>
   <div class="app">
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- HERO                                                   -->
-    <!-- ═══════════════════════════════════════════════════════ -->
     <header class="hero">
       <div class="hero__grid" aria-hidden="true"></div>
       <div class="hero__content">
@@ -725,9 +666,6 @@ function kb(bytes: number) {
       </div>
     </header>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- INLINE NAV (visible at top)                            -->
-    <!-- ═══════════════════════════════════════════════════════ -->
     <nav ref="navRef" class="nav">
       <a
         v-for="s in sections"
@@ -738,9 +676,6 @@ function kb(bytes: number) {
       >{{ s.label }}</a>
     </nav>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- SIDEBAR TOC (appears on scroll)                        -->
-    <!-- ═══════════════════════════════════════════════════════ -->
     <Transition name="toc">
       <aside v-if="showSidebar" class="toc">
         <a
@@ -756,9 +691,6 @@ function kb(bytes: number) {
       </aside>
     </Transition>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- 01 · THE BASICS                                        -->
-    <!-- ═══════════════════════════════════════════════════════ -->
     <section id="basics" class="showcase">
       <div class="showcase__header">
         <span class="showcase__num" style="--accent: var(--cyan)">01</span>
@@ -810,9 +742,6 @@ function kb(bytes: number) {
       </div>
     </section>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- 02 · AVATAR STUDIO                                     -->
-    <!-- ═══════════════════════════════════════════════════════ -->
     <section id="avatar" class="showcase">
       <div class="showcase__header">
         <span class="showcase__num" style="--accent: var(--magenta)">02</span>
@@ -886,9 +815,6 @@ function kb(bytes: number) {
       </div>
     </section>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- 03 · FULL CONTROL                                      -->
-    <!-- ═══════════════════════════════════════════════════════ -->
     <section id="full-control" class="showcase">
       <div class="showcase__header">
         <span class="showcase__num" style="--accent: var(--emerald)">03</span>
@@ -989,9 +915,6 @@ function kb(bytes: number) {
       </div>
     </section>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- 04 · SHAPE SHIFTER                                     -->
-    <!-- ═══════════════════════════════════════════════════════ -->
     <section id="shape-shifter" class="showcase">
       <div class="showcase__header">
         <span class="showcase__num" style="--accent: var(--amber)">04</span>
@@ -1083,9 +1006,6 @@ function kb(bytes: number) {
       </div>
     </section>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- 05 · UNDER THE HOOD                                    -->
-    <!-- ═══════════════════════════════════════════════════════ -->
     <section id="composable" class="showcase showcase--blueprint">
       <div class="showcase__header">
         <span class="showcase__num" style="--accent: var(--cyan)">05</span>
@@ -1160,9 +1080,6 @@ function kb(bytes: number) {
       </div>
     </section>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- 06 · THEME GALLERY                                     -->
-    <!-- ═══════════════════════════════════════════════════════ -->
     <section id="themes" class="showcase">
       <div class="showcase__header">
         <span class="showcase__num" style="--accent: #a78bfa">06</span>
@@ -1213,9 +1130,6 @@ function kb(bytes: number) {
       </div>
     </section>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- 07 · STANDALONE PARTS                                  -->
-    <!-- ═══════════════════════════════════════════════════════ -->
     <section id="standalone" class="showcase">
       <div class="showcase__header">
         <span class="showcase__num" style="--accent: var(--emerald)">07</span>
@@ -1315,9 +1229,6 @@ function kb(bytes: number) {
       </div>
     </section>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- 08 · PROFILE EDITOR                                    -->
-    <!-- ═══════════════════════════════════════════════════════ -->
     <section id="profile-editor" class="showcase">
       <div class="showcase__header">
         <span class="showcase__num" style="--accent: var(--cyan)">08</span>
@@ -1403,9 +1314,6 @@ function kb(bytes: number) {
       </div>
     </section>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- 09 · POST COMPOSER                                      -->
-    <!-- ═══════════════════════════════════════════════════════ -->
     <section id="post-composer" class="showcase">
       <div class="showcase__header">
         <span class="showcase__num" style="--accent: var(--magenta)">09</span>
@@ -1486,9 +1394,6 @@ function kb(bytes: number) {
       </div>
     </section>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- 10 · PRODUCT GALLERY                                    -->
-    <!-- ═══════════════════════════════════════════════════════ -->
     <section id="product-gallery" class="showcase">
       <div class="showcase__header">
         <span class="showcase__num" style="--accent: var(--emerald)">10</span>
@@ -1596,9 +1501,6 @@ function kb(bytes: number) {
       </div>
     </section>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- 11 · MODAL CROP                                       -->
-    <!-- ═══════════════════════════════════════════════════════ -->
     <section id="modal-crop" class="showcase">
       <div class="showcase__header">
         <span class="showcase__num" style="--accent: var(--magenta)">11</span>
@@ -1699,9 +1601,6 @@ function kb(bytes: number) {
       </div>
     </section>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- 12 · ID SCANNER                                        -->
-    <!-- ═══════════════════════════════════════════════════════ -->
     <section id="id-scanner" class="showcase">
       <div class="showcase__header">
         <span class="showcase__num" style="--accent: var(--amber)">12</span>
@@ -1798,9 +1697,6 @@ function kb(bytes: number) {
       </div>
     </section>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- 13 · BEFORE / AFTER                                    -->
-    <!-- ═══════════════════════════════════════════════════════ -->
     <section id="before-after" class="showcase">
       <div class="showcase__header">
         <span class="showcase__num" style="--accent: var(--cyan)">13</span>
@@ -1823,7 +1719,6 @@ function kb(bytes: number) {
         @change="handleCompareFile"
       />
 
-      <!-- Pick phase -->
       <div v-if="comparePhase === 'pick'" class="compare__pick" @click="triggerCompareFile">
         <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5">
           <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
@@ -1834,7 +1729,6 @@ function kb(bytes: number) {
         <span class="compare__pick-hint">Upload, crop, then drag the slider to compare</span>
       </div>
 
-      <!-- Crop phase -->
       <template v-if="comparePhase === 'crop'">
         <CropVue
           ref="compareCropperRef"
@@ -1848,7 +1742,6 @@ function kb(bytes: number) {
         </CropVue>
       </template>
 
-      <!-- Compare phase -->
       <template v-if="comparePhase === 'compare' && compareResult">
         <div
           class="compare__viewport"
@@ -1891,9 +1784,6 @@ function kb(bytes: number) {
       </div>
     </section>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- 14 · CHAT ATTACH                                       -->
-    <!-- ═══════════════════════════════════════════════════════ -->
     <section id="chat-attach" class="showcase">
       <div class="showcase__header">
         <span class="showcase__num" style="--accent: var(--emerald)">14</span>
@@ -2045,9 +1935,6 @@ function kb(bytes: number) {
       </div>
     </section>
 
-    <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- 15 · MULTI-STEP WIZARD                                 -->
-    <!-- ═══════════════════════════════════════════════════════ -->
     <section id="wizard" class="showcase">
       <div class="showcase__header">
         <span class="showcase__num" style="--accent: #a78bfa">15</span>
@@ -2062,7 +1949,6 @@ function kb(bytes: number) {
       </div>
 
       <template v-if="!showCode['wizard']">
-      <!-- Stepper -->
       <div class="wizard__stepper">
         <div class="wizard__step" :class="{ 'wizard__step--active': wizardStep >= 1, 'wizard__step--done': wizardStep > 1 }">
           <span class="wizard__step-num">1</span>
@@ -2080,7 +1966,6 @@ function kb(bytes: number) {
         </div>
       </div>
 
-      <!-- Step 1: Upload -->
       <div v-if="wizardStep === 1" class="wizard__body">
         <CropDropzone @files="onWizardFiles">
           <template #default="{ open, isDragging }">
@@ -2099,7 +1984,6 @@ function kb(bytes: number) {
         </CropDropzone>
       </div>
 
-      <!-- Step 2: Crop & Adjust -->
       <div v-if="wizardStep === 2 && wizardCropper.isReady.value" class="wizard__body">
         <div class="wizard__aspect-bar">
           <span class="wizard__aspect-label">Aspect Ratio:</span>
@@ -2137,7 +2021,6 @@ function kb(bytes: number) {
         </div>
       </div>
 
-      <!-- Step 3: Review & Export -->
       <div v-if="wizardStep === 3 && wizardResult" class="wizard__body">
         <div class="result">
           <img :src="wizardResult.url" alt="Final result" class="result__img" />
@@ -2165,7 +2048,6 @@ function kb(bytes: number) {
       </div>
     </section>
 
-    <!-- Footer -->
     <footer class="footer">
       <p>Built with <strong>CropVue</strong> &middot; Vue 3 &middot; No extra dependencies</p>
     </footer>
@@ -2175,9 +2057,6 @@ function kb(bytes: number) {
 <style>
 @import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Syne:wght@400..800&display=swap');
 
-/* =========================================================
-   CUSTOM PROPERTIES
-   ========================================================= */
 :root {
   --bg: #0c0c0f;
   --surface: #14141a;
@@ -2203,9 +2082,6 @@ function kb(bytes: number) {
   --nav-h: 56px;
 }
 
-/* =========================================================
-   RESET & BASE
-   ========================================================= */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 html {
@@ -2230,18 +2106,12 @@ code {
   color: var(--cyan);
 }
 
-/* =========================================================
-   APP CONTAINER
-   ========================================================= */
 .app {
   max-width: 960px;
   margin: 0 auto;
   padding: 0 20px 80px;
 }
 
-/* =========================================================
-   HERO
-   ========================================================= */
 .hero {
   position: relative;
   display: flex;
@@ -2305,9 +2175,6 @@ code {
   to { opacity: 1; transform: translateY(0); }
 }
 
-/* =========================================================
-   STICKY NAV
-   ========================================================= */
 .nav {
   display: flex;
   flex-wrap: wrap;
@@ -2339,9 +2206,6 @@ code {
   background: var(--surface-3);
 }
 
-/* =========================================================
-   SIDEBAR TOC
-   ========================================================= */
 .toc {
   position: fixed;
   top: 50%;
@@ -2414,7 +2278,6 @@ code {
   color: var(--text);
 }
 
-/* TOC transition */
 .toc-enter-active {
   transition: opacity 250ms ease, transform 250ms ease;
 }
@@ -2433,9 +2296,6 @@ code {
   transform: translateY(-50%) translateX(-12px);
 }
 
-/* =========================================================
-   SHOWCASE (SECTION) BASE
-   ========================================================= */
 .showcase {
   margin-bottom: 48px;
   padding: 32px;
@@ -2479,9 +2339,6 @@ code {
   line-height: 1.5;
 }
 
-/* =========================================================
-   SHOWCASE: PREVIEW/CODE TOGGLE
-   ========================================================= */
 .showcase__toggle {
   margin-left: auto;
   display: flex;
@@ -2514,9 +2371,6 @@ code {
   color: var(--text);
 }
 
-/* =========================================================
-   CODE SNIPPET DISPLAY
-   ========================================================= */
 .snippet {
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -2576,9 +2430,6 @@ code {
   color: inherit !important;
 }
 
-/* =========================================================
-   SHARED: BUTTONS
-   ========================================================= */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -2628,9 +2479,6 @@ code {
   margin-bottom: 8px;
 }
 
-/* =========================================================
-   SHARED: RESULT DISPLAY
-   ========================================================= */
 .result {
   padding: 24px;
   text-align: center;
@@ -2683,9 +2531,6 @@ code {
   font-weight: 500;
 }
 
-/* =========================================================
-   SHARED: PILLS / TAGS
-   ========================================================= */
 .pill {
   display: inline-block;
   padding: 3px 10px;
@@ -2700,9 +2545,6 @@ code {
 .pill--magenta { background: var(--magenta-dim); color: var(--magenta); }
 .pill--amber { background: var(--amber-dim); color: var(--amber); }
 
-/* =========================================================
-   SHARED: STATUS TEXT
-   ========================================================= */
 .status-text {
   color: var(--text-muted);
   font-style: italic;
@@ -2710,9 +2552,6 @@ code {
   text-align: center;
 }
 
-/* =========================================================
-   01 · THE BASICS — geometric wireframe
-   ========================================================= */
 .basics__frame {
   position: relative;
   padding: 2px;
@@ -2736,9 +2575,6 @@ code {
 .basics__corner--bl { bottom: -4px; left: -4px; border-bottom-width: 2px; border-left-width: 2px; border-bottom-left-radius: 4px; }
 .basics__corner--br { bottom: -4px; right: -4px; border-bottom-width: 2px; border-right-width: 2px; border-bottom-right-radius: 4px; }
 
-/* =========================================================
-   02 · AVATAR STUDIO — glassmorphism
-   ========================================================= */
 .avatar__card {
   background: linear-gradient(135deg, rgba(255, 45, 138, 0.05) 0%, rgba(0, 212, 255, 0.03) 100%);
   border: 1px solid rgba(255, 45, 138, 0.12);
@@ -2840,9 +2676,6 @@ code {
   border: 3px solid var(--surface);
 }
 
-/* =========================================================
-   03 · FULL CONTROL — terminal aesthetic
-   ========================================================= */
 .terminal {
   border: 1px solid var(--border);
   border-radius: 10px;
@@ -2919,7 +2752,6 @@ code {
   margin-top: 8px;
 }
 
-/* Dock toolbar */
 .dock {
   display: flex;
   align-items: center;
@@ -2970,9 +2802,6 @@ code {
   padding: 12px 0;
 }
 
-/* =========================================================
-   04 · SHAPE SHIFTER — control dashboard
-   ========================================================= */
 .controls {
   display: flex;
   flex-direction: column;
@@ -3074,9 +2903,6 @@ code {
   border: 2px solid var(--surface);
 }
 
-/* =========================================================
-   05 · UNDER THE HOOD — blueprint aesthetic
-   ========================================================= */
 .showcase--blueprint {
   background:
     linear-gradient(rgba(0, 212, 255, 0.02) 1px, transparent 1px),
@@ -3139,9 +2965,6 @@ code {
   background: var(--surface);
 }
 
-/* =========================================================
-   06 · THEME GALLERY
-   ========================================================= */
 .theme-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
@@ -3178,9 +3001,6 @@ code {
   background: var(--surface);
 }
 
-/* =========================================================
-   07 · STANDALONE PARTS — bento grid
-   ========================================================= */
 .bento {
   display: grid;
   grid-template-columns: 1fr 1fr;
@@ -3206,7 +3026,6 @@ code {
   margin-bottom: 12px;
 }
 
-/* Rainbow dropzone */
 .rainbow-drop {
   position: relative;
   border-radius: 12px;
@@ -3252,7 +3071,6 @@ code {
   margin-top: 10px;
 }
 
-/* Toolbar wrap */
 .bento__toolbar-wrap {
   border-radius: 8px;
   overflow: hidden;
@@ -3272,7 +3090,6 @@ code {
   padding: 2px 0;
 }
 
-/* URL input */
 .url-row {
   margin-bottom: 12px;
 }
@@ -3299,9 +3116,6 @@ code {
   box-shadow: 0 0 0 3px rgba(16, 224, 128, 0.1);
 }
 
-/* =========================================================
-   08 · PROFILE EDITOR — settings card
-   ========================================================= */
 .profile-editor {
   background: var(--surface-2);
   border: 1px solid var(--border);
@@ -3442,9 +3256,6 @@ code {
   border-top: 1px solid var(--border);
 }
 
-/* =========================================================
-   09 · POST COMPOSER — blog/social card
-   ========================================================= */
 .post-composer {
   background: var(--surface-2);
   border: 1px solid var(--border);
@@ -3589,9 +3400,6 @@ code {
   border-top: 1px solid var(--border);
 }
 
-/* =========================================================
-   10 · PRODUCT GALLERY — e-commerce card
-   ========================================================= */
 .product-gallery {
   background: var(--surface-2);
   border: 1px solid var(--border);
@@ -3751,9 +3559,6 @@ code {
   width: 100%;
 }
 
-/* =========================================================
-   11 · MODAL CROP — overlay dialog
-   ========================================================= */
 .modal-crop__card {
   border: 1px solid var(--border);
   border-radius: 12px;
@@ -3934,7 +3739,6 @@ code {
   border-top: 1px solid var(--border);
 }
 
-/* Modal transitions */
 .modal-fade-enter-active,
 .modal-fade-leave-active {
   transition: opacity 250ms ease;
@@ -3958,9 +3762,6 @@ code {
   transform: scale(0.95) translateY(10px);
 }
 
-/* =========================================================
-   12 · ID SCANNER — document scanning
-   ========================================================= */
 .file-btn--amber {
   color: var(--amber);
   background: var(--amber-dim);
@@ -4070,9 +3871,6 @@ code {
 .scanner__id-line--medium { width: 70%; }
 .scanner__id-line--short { width: 40%; }
 
-/* =========================================================
-   13 · BEFORE / AFTER — comparison slider
-   ========================================================= */
 .compare__viewport {
   position: relative;
   border-radius: 12px;
@@ -4184,9 +3982,6 @@ code {
   margin-top: 12px;
 }
 
-/* =========================================================
-   14 · CHAT ATTACH — messaging interface
-   ========================================================= */
 .chat {
   background: var(--surface-2);
   border: 1px solid var(--border);
@@ -4234,7 +4029,6 @@ code {
   margin-top: 4px;
 }
 
-/* Chat crop modal */
 .chat-modal__backdrop {
   position: fixed;
   inset: 0;
@@ -4352,7 +4146,6 @@ code {
   border-top: 1px solid var(--border);
 }
 
-/* Chat modal transitions */
 .modal-fade-enter-active .chat-modal__panel,
 .modal-fade-leave-active .chat-modal__panel {
   transition: transform 250ms ease;
@@ -4475,7 +4268,6 @@ code {
   color: var(--text-muted);
 }
 
-/* Popover transitions */
 .popover-enter-active {
   transition: opacity 200ms ease, transform 200ms cubic-bezier(0.34, 1.56, 0.64, 1);
 }
@@ -4529,9 +4321,6 @@ code {
 .chat__input::placeholder { color: var(--text-muted); }
 .chat__input:focus { border-color: var(--emerald); }
 
-/* =========================================================
-   15 · MULTI-STEP WIZARD — progress stepper
-   ========================================================= */
 .wizard__stepper {
   display: flex;
   align-items: center;
@@ -4683,9 +4472,6 @@ code {
   margin-top: 16px;
 }
 
-/* =========================================================
-   FOOTER
-   ========================================================= */
 .footer {
   text-align: center;
   padding: 40px 0 0;
@@ -4697,9 +4483,6 @@ code {
   color: var(--text-dim);
 }
 
-/* =========================================================
-   RESPONSIVE
-   ========================================================= */
 @media (max-width: 1200px) {
   .toc { display: none; }
 }
