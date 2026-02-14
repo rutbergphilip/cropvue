@@ -298,6 +298,8 @@ defineExpose({
 <style>
 .cropvue {
   width: 100%;
+  min-width: 0;
+  max-width: var(--cropvue-max-width, none);
 }
 
 .cropvue__dropzone {
@@ -321,18 +323,18 @@ defineExpose({
 
 .cropvue__actions {
   display: flex;
-  gap: 8px;
+  gap: var(--cropvue-actions-gap, 8px);
   justify-content: flex-end;
-  padding: 12px 0;
+  padding: var(--cropvue-actions-padding, 12px 0);
 }
 
 .cropvue__btn {
-  padding: 8px 20px;
+  padding: var(--cropvue-btn-padding, 8px 20px);
   border: 1px solid var(--cropvue-btn-border-color, #d1d5db);
   border-radius: var(--cropvue-btn-radius, 6px);
   background: var(--cropvue-btn-bg, #fff);
   color: var(--cropvue-btn-color, #374151);
-  font-size: 14px;
+  font-size: var(--cropvue-btn-font-size, 14px);
   cursor: pointer;
   transition: background 150ms ease;
 }

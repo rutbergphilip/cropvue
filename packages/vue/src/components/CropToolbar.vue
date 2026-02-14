@@ -95,8 +95,10 @@ function reset() { emit('reset') }
 .cropvue-toolbar__default {
   display: flex;
   align-items: center;
-  gap: 4px;
-  padding: 8px;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--cropvue-toolbar-gap, 4px);
+  padding: var(--cropvue-toolbar-padding, 8px);
   background: var(--cropvue-toolbar-bg, #fff);
   border-radius: var(--cropvue-toolbar-border-radius, 8px);
   border: 1px solid var(--cropvue-toolbar-border-color, #e5e7eb);
@@ -106,8 +108,8 @@ function reset() { emit('reset') }
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 36px;
-  height: 36px;
+  width: var(--cropvue-toolbar-btn-size, 36px);
+  height: var(--cropvue-toolbar-btn-size, 36px);
   padding: 0;
   border: none;
   background: transparent;
@@ -127,9 +129,10 @@ function reset() { emit('reset') }
 }
 
 .cropvue-toolbar__separator {
+  display: var(--cropvue-toolbar-separator-display, block);
   width: 1px;
-  height: 20px;
-  margin: 0 4px;
+  height: var(--cropvue-toolbar-separator-height, 20px);
+  margin: 0 var(--cropvue-toolbar-gap, 4px);
   background: var(--cropvue-toolbar-separator-color, #e5e7eb);
 }
 </style>

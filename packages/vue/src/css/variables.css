@@ -28,13 +28,25 @@
 
   /* Editor */
   --cropvue-editor-bg: #1a1a1a;
+  --cropvue-editor-height: auto;
+  --cropvue-editor-aspect-ratio: 4 / 3;
+  --cropvue-editor-max-height: none;
+  --cropvue-editor-min-height: 120px;
+  --cropvue-editor-border-radius: 0;
 
   /* Preview */
   --cropvue-preview-border-radius: 0;
   --cropvue-preview-bg: transparent;
 
+  /* Component */
+  --cropvue-max-width: none;
+
   /* Toolbar */
   --cropvue-toolbar-bg: #fff;
+  --cropvue-toolbar-btn-size: 36px;
+  --cropvue-toolbar-padding: 8px;
+  --cropvue-toolbar-gap: 4px;
+  --cropvue-toolbar-separator-height: 20px;
   --cropvue-toolbar-border-radius: 8px;
   --cropvue-toolbar-border-color: #e5e7eb;
   --cropvue-toolbar-btn-color: #374151;
@@ -43,6 +55,7 @@
   --cropvue-toolbar-btn-active-bg: #e5e7eb;
   --cropvue-toolbar-btn-radius: 6px;
   --cropvue-toolbar-separator-color: #e5e7eb;
+  --cropvue-toolbar-separator-display: block;
 
   /* Queue */
   --cropvue-queue-thumb-size: 64px;
@@ -51,6 +64,8 @@
   --cropvue-queue-check-bg: #22c55e;
 
   /* Buttons */
+  --cropvue-btn-padding: 8px 20px;
+  --cropvue-btn-font-size: 14px;
   --cropvue-btn-bg: #fff;
   --cropvue-btn-color: #374151;
   --cropvue-btn-border-color: #d1d5db;
@@ -60,6 +75,10 @@
   --cropvue-btn-confirm-color: #fff;
   --cropvue-btn-confirm-border: #3b82f6;
   --cropvue-btn-confirm-hover-bg: #2563eb;
+
+  /* Actions */
+  --cropvue-actions-gap: 8px;
+  --cropvue-actions-padding: 12px 0;
 
   /* Stencil */
   --cropvue-stencil-bg: transparent;

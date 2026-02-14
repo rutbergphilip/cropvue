@@ -49,6 +49,60 @@ import 'cropvue/styles'
 }
 ```
 
+### Editor Sizing
+
+The editor scales proportionally by default. Override these variables to control size:
+
+```css
+:root {
+  --cropvue-editor-aspect-ratio: 4 / 3;  /* Default aspect ratio */
+  --cropvue-editor-height: auto;          /* Set explicit value to override aspect-ratio */
+  --cropvue-editor-max-height: none;      /* Cap maximum height */
+  --cropvue-editor-min-height: 120px;     /* Floor minimum height */
+  --cropvue-editor-border-radius: 0;      /* Set to 50% for circular viewport */
+  --cropvue-max-width: none;              /* Constrain component width */
+}
+```
+
+#### Compact Avatar Editor
+
+```css
+.avatar-editor {
+  --cropvue-editor-aspect-ratio: 1;
+  --cropvue-toolbar-btn-size: 28px;
+  --cropvue-toolbar-padding: 4px;
+  --cropvue-toolbar-separator-display: none;
+  --cropvue-btn-padding: 6px 14px;
+  --cropvue-btn-font-size: 12px;
+}
+```
+
+#### Fixed Height (legacy)
+
+```css
+.my-container {
+  --cropvue-editor-height: 400px;
+}
+```
+
+### Layout
+
+Control toolbar and button sizing:
+
+```css
+:root {
+  --cropvue-toolbar-btn-size: 36px;
+  --cropvue-toolbar-padding: 8px;
+  --cropvue-toolbar-gap: 4px;
+  --cropvue-toolbar-separator-height: 20px;
+  --cropvue-toolbar-separator-display: block; /* set to 'none' for compact/narrow layouts */
+  --cropvue-btn-padding: 8px 20px;
+  --cropvue-btn-font-size: 14px;
+  --cropvue-actions-gap: 8px;
+  --cropvue-actions-padding: 12px 0;
+}
+```
+
 ### Dropzone
 
 ```css

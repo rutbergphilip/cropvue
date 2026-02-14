@@ -44,6 +44,9 @@ const sections = [
   { id: 'composable', label: 'Under the Hood' },
   { id: 'themes', label: 'Theme Gallery' },
   { id: 'standalone', label: 'Standalone' },
+  { id: 'profile-editor', label: 'Profile Editor' },
+  { id: 'post-composer', label: 'Post Composer' },
+  { id: 'product-gallery', label: 'Product Gallery' },
 ]
 
 const activeSection = ref('basics')
@@ -262,6 +265,100 @@ function logAction(action: string) {
 }
 
 // ============================================================
+// Section 8: Profile Editor — avatar + form card
+// ============================================================
+const profileAvatar = ref<CropResult | null>(null)
+const profileName = ref('Alex Johnson')
+const profileEmail = ref('alex@example.com')
+const profileBio = ref('Design-minded developer who loves clean UI.')
+const profileSaved = ref(false)
+
+const profileTheme: Record<string, string> = {
+  '--cropvue-editor-bg': '#1c1917',
+  '--cropvue-editor-aspect-ratio': '1',
+  '--cropvue-toolbar-separator-display': 'none',
+  '--cropvue-overlay-color': 'rgba(28, 25, 23, 0.65)',
+  '--cropvue-crop-border-color': '#a3a3a3',
+  '--cropvue-grid-color': 'rgba(163, 163, 163, 0.25)',
+  '--cropvue-handle-color': '#d4d4d4',
+  '--cropvue-toolbar-bg': '#292524',
+  '--cropvue-toolbar-border-color': '#44403c',
+  '--cropvue-toolbar-btn-color': '#a8a29e',
+  '--cropvue-toolbar-btn-hover-bg': '#44403c',
+  '--cropvue-toolbar-btn-size': '28px',
+  '--cropvue-toolbar-padding': '4px',
+  '--cropvue-toolbar-gap': '2px',
+  '--cropvue-toolbar-separator-height': '14px',
+  '--cropvue-btn-bg': '#292524',
+  '--cropvue-btn-color': '#e7e5e4',
+  '--cropvue-btn-border-color': '#44403c',
+  '--cropvue-btn-hover-bg': '#44403c',
+  '--cropvue-btn-padding': '6px 12px',
+  '--cropvue-btn-font-size': '12px',
+  '--cropvue-btn-confirm-bg': '#06b6d4',
+  '--cropvue-btn-confirm-border': '#06b6d4',
+  '--cropvue-btn-confirm-color': '#fff',
+  '--cropvue-btn-confirm-hover-bg': '#0891b2',
+  '--cropvue-actions-padding': '8px 0',
+  '--cropvue-actions-gap': '6px',
+  '--cropvue-dropzone-border-color': '#44403c',
+  '--cropvue-dropzone-border-color-active': '#06b6d4',
+  '--cropvue-dropzone-bg': 'rgba(28, 25, 23, 0.5)',
+  '--cropvue-dropzone-bg-active': 'rgba(6, 182, 212, 0.08)',
+}
+
+function saveProfile() {
+  profileSaved.value = true
+  setTimeout(() => { profileSaved.value = false }, 2000)
+}
+
+// ============================================================
+// Section 9: Post Composer — cover image + text
+// ============================================================
+const postCover = ref<CropResult | null>(null)
+const postTitle = ref('')
+const postBody = ref('')
+const postTags = ref(['Design', 'Vue', 'Tutorial'])
+const postPublished = ref(false)
+
+function publishPost() {
+  postPublished.value = true
+  setTimeout(() => { postPublished.value = false }, 2000)
+}
+
+function removePostCover() {
+  postCover.value = null
+}
+
+// ============================================================
+// Section 10: Product Gallery — multi-slot images
+// ============================================================
+const productImages = ref<(CropResult | null)[]>([null, null, null, null])
+const activeProductSlot = ref<number | null>(null)
+const showProductCropper = ref(false)
+
+function openProductSlot(index: number) {
+  activeProductSlot.value = index
+  showProductCropper.value = true
+}
+
+function onProductCrop(result: CropResult) {
+  if (activeProductSlot.value !== null) {
+    const imgs = [...productImages.value]
+    imgs[activeProductSlot.value] = result
+    productImages.value = imgs
+  }
+  showProductCropper.value = false
+  activeProductSlot.value = null
+}
+
+function removeProductImage(index: number) {
+  const imgs = [...productImages.value]
+  imgs[index] = null
+  productImages.value = imgs
+}
+
+// ============================================================
 // Helpers
 // ============================================================
 function kb(bytes: number) {
@@ -279,7 +376,7 @@ function kb(bytes: number) {
       <div class="hero__content">
         <h1 class="hero__title">CropVue</h1>
         <p class="hero__tagline">Image cropping for Vue, reimagined.</p>
-        <p class="hero__sub">7 interactive demos showcasing what's possible.</p>
+        <p class="hero__sub">10 interactive demos showcasing what's possible.</p>
       </div>
     </header>
 
@@ -852,6 +949,262 @@ function kb(bytes: number) {
           <button class="snippet__copy" @click="copyCode('standalone')">Copy</button>
         </div>
         <div class="snippet__body" v-html="highlightedCode('standalone')"></div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- 08 · PROFILE EDITOR                                    -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <section id="profile-editor" class="showcase">
+      <div class="showcase__header">
+        <span class="showcase__num" style="--accent: var(--cyan)">08</span>
+        <div>
+          <h2 class="showcase__title">Profile Editor</h2>
+          <p class="showcase__desc">A realistic settings card — circular avatar crop alongside form fields. See how CropVue blends into app UI.</p>
+        </div>
+        <div class="showcase__toggle">
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': !showCode['profile-editor'] }" @click="showCode['profile-editor'] = false">Preview</button>
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': showCode['profile-editor'] }" @click="showCode['profile-editor'] = true">Code</button>
+        </div>
+      </div>
+
+      <template v-if="!showCode['profile-editor']">
+      <div class="profile-editor">
+        <div class="profile-editor__grid">
+          <div class="profile-editor__avatar-col">
+            <div :style="profileTheme" style="width: 100%">
+              <CropVue
+                v-if="!profileAvatar"
+                stencil="circle"
+                :aspect-ratio="1"
+                output-format="webp"
+                :output-quality="0.9"
+                @done="(r: CropResult) => profileAvatar = r"
+              >
+                <template #dropzone="{ open, isDragging }">
+                  <div
+                    class="profile-editor__drop"
+                    :class="{ 'profile-editor__drop--active': isDragging }"
+                    @click="open"
+                  >
+                    <svg viewBox="0 0 24 24" width="28" height="28" fill="none" stroke="currentColor" stroke-width="1.5">
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                      <circle cx="12" cy="13" r="4"/>
+                    </svg>
+                    <span>{{ isDragging ? 'Drop photo' : 'Upload photo' }}</span>
+                  </div>
+                </template>
+              </CropVue>
+              <div v-else class="profile-editor__avatar-done">
+                <img :src="profileAvatar.url" alt="Avatar" class="profile-editor__avatar-img" />
+                <button class="profile-editor__change-link" @click="profileAvatar = null">Change photo</button>
+              </div>
+            </div>
+          </div>
+          <div class="profile-editor__form-col">
+            <div class="profile-editor__field">
+              <label class="profile-editor__label">Name</label>
+              <input v-model="profileName" type="text" class="profile-editor__input" />
+            </div>
+            <div class="profile-editor__field">
+              <label class="profile-editor__label">Email</label>
+              <input v-model="profileEmail" type="email" class="profile-editor__input" />
+            </div>
+            <div class="profile-editor__field">
+              <label class="profile-editor__label">Bio</label>
+              <textarea v-model="profileBio" rows="3" class="profile-editor__input profile-editor__textarea"></textarea>
+            </div>
+          </div>
+        </div>
+        <div class="profile-editor__actions">
+          <button class="btn btn--ghost">Cancel</button>
+          <button class="btn btn--cyan" @click="saveProfile">
+            {{ profileSaved ? 'Saved!' : 'Save Profile' }}
+          </button>
+        </div>
+      </div>
+      </template>
+
+      <div v-else class="snippet">
+        <div class="snippet__header">
+          <span class="snippet__filename">ProfileEditor.vue</span>
+          <button class="snippet__copy" @click="copyCode('profile-editor')">Copy</button>
+        </div>
+        <div class="snippet__body" v-html="highlightedCode('profile-editor')"></div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- 09 · POST COMPOSER                                      -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <section id="post-composer" class="showcase">
+      <div class="showcase__header">
+        <span class="showcase__num" style="--accent: var(--magenta)">09</span>
+        <div>
+          <h2 class="showcase__title">Post Composer</h2>
+          <p class="showcase__desc">Blog/social post creator with a 16:9 cover image area. Crop replaces the placeholder inline.</p>
+        </div>
+        <div class="showcase__toggle">
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': !showCode['post-composer'] }" @click="showCode['post-composer'] = false">Preview</button>
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': showCode['post-composer'] }" @click="showCode['post-composer'] = true">Code</button>
+        </div>
+      </div>
+
+      <template v-if="!showCode['post-composer']">
+      <div class="post-composer">
+        <div class="post-composer__cover-area">
+          <CropVue
+            v-if="!postCover"
+            stencil="rectangle"
+            :aspect-ratio="16 / 9"
+            output-format="jpeg"
+            :output-quality="0.85"
+            @done="(r: CropResult) => postCover = r"
+          >
+            <template #dropzone="{ open, isDragging }">
+              <div
+                class="post-composer__drop"
+                :class="{ 'post-composer__drop--active': isDragging }"
+                @click="open"
+              >
+                <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5">
+                  <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
+                  <circle cx="8.5" cy="8.5" r="1.5"/>
+                  <polyline points="21 15 16 10 5 21"/>
+                </svg>
+                <span>{{ isDragging ? 'Drop to set cover' : 'Add cover image' }}</span>
+                <span class="post-composer__drop-hint">16:9 ratio &middot; Click or drag</span>
+              </div>
+            </template>
+          </CropVue>
+          <div v-else class="post-composer__cover-done">
+            <img :src="postCover.url" alt="Cover" class="post-composer__cover-img" />
+            <button class="post-composer__remove" @click="removePostCover">&times;</button>
+          </div>
+        </div>
+        <div class="post-composer__body">
+          <input
+            v-model="postTitle"
+            type="text"
+            class="post-composer__title-input"
+            placeholder="Post title..."
+          />
+          <textarea
+            v-model="postBody"
+            rows="4"
+            class="post-composer__body-input"
+            placeholder="Write your post..."
+          ></textarea>
+          <div class="post-composer__tags">
+            <span v-for="tag in postTags" :key="tag" class="post-composer__tag">{{ tag }}</span>
+          </div>
+        </div>
+        <div class="post-composer__actions">
+          <button class="btn btn--ghost">Save Draft</button>
+          <button class="btn btn--magenta" @click="publishPost">
+            {{ postPublished ? 'Published!' : 'Publish' }}
+          </button>
+        </div>
+      </div>
+      </template>
+
+      <div v-else class="snippet">
+        <div class="snippet__header">
+          <span class="snippet__filename">PostComposer.vue</span>
+          <button class="snippet__copy" @click="copyCode('post-composer')">Copy</button>
+        </div>
+        <div class="snippet__body" v-html="highlightedCode('post-composer')"></div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- 10 · PRODUCT GALLERY                                    -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <section id="product-gallery" class="showcase">
+      <div class="showcase__header">
+        <span class="showcase__num" style="--accent: var(--emerald)">10</span>
+        <div>
+          <h2 class="showcase__title">Product Gallery</h2>
+          <p class="showcase__desc">E-commerce product card with a shared CropVue instance — one cropper fills multiple image slots.</p>
+        </div>
+        <div class="showcase__toggle">
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': !showCode['product-gallery'] }" @click="showCode['product-gallery'] = false">Preview</button>
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': showCode['product-gallery'] }" @click="showCode['product-gallery'] = true">Code</button>
+        </div>
+      </div>
+
+      <template v-if="!showCode['product-gallery']">
+      <div class="product-gallery">
+        <div class="product-gallery__images">
+          <div
+            class="product-gallery__slot product-gallery__slot--hero"
+            @click="!productImages[0] ? openProductSlot(0) : undefined"
+          >
+            <template v-if="productImages[0]">
+              <img :src="productImages[0].url" alt="Product main" class="product-gallery__slot-img" />
+              <div class="product-gallery__overlay">
+                <button class="product-gallery__overlay-btn" @click.stop="openProductSlot(0)">Change</button>
+                <button class="product-gallery__overlay-btn product-gallery__overlay-btn--danger" @click.stop="removeProductImage(0)">Remove</button>
+              </div>
+            </template>
+            <div v-else class="product-gallery__placeholder">
+              <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              <span>Main photo</span>
+            </div>
+          </div>
+          <div class="product-gallery__thumbs">
+            <div
+              v-for="i in [1, 2, 3]"
+              :key="i"
+              class="product-gallery__slot product-gallery__slot--thumb"
+              @click="!productImages[i] ? openProductSlot(i) : undefined"
+            >
+              <template v-if="productImages[i]">
+                <img :src="productImages[i]!.url" alt="Product thumbnail" class="product-gallery__slot-img" />
+                <div class="product-gallery__overlay">
+                  <button class="product-gallery__overlay-btn" @click.stop="openProductSlot(i)">Change</button>
+                  <button class="product-gallery__overlay-btn product-gallery__overlay-btn--danger" @click.stop="removeProductImage(i)">Remove</button>
+                </div>
+              </template>
+              <div v-else class="product-gallery__placeholder">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="1.5"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div v-if="showProductCropper" class="product-gallery__cropper">
+          <CropVue
+            stencil="rectangle"
+            :aspect-ratio="1"
+            output-format="webp"
+            :output-quality="0.9"
+            @done="onProductCrop"
+          >
+            <template #actions="{ confirm, cancel }">
+              <div class="product-gallery__cropper-actions">
+                <button class="btn btn--ghost" @click="() => { showProductCropper = false; cancel() }">Cancel</button>
+                <button class="btn btn--emerald" @click="confirm">Use Photo</button>
+              </div>
+            </template>
+          </CropVue>
+        </div>
+
+        <div class="product-gallery__info">
+          <h3 class="product-gallery__name">Artisan Ceramic Vase</h3>
+          <p class="product-gallery__price">$89.00</p>
+          <p class="product-gallery__desc-text">Hand-thrown stoneware vase with reactive glaze finish. Each piece is unique — slight variations in color and texture are part of the charm.</p>
+          <button class="btn btn--emerald product-gallery__cta">Add to Cart</button>
+        </div>
+      </div>
+      </template>
+
+      <div v-else class="snippet">
+        <div class="snippet__header">
+          <span class="snippet__filename">ProductGallery.vue</span>
+          <button class="snippet__copy" @click="copyCode('product-gallery')">Copy</button>
+        </div>
+        <div class="snippet__body" v-html="highlightedCode('product-gallery')"></div>
       </div>
     </section>
 
@@ -1902,6 +2255,433 @@ code {
 }
 
 /* =========================================================
+   08 · PROFILE EDITOR — settings card
+   ========================================================= */
+.profile-editor {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.profile-editor__grid {
+  display: grid;
+  grid-template-columns: 200px 1fr;
+  gap: 28px;
+  padding: 28px;
+}
+
+.profile-editor__avatar-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-width: 0;
+  overflow: hidden;
+}
+
+.profile-editor__drop {
+  width: 120px;
+  height: 120px;
+  border: 2px dashed var(--border-light);
+  border-radius: 50%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  color: var(--text-muted);
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 250ms ease;
+}
+
+.profile-editor__drop:hover {
+  border-color: var(--cyan);
+  color: var(--cyan);
+}
+
+.profile-editor__drop--active {
+  border-color: var(--cyan);
+  background: rgba(6, 182, 212, 0.06);
+  color: var(--cyan);
+}
+
+.profile-editor__avatar-done {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+}
+
+.profile-editor__avatar-img {
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--border);
+}
+
+.profile-editor__change-link {
+  background: none;
+  border: none;
+  color: var(--cyan);
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  padding: 0;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.profile-editor__change-link:hover {
+  color: #00b8db;
+}
+
+.profile-editor__form-col {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.profile-editor__field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.profile-editor__label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-dim);
+}
+
+.profile-editor__input {
+  width: 100%;
+  padding: 10px 14px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+
+.profile-editor__input:focus {
+  border-color: var(--cyan);
+  box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+}
+
+.profile-editor__textarea {
+  resize: vertical;
+  min-height: 60px;
+}
+
+.profile-editor__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 16px 28px;
+  border-top: 1px solid var(--border);
+}
+
+/* =========================================================
+   09 · POST COMPOSER — blog/social card
+   ========================================================= */
+.post-composer {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.post-composer__cover-area {
+  border-bottom: 1px solid var(--border);
+}
+
+.post-composer__drop {
+  aspect-ratio: 16 / 9;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  color: var(--text-muted);
+  cursor: pointer;
+  transition: all 250ms ease;
+  background: var(--surface);
+}
+
+.post-composer__drop:hover {
+  color: var(--magenta);
+  background: rgba(255, 45, 138, 0.03);
+}
+
+.post-composer__drop--active {
+  color: var(--magenta);
+  background: rgba(255, 45, 138, 0.06);
+}
+
+.post-composer__drop span {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.post-composer__drop-hint {
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  color: var(--text-muted) !important;
+}
+
+.post-composer__cover-done {
+  position: relative;
+}
+
+.post-composer__cover-img {
+  display: block;
+  width: 100%;
+  aspect-ratio: 16 / 9;
+  object-fit: cover;
+}
+
+.post-composer__remove {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(12, 12, 15, 0.7);
+  color: #fff;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(8px);
+  transition: all 150ms ease;
+}
+
+.post-composer__remove:hover {
+  background: rgba(255, 45, 138, 0.8);
+}
+
+.post-composer__body {
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.post-composer__title-input {
+  font-family: var(--font-display);
+  font-size: 22px;
+  font-weight: 700;
+  color: var(--text);
+  background: none;
+  border: none;
+  outline: none;
+  padding: 0;
+  width: 100%;
+}
+
+.post-composer__title-input::placeholder {
+  color: var(--text-muted);
+}
+
+.post-composer__body-input {
+  font-family: var(--font-body);
+  font-size: 15px;
+  color: var(--text);
+  background: none;
+  border: none;
+  outline: none;
+  resize: vertical;
+  padding: 0;
+  width: 100%;
+  line-height: 1.6;
+}
+
+.post-composer__body-input::placeholder {
+  color: var(--text-muted);
+}
+
+.post-composer__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.post-composer__tag {
+  padding: 4px 12px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--magenta);
+  background: var(--magenta-dim);
+  border-radius: 999px;
+}
+
+.post-composer__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 16px 24px;
+  border-top: 1px solid var(--border);
+}
+
+/* =========================================================
+   10 · PRODUCT GALLERY — e-commerce card
+   ========================================================= */
+.product-gallery {
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  overflow: hidden;
+}
+
+.product-gallery__images {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px;
+}
+
+.product-gallery__slot {
+  position: relative;
+  aspect-ratio: 1;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 200ms ease;
+}
+
+.product-gallery__slot:hover {
+  border-color: var(--border-light);
+}
+
+.product-gallery__slot--hero {
+  width: 100%;
+  aspect-ratio: 1;
+}
+
+.product-gallery__thumbs {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.product-gallery__slot--thumb {
+  aspect-ratio: 1;
+}
+
+.product-gallery__slot-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.product-gallery__placeholder {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 100%;
+  color: var(--text-muted);
+  font-size: 12px;
+}
+
+.product-gallery__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(12, 12, 15, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  opacity: 0;
+  transition: opacity 200ms ease;
+}
+
+.product-gallery__slot:hover .product-gallery__overlay {
+  opacity: 1;
+}
+
+.product-gallery__overlay-btn {
+  padding: 6px 14px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+  cursor: pointer;
+  backdrop-filter: blur(4px);
+  transition: all 150ms ease;
+}
+
+.product-gallery__overlay-btn:hover {
+  background: rgba(255, 255, 255, 0.2);
+}
+
+.product-gallery__overlay-btn--danger:hover {
+  background: rgba(255, 80, 80, 0.6);
+  border-color: rgba(255, 80, 80, 0.6);
+}
+
+.product-gallery__cropper {
+  padding: 16px;
+  border-top: 1px solid var(--border);
+  border-bottom: 1px solid var(--border);
+}
+
+.product-gallery__cropper-actions {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  padding: 12px 0;
+}
+
+.product-gallery__info {
+  padding: 24px;
+}
+
+.product-gallery__name {
+  font-family: var(--font-display);
+  font-size: 20px;
+  font-weight: 700;
+  color: var(--text);
+}
+
+.product-gallery__price {
+  font-family: var(--font-display);
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--emerald);
+  margin-top: 6px;
+}
+
+.product-gallery__desc-text {
+  font-size: 14px;
+  color: var(--text-dim);
+  line-height: 1.6;
+  margin-top: 12px;
+}
+
+.product-gallery__cta {
+  margin-top: 20px;
+  width: 100%;
+}
+
+/* =========================================================
    FOOTER
    ========================================================= */
 .footer {
@@ -1979,6 +2759,31 @@ code {
 
   .avatar__drop {
     padding: 28px 20px;
+  }
+
+  .profile-editor__grid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .profile-editor__avatar-col {
+    justify-self: center;
+  }
+
+  .profile-editor__actions {
+    padding: 16px 20px;
+  }
+
+  .post-composer__body {
+    padding: 16px;
+  }
+
+  .post-composer__title-input {
+    font-size: 18px;
+  }
+
+  .post-composer__actions {
+    padding: 12px 16px;
   }
 }
 </style>
