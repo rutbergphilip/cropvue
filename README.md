@@ -1,5 +1,9 @@
 # CropVue
 
+[![npm version](https://img.shields.io/npm/v/cropvue)](https://www.npmjs.com/package/cropvue)
+[![CI](https://github.com/rutbergphilip/cropvue/actions/workflows/ci.yml/badge.svg)](https://github.com/rutbergphilip/cropvue/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+
 Headless, fully customizable image cropping and upload library for Vue 3 + Nuxt.
 
 ## Features
