@@ -1,1398 +1,1757 @@
 <script setup lang="ts">
-import { ref, reactive, watch, computed } from 'vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import {
   CropVue,
   CropEditor,
-  CropPreview,
   CropDropzone,
   CropToolbar,
-  CropQueue,
-  CropStencil,
 } from 'cropvue'
-import { useCropper, useDropzone, useImageQueue, useCompressor } from '@cropvue/core'
+import { useCropper } from '@cropvue/core'
 import type { CropResult, CropVueError, StencilType, OutputFormat, TransformState } from '@cropvue/core'
 import 'cropvue/styles'
 
 // ============================================================
-// SECTION 1: Simple CropVue (default rendering)
+// Navigation — IntersectionObserver tracks active section
 // ============================================================
-const simpleResult = ref<CropResult | null>(null)
-const simpleError = ref<string | null>(null)
+const sections = [
+  { id: 'basics', label: 'The Basics' },
+  { id: 'avatar', label: 'Avatar Studio' },
+  { id: 'full-control', label: 'Full Control' },
+  { id: 'shape-shifter', label: 'Shape Shifter' },
+  { id: 'composable', label: 'Under the Hood' },
+  { id: 'themes', label: 'Theme Gallery' },
+  { id: 'standalone', label: 'Standalone' },
+]
 
-function handleSimpleDone(result: CropResult) {
-  simpleResult.value = result
-  simpleError.value = null
+const activeSection = ref('basics')
+let observer: IntersectionObserver | null = null
+
+onMounted(() => {
+  observer = new IntersectionObserver(
+    (entries) => {
+      for (const entry of entries) {
+        if (entry.isIntersecting) {
+          activeSection.value = entry.target.id
+        }
+      }
+    },
+    { rootMargin: '-80px 0px -55% 0px', threshold: 0 }
+  )
+  for (const { id } of sections) {
+    const el = document.getElementById(id)
+    if (el) observer!.observe(el)
+  }
+})
+
+onUnmounted(() => observer?.disconnect())
+
+// ============================================================
+// Section 1: The Basics — zero-config with CSS var theming
+// ============================================================
+const basicsResult = ref<CropResult | null>(null)
+
+const basicsTheme: Record<string, string> = {
+  '--cropvue-crop-border-color': '#00d4ff',
+  '--cropvue-grid-color': 'rgba(0, 212, 255, 0.3)',
+  '--cropvue-handle-color': '#00d4ff',
+  '--cropvue-dropzone-border-color': '#2a2a34',
+  '--cropvue-dropzone-border-color-active': '#00d4ff',
+  '--cropvue-dropzone-bg': 'rgba(0, 212, 255, 0.02)',
+  '--cropvue-dropzone-bg-active': 'rgba(0, 212, 255, 0.06)',
+  '--cropvue-editor-bg': '#111118',
+  '--cropvue-overlay-color': 'rgba(12, 12, 15, 0.65)',
+  '--cropvue-toolbar-bg': '#16161a',
+  '--cropvue-toolbar-border-color': '#2a2a34',
+  '--cropvue-toolbar-btn-color': '#72728a',
+  '--cropvue-toolbar-btn-hover-bg': '#1e1e24',
+  '--cropvue-toolbar-btn-hover-color': '#00d4ff',
+  '--cropvue-btn-bg': '#1e1e24',
+  '--cropvue-btn-color': '#e8e8ed',
+  '--cropvue-btn-border-color': '#2a2a34',
+  '--cropvue-btn-hover-bg': '#2a2a34',
+  '--cropvue-btn-confirm-bg': '#00d4ff',
+  '--cropvue-btn-confirm-border': '#00d4ff',
+  '--cropvue-btn-confirm-color': '#0c0c0f',
+  '--cropvue-btn-confirm-hover-bg': '#00b8db',
 }
-function handleSimpleError(error: CropVueError) {
-  simpleError.value = error.message
-}
 
 // ============================================================
-// SECTION 2: Circle Stencil with Aspect Ratio Lock
+// Section 2: Avatar Studio — circle stencil + custom dropzone
 // ============================================================
-const circleResult = ref<CropResult | null>(null)
-
-function handleCircleDone(result: CropResult) {
-  circleResult.value = result
-}
+const avatarResult = ref<CropResult | null>(null)
 
 // ============================================================
-// SECTION 3: Custom Styled CropVue (scoped slots)
+// Section 3: Full Control — all slots overridden
 // ============================================================
-const customResult = ref<CropResult | null>(null)
-
-function handleCustomDone(result: CropResult) {
-  customResult.value = result
-}
+const fullControlResult = ref<CropResult | null>(null)
 
 // ============================================================
-// SECTION 4: Dynamic Stencil & Aspect Ratio Switching
+// Section 4: Shape Shifter — dynamic reactive controls
 // ============================================================
-const dynamicStencil = ref<StencilType>('rectangle')
-const dynamicAspectRatio = ref<number | null>(null)
-const dynamicFormat = ref<OutputFormat>('auto')
-const dynamicQuality = ref(0.85)
-const dynamicResult = ref<CropResult | null>(null)
-const dynamicCropRef = ref<InstanceType<typeof CropVue> | null>(null)
+const shifterStencil = ref<StencilType>('rectangle')
+const shifterAspect = ref<number | null>(null)
+const shifterFormat = ref<OutputFormat>('auto')
+const shifterQuality = ref(0.85)
+const shifterResult = ref<CropResult | null>(null)
 
-const aspectRatioPresets = [
+const aspectPresets = [
   { label: 'Free', value: null },
   { label: '1:1', value: 1 },
   { label: '4:3', value: 4 / 3 },
   { label: '16:9', value: 16 / 9 },
   { label: '3:2', value: 3 / 2 },
-  { label: '2:3', value: 2 / 3 },
 ]
 
-function handleDynamicDone(result: CropResult) {
-  dynamicResult.value = result
-}
-
 // ============================================================
-// SECTION 5: Composable-Only Usage (useCropper)
+// Section 5: Under the Hood — composable API
 // ============================================================
-const composableCropper = useCropper({
-  stencil: 'rectangle',
-  outputQuality: 0.85,
-})
+const cropper = useCropper({ stencil: 'rectangle', outputQuality: 0.85 })
 const composableResult = ref<CropResult | null>(null)
 const composableStatus = ref('')
 
-async function onComposableFileSelect(event: Event) {
+async function onFileSelect(event: Event) {
   const input = event.target as HTMLInputElement
   if (input.files?.[0]) {
     composableStatus.value = 'Loading...'
-    await composableCropper.loadFile(input.files[0])
-    composableStatus.value = 'Ready - use controls to manipulate'
+    await cropper.loadFile(input.files[0])
+    composableStatus.value = 'Image loaded — transform, then export.'
   }
 }
 
-async function getComposableResult() {
-  composableStatus.value = 'Processing...'
-  const result = await composableCropper.getResult({ format: 'webp', quality: 0.8 })
+async function exportResult() {
+  composableStatus.value = 'Rendering...'
+  const result = await cropper.getResult({ format: 'webp', quality: 0.8 })
   composableResult.value = result
-  composableStatus.value = `Done: ${result.width}x${result.height}, ${(result.blob.size / 1024).toFixed(1)} KB`
+  composableStatus.value = `Done: ${result.width}\u00d7${result.height}, ${kb(result.blob.size)}`
 }
 
 // ============================================================
-// SECTION 6: Standalone CropDropzone
+// Section 6: Theme Gallery — three themed CropVue instances
 // ============================================================
-const dropzoneFiles = ref<File[]>([])
-const dropzoneErrors = ref<string[]>([])
-
-function onDropzoneFiles(files: File[]) {
-  dropzoneFiles.value.push(...files)
-}
-function onDropzoneError(error: CropVueError) {
-  dropzoneErrors.value.push(error.message)
+const themeImageUrls: Record<string, string> = {
+  midnight: 'https://picsum.photos/id/1015/400/300',
+  violet: 'https://picsum.photos/id/1025/400/300',
+  ember: 'https://picsum.photos/id/1035/400/300',
 }
 
+const themeConfigs = {
+  midnight: {
+    name: 'Midnight',
+    accent: '#22d3ee',
+    style: {
+      '--cropvue-editor-bg': '#0a1628',
+      '--cropvue-overlay-color': 'rgba(10, 22, 40, 0.7)',
+      '--cropvue-crop-border-color': '#22d3ee',
+      '--cropvue-grid-color': 'rgba(34, 211, 238, 0.3)',
+      '--cropvue-handle-color': '#22d3ee',
+      '--cropvue-toolbar-bg': '#0f1f38',
+      '--cropvue-toolbar-border-color': '#1a3050',
+      '--cropvue-toolbar-btn-color': '#7dd3fc',
+      '--cropvue-toolbar-btn-hover-bg': '#1a3050',
+      '--cropvue-btn-bg': '#0f1f38',
+      '--cropvue-btn-color': '#e0f2fe',
+      '--cropvue-btn-border-color': '#1a3050',
+      '--cropvue-btn-hover-bg': '#1a3050',
+      '--cropvue-btn-confirm-bg': '#0891b2',
+      '--cropvue-btn-confirm-border': '#0891b2',
+      '--cropvue-btn-confirm-hover-bg': '#0e7490',
+      '--cropvue-dropzone-border-color': '#1a3050',
+      '--cropvue-dropzone-border-color-active': '#22d3ee',
+      '--cropvue-dropzone-bg': 'rgba(10, 22, 40, 0.5)',
+      '--cropvue-dropzone-bg-active': 'rgba(34, 211, 238, 0.08)',
+    },
+  },
+  violet: {
+    name: 'Neon Violet',
+    accent: '#a855f7',
+    style: {
+      '--cropvue-editor-bg': '#1a0a2e',
+      '--cropvue-overlay-color': 'rgba(26, 10, 46, 0.7)',
+      '--cropvue-crop-border-color': '#a855f7',
+      '--cropvue-grid-color': 'rgba(168, 85, 247, 0.3)',
+      '--cropvue-handle-color': '#a855f7',
+      '--cropvue-toolbar-bg': '#240e40',
+      '--cropvue-toolbar-border-color': '#3b1664',
+      '--cropvue-toolbar-btn-color': '#c4b5fd',
+      '--cropvue-toolbar-btn-hover-bg': '#3b1664',
+      '--cropvue-btn-bg': '#240e40',
+      '--cropvue-btn-color': '#e9d5ff',
+      '--cropvue-btn-border-color': '#3b1664',
+      '--cropvue-btn-hover-bg': '#3b1664',
+      '--cropvue-btn-confirm-bg': '#9333ea',
+      '--cropvue-btn-confirm-border': '#9333ea',
+      '--cropvue-btn-confirm-hover-bg': '#7e22ce',
+      '--cropvue-dropzone-border-color': '#3b1664',
+      '--cropvue-dropzone-border-color-active': '#a855f7',
+      '--cropvue-dropzone-bg': 'rgba(26, 10, 46, 0.5)',
+      '--cropvue-dropzone-bg-active': 'rgba(168, 85, 247, 0.08)',
+    },
+  },
+  ember: {
+    name: 'Ember',
+    accent: '#f59e0b',
+    style: {
+      '--cropvue-editor-bg': '#1c1210',
+      '--cropvue-overlay-color': 'rgba(28, 18, 16, 0.7)',
+      '--cropvue-crop-border-color': '#f59e0b',
+      '--cropvue-grid-color': 'rgba(245, 158, 11, 0.3)',
+      '--cropvue-handle-color': '#f59e0b',
+      '--cropvue-toolbar-bg': '#2a1c18',
+      '--cropvue-toolbar-border-color': '#3d2a22',
+      '--cropvue-toolbar-btn-color': '#fcd34d',
+      '--cropvue-toolbar-btn-hover-bg': '#3d2a22',
+      '--cropvue-btn-bg': '#2a1c18',
+      '--cropvue-btn-color': '#fef3c7',
+      '--cropvue-btn-border-color': '#3d2a22',
+      '--cropvue-btn-hover-bg': '#3d2a22',
+      '--cropvue-btn-confirm-bg': '#d97706',
+      '--cropvue-btn-confirm-border': '#d97706',
+      '--cropvue-btn-confirm-hover-bg': '#b45309',
+      '--cropvue-dropzone-border-color': '#3d2a22',
+      '--cropvue-dropzone-border-color-active': '#f59e0b',
+      '--cropvue-dropzone-bg': 'rgba(28, 18, 16, 0.5)',
+      '--cropvue-dropzone-bg-active': 'rgba(245, 158, 11, 0.08)',
+    },
+  },
+} as const
+
+type ThemeKey = keyof typeof themeConfigs
+
 // ============================================================
-// SECTION 7: Standalone CropToolbar
+// Section 7: Standalone Parts — bento grid
 // ============================================================
+const standaloneFiles = ref<File[]>([])
+const urlInput = ref('https://picsum.photos/id/1040/800/600')
+const urlResult = ref<CropResult | null>(null)
 const toolbarTransform = ref<TransformState>({
-  x: 0,
-  y: 0,
-  scale: 1,
-  rotation: 0,
-  flipX: false,
-  flipY: false,
+  x: 0, y: 0, scale: 1, rotation: 0, flipX: false, flipY: false,
 })
 const toolbarLog = ref<string[]>([])
 
-function logToolbarAction(action: string) {
+function logAction(action: string) {
   toolbarLog.value.unshift(action)
-  if (toolbarLog.value.length > 10) toolbarLog.value.pop()
+  if (toolbarLog.value.length > 6) toolbarLog.value.pop()
 }
 
 // ============================================================
-// SECTION 8: CropVue with Output Format Options
+// Helpers
 // ============================================================
-const formatResult = ref<CropResult | null>(null)
-const selectedFormat = ref<OutputFormat>('webp')
-const selectedQuality = ref(0.85)
-
-function handleFormatDone(result: CropResult) {
-  formatResult.value = result
+function kb(bytes: number) {
+  return `${(bytes / 1024).toFixed(1)} KB`
 }
-
-// ============================================================
-// SECTION 9: CropVue with Max File Size Validation
-// ============================================================
-const validationError = ref<string | null>(null)
-
-function handleValidationError(error: CropVueError) {
-  validationError.value = `${error.type}: ${error.message}`
-}
-
-// ============================================================
-// SECTION 10: CropVue with Custom Output Dimensions
-// ============================================================
-const dimensionResult = ref<CropResult | null>(null)
-const outputMaxWidth = ref(200)
-const outputMaxHeight = ref(200)
-
-function handleDimensionDone(result: CropResult) {
-  dimensionResult.value = result
-}
-
-// ============================================================
-// SECTION 11: Theme Override Demo (CSS Custom Properties)
-// ============================================================
-const themeResult = ref<CropResult | null>(null)
-const activeTheme = ref<'default' | 'dark' | 'purple' | 'warm'>('default')
-
-const themes = {
-  default: {},
-  dark: {
-    '--cropvue-editor-bg': '#0a0a0a',
-    '--cropvue-overlay-color': 'rgba(0, 0, 0, 0.7)',
-    '--cropvue-crop-border-color': '#22d3ee',
-    '--cropvue-grid-color': 'rgba(34, 211, 238, 0.3)',
-    '--cropvue-handle-color': '#22d3ee',
-    '--cropvue-toolbar-bg': '#1e293b',
-    '--cropvue-toolbar-border-color': '#334155',
-    '--cropvue-toolbar-btn-color': '#94a3b8',
-    '--cropvue-toolbar-btn-hover-bg': '#334155',
-    '--cropvue-btn-bg': '#1e293b',
-    '--cropvue-btn-color': '#e2e8f0',
-    '--cropvue-btn-border-color': '#334155',
-    '--cropvue-btn-hover-bg': '#334155',
-    '--cropvue-btn-confirm-bg': '#0891b2',
-    '--cropvue-btn-confirm-border': '#0891b2',
-    '--cropvue-btn-confirm-hover-bg': '#0e7490',
-    '--cropvue-dropzone-border-color': '#334155',
-    '--cropvue-dropzone-border-color-active': '#22d3ee',
-    '--cropvue-dropzone-bg-active': 'rgba(34, 211, 238, 0.05)',
-  },
-  purple: {
-    '--cropvue-editor-bg': '#1e1030',
-    '--cropvue-overlay-color': 'rgba(30, 16, 48, 0.6)',
-    '--cropvue-crop-border-color': '#a855f7',
-    '--cropvue-grid-color': 'rgba(168, 85, 247, 0.3)',
-    '--cropvue-handle-color': '#a855f7',
-    '--cropvue-handle-border-radius': '2px',
-    '--cropvue-toolbar-bg': '#2e1065',
-    '--cropvue-toolbar-border-color': '#4c1d95',
-    '--cropvue-toolbar-btn-color': '#c4b5fd',
-    '--cropvue-toolbar-btn-hover-bg': '#4c1d95',
-    '--cropvue-btn-bg': '#2e1065',
-    '--cropvue-btn-color': '#e9d5ff',
-    '--cropvue-btn-border-color': '#4c1d95',
-    '--cropvue-btn-hover-bg': '#4c1d95',
-    '--cropvue-btn-confirm-bg': '#9333ea',
-    '--cropvue-btn-confirm-border': '#9333ea',
-    '--cropvue-btn-confirm-hover-bg': '#7e22ce',
-    '--cropvue-dropzone-border-color': '#4c1d95',
-    '--cropvue-dropzone-border-color-active': '#a855f7',
-    '--cropvue-dropzone-bg': 'rgba(30, 16, 48, 0.3)',
-    '--cropvue-dropzone-bg-active': 'rgba(168, 85, 247, 0.1)',
-  },
-  warm: {
-    '--cropvue-editor-bg': '#1c1917',
-    '--cropvue-overlay-color': 'rgba(28, 25, 23, 0.6)',
-    '--cropvue-crop-border-color': '#f59e0b',
-    '--cropvue-grid-color': 'rgba(245, 158, 11, 0.3)',
-    '--cropvue-handle-color': '#f59e0b',
-    '--cropvue-handle-size': '14px',
-    '--cropvue-handle-border-radius': '3px',
-    '--cropvue-toolbar-bg': '#292524',
-    '--cropvue-toolbar-border-color': '#44403c',
-    '--cropvue-toolbar-btn-color': '#d6d3d1',
-    '--cropvue-toolbar-btn-hover-bg': '#44403c',
-    '--cropvue-btn-bg': '#292524',
-    '--cropvue-btn-color': '#fafaf9',
-    '--cropvue-btn-border-color': '#44403c',
-    '--cropvue-btn-hover-bg': '#44403c',
-    '--cropvue-btn-confirm-bg': '#d97706',
-    '--cropvue-btn-confirm-border': '#d97706',
-    '--cropvue-btn-confirm-hover-bg': '#b45309',
-    '--cropvue-dropzone-border-color': '#44403c',
-    '--cropvue-dropzone-border-color-active': '#f59e0b',
-    '--cropvue-dropzone-bg-active': 'rgba(245, 158, 11, 0.05)',
-  },
-}
-
-const themeStyle = computed(() => themes[activeTheme.value])
-
-// ============================================================
-// SECTION 12: Load Image from URL
-// ============================================================
-const urlInput = ref('https://picsum.photos/800/600')
-const urlResult = ref<CropResult | null>(null)
-
-function handleUrlDone(result: CropResult) {
-  urlResult.value = result
-}
-
-// ============================================================
-// Navigation
-// ============================================================
-const sections = [
-  { id: 'simple', label: '1. Default CropVue' },
-  { id: 'circle', label: '2. Circle Stencil' },
-  { id: 'custom', label: '3. Custom Slots' },
-  { id: 'dynamic', label: '4. Dynamic Settings' },
-  { id: 'composable', label: '5. Composable API' },
-  { id: 'dropzone', label: '6. Standalone Dropzone' },
-  { id: 'toolbar', label: '7. Standalone Toolbar' },
-  { id: 'format', label: '8. Output Formats' },
-  { id: 'validation', label: '9. File Validation' },
-  { id: 'dimensions', label: '10. Output Dimensions' },
-  { id: 'theming', label: '11. Theming' },
-  { id: 'url', label: '12. Load from URL' },
-]
 </script>
 
 <template>
-  <div class="playground">
-    <header class="header">
-      <h1>CropVue Playground</h1>
-      <p class="subtitle">Comprehensive test cases for all features</p>
+  <div class="app">
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- HERO                                                   -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <header class="hero">
+      <div class="hero__grid" aria-hidden="true"></div>
+      <div class="hero__content">
+        <h1 class="hero__title">CropVue</h1>
+        <p class="hero__tagline">Image cropping for Vue, reimagined.</p>
+        <p class="hero__sub">7 interactive demos showcasing what's possible.</p>
+      </div>
     </header>
 
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- STICKY NAV                                             -->
+    <!-- ═══════════════════════════════════════════════════════ -->
     <nav class="nav">
       <a
-        v-for="section in sections"
-        :key="section.id"
-        :href="`#${section.id}`"
-        class="nav-link"
-      >
-        {{ section.label }}
-      </a>
+        v-for="s in sections"
+        :key="s.id"
+        :href="`#${s.id}`"
+        class="nav__pill"
+        :class="{ 'nav__pill--active': activeSection === s.id }"
+      >{{ s.label }}</a>
     </nav>
 
-    <!-- ===== 1. Default CropVue ===== -->
-    <section :id="'simple'" class="section">
-      <h2>1. Default CropVue (Rectangle, Free Aspect)</h2>
-      <p class="description">Basic usage with default rendering. Rectangle stencil, free aspect ratio, auto format.</p>
-
-      <CropVue
-        stencil="rectangle"
-        :aspect-ratio="null"
-        :output-quality="0.85"
-        @done="handleSimpleDone"
-        @error="handleSimpleError"
-      >
-        <template #done="{ result, restart }">
-          <div class="result-card">
-            <h3>Result</h3>
-            <img v-if="result" :src="result.url" alt="Result" class="result-image" />
-            <div v-if="result" class="result-meta">
-              <span>{{ result.width }}x{{ result.height }}</span>
-              <span>{{ result.blob.type }}</span>
-              <span>{{ (result.blob.size / 1024).toFixed(1) }} KB</span>
-            </div>
-            <button class="btn btn--primary" @click="restart">Crop Another</button>
-          </div>
-        </template>
-      </CropVue>
-
-      <div v-if="simpleError" class="error-box">{{ simpleError }}</div>
-    </section>
-
-    <!-- ===== 2. Circle Stencil ===== -->
-    <section :id="'circle'" class="section">
-      <h2>2. Circle Stencil (1:1 Locked)</h2>
-      <p class="description">Circle stencil with locked 1:1 aspect ratio. Ideal for avatar/profile picture cropping.</p>
-
-      <CropVue
-        stencil="circle"
-        :aspect-ratio="1"
-        output-format="webp"
-        :output-quality="0.9"
-        @done="handleCircleDone"
-      >
-        <template #dropzone="{ open, isDragging }">
-          <div
-            class="avatar-dropzone"
-            :class="{ 'avatar-dropzone--active': isDragging }"
-            @click="open"
-          >
-            <div class="avatar-placeholder">
-              <svg viewBox="0 0 24 24" width="48" height="48" fill="none" stroke="currentColor" stroke-width="1.5">
-                <circle cx="12" cy="8" r="4" />
-                <path d="M20 21a8 8 0 0 0-16 0" />
-              </svg>
-              <p>Upload profile picture</p>
-            </div>
-          </div>
-        </template>
-
-        <template #done="{ result, restart }">
-          <div class="result-card result-card--center">
-            <div v-if="result" class="avatar-result">
-              <img :src="result.url" alt="Avatar" class="avatar-image" />
-            </div>
-            <div v-if="result" class="result-meta">
-              <span>{{ result.width }}x{{ result.height }}</span>
-              <span>{{ result.blob.type }}</span>
-              <span>{{ (result.blob.size / 1024).toFixed(1) }} KB</span>
-            </div>
-            <button class="btn btn--primary" @click="restart">Choose Different Photo</button>
-          </div>
-        </template>
-      </CropVue>
-    </section>
-
-    <!-- ===== 3. Custom Slots ===== -->
-    <section :id="'custom'" class="section">
-      <h2>3. Fully Custom Slots</h2>
-      <p class="description">Complete UI customization via scoped slots: custom dropzone, toolbar, actions, and done state.</p>
-
-      <CropVue
-        stencil="rectangle"
-        :aspect-ratio="16 / 9"
-        output-format="jpeg"
-        :output-quality="0.8"
-        @done="handleCustomDone"
-      >
-        <template #dropzone="{ open, isDragging }">
-          <div
-            class="custom-drop"
-            :class="{ 'custom-drop--active': isDragging }"
-            @click="open"
-          >
-            <svg viewBox="0 0 24 24" width="40" height="40" fill="none" stroke="currentColor" stroke-width="1.5">
-              <path d="M12 16V4M12 4l4 4M12 4l-4 4" />
-              <path d="M2 17l.621 2.485A2 2 0 0 0 4.561 21h14.878a2 2 0 0 0 1.94-1.515L22 17" />
-            </svg>
-            <p class="custom-drop__title">{{ isDragging ? 'Release to upload!' : 'Drag & drop your image' }}</p>
-            <p class="custom-drop__subtitle">or click to browse (16:9 crop)</p>
-          </div>
-        </template>
-
-        <template #toolbar="{ rotateLeft, rotateRight, flipX, flipY, zoomIn, zoomOut, reset }">
-          <div class="custom-toolbar">
-            <button class="custom-toolbar__btn" @click="rotateLeft" title="Rotate CCW">&#x21BA;</button>
-            <button class="custom-toolbar__btn" @click="rotateRight" title="Rotate CW">&#x21BB;</button>
-            <span class="custom-toolbar__divider">|</span>
-            <button class="custom-toolbar__btn" @click="flipX" title="Flip H">&#x21C4;</button>
-            <button class="custom-toolbar__btn" @click="flipY" title="Flip V">&#x21C5;</button>
-            <span class="custom-toolbar__divider">|</span>
-            <button class="custom-toolbar__btn" @click="zoomOut" title="Zoom Out">&#x2212;</button>
-            <button class="custom-toolbar__btn" @click="zoomIn" title="Zoom In">&#x002B;</button>
-            <span class="custom-toolbar__divider">|</span>
-            <button class="custom-toolbar__btn custom-toolbar__btn--reset" @click="reset" title="Reset">Reset</button>
-          </div>
-        </template>
-
-        <template #actions="{ confirm, cancel }">
-          <div class="custom-actions">
-            <button class="btn btn--ghost" @click="cancel">Discard</button>
-            <button class="btn btn--primary" @click="confirm">Save Crop (16:9, JPEG)</button>
-          </div>
-        </template>
-
-        <template #done="{ result, restart }">
-          <div class="result-card">
-            <h3>Custom Result View</h3>
-            <img v-if="result" :src="result.url" alt="Result" class="result-image" />
-            <table v-if="result" class="result-table">
-              <tr><td>Dimensions</td><td>{{ result.width }} x {{ result.height }}</td></tr>
-              <tr><td>Format</td><td>{{ result.blob.type }}</td></tr>
-              <tr><td>Size</td><td>{{ (result.blob.size / 1024).toFixed(1) }} KB</td></tr>
-              <tr><td>Original</td><td>{{ result.originalWidth }} x {{ result.originalHeight }}</td></tr>
-            </table>
-            <button class="btn btn--primary" @click="restart">Start Over</button>
-          </div>
-        </template>
-      </CropVue>
-    </section>
-
-    <!-- ===== 4. Dynamic Stencil & Aspect Ratio ===== -->
-    <section :id="'dynamic'" class="section">
-      <h2>4. Dynamic Stencil & Settings</h2>
-      <p class="description">Change stencil type, aspect ratio, output format, and quality in real-time.</p>
-
-      <div class="controls-panel">
-        <div class="control-group">
-          <label>Stencil:</label>
-          <div class="btn-group">
-            <button
-              v-for="s in ['rectangle', 'circle'] as StencilType[]"
-              :key="s"
-              class="btn btn--sm"
-              :class="{ 'btn--active': dynamicStencil === s }"
-              @click="dynamicStencil = s"
-            >{{ s }}</button>
-          </div>
-        </div>
-
-        <div class="control-group">
-          <label>Aspect Ratio:</label>
-          <div class="btn-group">
-            <button
-              v-for="preset in aspectRatioPresets"
-              :key="preset.label"
-              class="btn btn--sm"
-              :class="{ 'btn--active': dynamicAspectRatio === preset.value }"
-              @click="dynamicAspectRatio = preset.value"
-            >{{ preset.label }}</button>
-          </div>
-        </div>
-
-        <div class="control-group">
-          <label>Format:</label>
-          <div class="btn-group">
-            <button
-              v-for="f in ['auto', 'webp', 'jpeg', 'png'] as OutputFormat[]"
-              :key="f"
-              class="btn btn--sm"
-              :class="{ 'btn--active': dynamicFormat === f }"
-              @click="dynamicFormat = f"
-            >{{ f }}</button>
-          </div>
-        </div>
-
-        <div class="control-group">
-          <label>Quality: {{ dynamicQuality.toFixed(2) }}</label>
-          <input type="range" min="0.1" max="1" step="0.05" v-model.number="dynamicQuality" />
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- 01 · THE BASICS                                        -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <section id="basics" class="showcase">
+      <div class="showcase__header">
+        <span class="showcase__num" style="--accent: var(--cyan)">01</span>
+        <div>
+          <h2 class="showcase__title">The Basics</h2>
+          <p class="showcase__desc">Zero-config defaults with CSS variable theming. No custom slots — just drop and crop.</p>
         </div>
       </div>
 
-      <CropVue
-        ref="dynamicCropRef"
-        :stencil="dynamicStencil"
-        :aspect-ratio="dynamicAspectRatio"
-        :output-format="dynamicFormat"
-        :output-quality="dynamicQuality"
-        @done="handleDynamicDone"
-      >
-        <template #done="{ result, restart }">
-          <div class="result-card">
-            <h3>Dynamic Result</h3>
-            <img v-if="result" :src="result.url" alt="Result" class="result-image" />
-            <div v-if="result" class="result-meta">
-              <span>{{ result.width }}x{{ result.height }}</span>
-              <span>{{ result.blob.type }}</span>
-              <span>{{ (result.blob.size / 1024).toFixed(1) }} KB</span>
-              <span>Quality: {{ dynamicQuality }}</span>
-            </div>
-            <button class="btn btn--primary" @click="restart">Try Again</button>
-          </div>
-        </template>
-      </CropVue>
-    </section>
-
-    <!-- ===== 5. Composable-Only Usage ===== -->
-    <section :id="'composable'" class="section">
-      <h2>5. Composable API (useCropper)</h2>
-      <p class="description">Direct composable usage without CropVue component. Full control over state and rendering.</p>
-
-      <input type="file" accept="image/*" @change="onComposableFileSelect" class="file-input" />
-
-      <div v-if="composableCropper.isReady.value" class="composable-demo">
-        <CropEditor
-          :image="composableCropper.image.value"
-          :transform="composableCropper.transform.value"
-          :crop="composableCropper.crop.value"
-          @update:transform="t => composableCropper.transform.value = t"
-          @update:crop="c => composableCropper.crop.value = c"
-        />
-
-        <div class="composable-controls">
-          <div class="btn-group">
-            <button class="btn btn--sm" @click="composableCropper.rotateLeft()">Rotate Left</button>
-            <button class="btn btn--sm" @click="composableCropper.rotateRight()">Rotate Right</button>
-            <button class="btn btn--sm" @click="composableCropper.flipX()">Flip X</button>
-            <button class="btn btn--sm" @click="composableCropper.flipY()">Flip Y</button>
-          </div>
-          <div class="btn-group">
-            <button class="btn btn--sm" @click="composableCropper.zoomBy(-0.1)">Zoom -</button>
-            <button class="btn btn--sm" @click="composableCropper.zoomBy(0.1)">Zoom +</button>
-            <button class="btn btn--sm" @click="composableCropper.zoomTo(1)">100%</button>
-            <button class="btn btn--sm" @click="composableCropper.zoomTo(2)">200%</button>
-          </div>
-          <div class="btn-group">
-            <button class="btn btn--sm" @click="composableCropper.panTo(50, 50)">Pan to (50,50)</button>
-            <button class="btn btn--sm" @click="composableCropper.panTo(0, 0)">Pan to (0,0)</button>
-            <button class="btn btn--sm" @click="composableCropper.rotateTo(45)">Rotate to 45</button>
-            <button class="btn btn--sm" @click="composableCropper.rotateTo(0)">Rotate to 0</button>
-          </div>
-          <div class="btn-group">
-            <button class="btn btn--sm" @click="composableCropper.setStencil('rectangle')">Rectangle</button>
-            <button class="btn btn--sm" @click="composableCropper.setStencil('circle')">Circle</button>
-            <button class="btn btn--sm" @click="composableCropper.setAspectRatio(1)">1:1</button>
-            <button class="btn btn--sm" @click="composableCropper.setAspectRatio(null)">Free</button>
-            <button class="btn btn--sm btn--danger" @click="composableCropper.reset()">Reset</button>
-          </div>
-        </div>
-
-        <div class="state-display">
-          <h4>Current Transform State:</h4>
-          <pre>{{ JSON.stringify(composableCropper.transform.value, null, 2) }}</pre>
-          <h4>Current Crop State:</h4>
-          <pre>{{ JSON.stringify(composableCropper.crop.value, null, 2) }}</pre>
-        </div>
-
-        <button class="btn btn--primary" @click="getComposableResult">Get Result</button>
-
-        <div v-if="composableResult" class="result-card">
-          <h3>Composable Result</h3>
-          <img :src="composableResult.url" alt="Result" class="result-image" />
-          <div class="result-meta">
-            <span>{{ composableResult.width }}x{{ composableResult.height }}</span>
-            <span>{{ composableResult.blob.type }}</span>
-            <span>{{ (composableResult.blob.size / 1024).toFixed(1) }} KB</span>
-          </div>
-          <h4>Result Coordinates:</h4>
-          <pre>{{ JSON.stringify(composableResult.coords, null, 2) }}</pre>
-        </div>
-      </div>
-      <p v-else class="status-text">{{ composableStatus || 'Select a file to begin' }}</p>
-    </section>
-
-    <!-- ===== 6. Standalone CropDropzone ===== -->
-    <section :id="'dropzone'" class="section">
-      <h2>6. Standalone CropDropzone</h2>
-      <p class="description">CropDropzone component used independently. Validates accept types and max file size.</p>
-
-      <div class="dropzone-demos">
-        <div class="dropzone-demo">
-          <h4>Accept: image/* (any image)</h4>
-          <CropDropzone @files="onDropzoneFiles" @error="onDropzoneError" />
-        </div>
-
-        <div class="dropzone-demo">
-          <h4>Max 500KB with custom slot</h4>
-          <CropDropzone
-            :max-size="500 * 1024"
-            :accept="['image/jpeg', 'image/png']"
-            @files="onDropzoneFiles"
-            @error="onDropzoneError"
+      <div class="basics__frame">
+        <div class="basics__corner basics__corner--tl"></div>
+        <div class="basics__corner basics__corner--tr"></div>
+        <div class="basics__corner basics__corner--bl"></div>
+        <div class="basics__corner basics__corner--br"></div>
+        <div :style="basicsTheme">
+          <CropVue
+            stencil="rectangle"
+            :aspect-ratio="null"
+            :output-quality="0.85"
+            @done="(r: CropResult) => basicsResult = r"
           >
-            <template #default="{ open, isDragging }">
-              <div
-                class="dropzone-styled"
-                :class="{ 'dropzone-styled--active': isDragging }"
-                @click="open"
-              >
-                <p>{{ isDragging ? 'Drop it!' : 'JPEG/PNG only, max 500KB' }}</p>
+            <template #done="{ result, restart }">
+              <div class="result">
+                <img v-if="result" :src="result.url" alt="Cropped result" class="result__img" />
+                <div v-if="result" class="result__meta">
+                  <span class="pill">{{ result.width }}&times;{{ result.height }}</span>
+                  <span class="pill">{{ result.blob.type }}</span>
+                  <span class="pill">{{ kb(result.blob.size) }}</span>
+                </div>
+                <button class="btn btn--cyan" @click="restart">Crop Another</button>
               </div>
             </template>
-          </CropDropzone>
+          </CropVue>
         </div>
-      </div>
-
-      <div v-if="dropzoneFiles.length" class="file-list">
-        <h4>Received Files:</h4>
-        <div v-for="(file, i) in dropzoneFiles" :key="i" class="file-item">
-          {{ file.name }} - {{ file.type }} - {{ (file.size / 1024).toFixed(1) }} KB
-        </div>
-      </div>
-      <div v-if="dropzoneErrors.length" class="error-list">
-        <h4>Errors:</h4>
-        <div v-for="(err, i) in dropzoneErrors" :key="i" class="error-item">{{ err }}</div>
       </div>
     </section>
 
-    <!-- ===== 7. Standalone CropToolbar ===== -->
-    <section :id="'toolbar'" class="section">
-      <h2>7. Standalone CropToolbar</h2>
-      <p class="description">CropToolbar renders default UI with SVG icons. Emits events for each action.</p>
-
-      <div class="toolbar-demo">
-        <h4>Default Toolbar</h4>
-        <CropToolbar
-          :transform="toolbarTransform"
-          @rotate-left="logToolbarAction('rotate-left')"
-          @rotate-right="logToolbarAction('rotate-right')"
-          @flip-x="logToolbarAction('flip-x')"
-          @flip-y="logToolbarAction('flip-y')"
-          @zoom-in="logToolbarAction('zoom-in')"
-          @zoom-out="logToolbarAction('zoom-out')"
-          @reset="logToolbarAction('reset')"
-        />
-      </div>
-
-      <div class="toolbar-demo">
-        <h4>Custom Toolbar via Slot</h4>
-        <CropToolbar :transform="toolbarTransform">
-          <template #default="{ rotateLeft, rotateRight, flipX, flipY, zoomIn, zoomOut, reset }">
-            <div class="custom-toolbar custom-toolbar--minimal">
-              <button class="btn btn--sm" @click="() => { rotateLeft(); logToolbarAction('custom-rotate-left') }">
-                Rotate L
-              </button>
-              <button class="btn btn--sm" @click="() => { rotateRight(); logToolbarAction('custom-rotate-right') }">
-                Rotate R
-              </button>
-              <button class="btn btn--sm btn--primary" @click="() => { zoomIn(); logToolbarAction('custom-zoom-in') }">
-                Zoom +
-              </button>
-              <button class="btn btn--sm btn--danger" @click="() => { reset(); logToolbarAction('custom-reset') }">
-                Reset
-              </button>
-            </div>
-          </template>
-        </CropToolbar>
-      </div>
-
-      <div v-if="toolbarLog.length" class="action-log">
-        <h4>Action Log:</h4>
-        <div v-for="(entry, i) in toolbarLog" :key="i" class="log-entry">{{ entry }}</div>
-      </div>
-    </section>
-
-    <!-- ===== 8. Output Formats ===== -->
-    <section :id="'format'" class="section">
-      <h2>8. Output Format Options</h2>
-      <p class="description">Test different output formats (auto, webp, jpeg, png) and quality settings.</p>
-
-      <div class="controls-panel">
-        <div class="control-group">
-          <label>Format:</label>
-          <div class="btn-group">
-            <button
-              v-for="f in ['auto', 'webp', 'jpeg', 'png'] as OutputFormat[]"
-              :key="f"
-              class="btn btn--sm"
-              :class="{ 'btn--active': selectedFormat === f }"
-              @click="selectedFormat = f"
-            >{{ f }}</button>
-          </div>
-        </div>
-        <div class="control-group">
-          <label>Quality: {{ selectedQuality.toFixed(2) }}</label>
-          <input type="range" min="0.1" max="1" step="0.05" v-model.number="selectedQuality" />
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- 02 · AVATAR STUDIO                                     -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <section id="avatar" class="showcase">
+      <div class="showcase__header">
+        <span class="showcase__num" style="--accent: var(--magenta)">02</span>
+        <div>
+          <h2 class="showcase__title">Avatar Studio</h2>
+          <p class="showcase__desc">Circle stencil with 1:1 lock. Custom dropzone and result display via scoped slots.</p>
         </div>
       </div>
 
-      <CropVue
-        stencil="rectangle"
-        :output-format="selectedFormat"
-        :output-quality="selectedQuality"
-        @done="handleFormatDone"
-      >
-        <template #done="{ result, restart }">
-          <div class="result-card">
-            <img v-if="result" :src="result.url" alt="Result" class="result-image" />
-            <div v-if="result" class="result-meta">
-              <span>{{ result.width }}x{{ result.height }}</span>
-              <span>Format: {{ result.blob.type }}</span>
-              <span>Size: {{ (result.blob.size / 1024).toFixed(1) }} KB</span>
-              <span>Quality: {{ selectedQuality }}</span>
-            </div>
-            <button class="btn btn--primary" @click="restart">Try Different Format</button>
-          </div>
-        </template>
-      </CropVue>
-    </section>
-
-    <!-- ===== 9. File Validation ===== -->
-    <section :id="'validation'" class="section">
-      <h2>9. File Validation (Size & Type Restrictions)</h2>
-      <p class="description">Max file size 100KB, only JPEG/PNG accepted. Try uploading an invalid file to see error handling.</p>
-
-      <CropVue
-        :accept="['image/jpeg', 'image/png']"
-        :max-file-size="100 * 1024"
-        @error="handleValidationError"
-      >
-        <template #dropzone="{ open, isDragging }">
-          <div
-            class="validation-dropzone"
-            :class="{ 'validation-dropzone--active': isDragging }"
-            @click="open"
-          >
-            <p>Drop image here</p>
-            <small>JPEG/PNG only, max 100KB</small>
-          </div>
-        </template>
-      </CropVue>
-
-      <div v-if="validationError" class="error-box">
-        Validation Error: {{ validationError }}
-        <button class="btn btn--sm" @click="validationError = null" style="margin-left: 8px">Clear</button>
-      </div>
-    </section>
-
-    <!-- ===== 10. Output Dimensions ===== -->
-    <section :id="'dimensions'" class="section">
-      <h2>10. Custom Output Dimensions</h2>
-      <p class="description">Constrain output to max width/height. Output will be scaled down to fit these bounds.</p>
-
-      <div class="controls-panel">
-        <div class="control-group">
-          <label>Max Width: {{ outputMaxWidth }}px</label>
-          <input type="range" min="50" max="1000" step="50" v-model.number="outputMaxWidth" />
-        </div>
-        <div class="control-group">
-          <label>Max Height: {{ outputMaxHeight }}px</label>
-          <input type="range" min="50" max="1000" step="50" v-model.number="outputMaxHeight" />
-        </div>
-      </div>
-
-      <CropVue
-        :output-max-width="outputMaxWidth"
-        :output-max-height="outputMaxHeight"
-        output-format="png"
-        @done="handleDimensionDone"
-      >
-        <template #done="{ result, restart }">
-          <div class="result-card">
-            <img v-if="result" :src="result.url" alt="Result" class="result-image" />
-            <div v-if="result" class="result-meta">
-              <span>Output: {{ result.width }}x{{ result.height }}</span>
-              <span>Original: {{ result.originalWidth }}x{{ result.originalHeight }}</span>
-              <span>Constrained to: {{ outputMaxWidth }}x{{ outputMaxHeight }} max</span>
-              <span>{{ (result.blob.size / 1024).toFixed(1) }} KB</span>
-            </div>
-            <button class="btn btn--primary" @click="restart">Try Again</button>
-          </div>
-        </template>
-      </CropVue>
-    </section>
-
-    <!-- ===== 11. Theming ===== -->
-    <section :id="'theming'" class="section" :class="`theme-${activeTheme}`">
-      <h2>11. CSS Custom Property Theming</h2>
-      <p class="description">Full visual customization via CSS custom properties. Switch between themes below.</p>
-
-      <div class="controls-panel">
-        <div class="control-group">
-          <label>Theme:</label>
-          <div class="btn-group">
-            <button
-              v-for="t in ['default', 'dark', 'purple', 'warm'] as const"
-              :key="t"
-              class="btn btn--sm"
-              :class="{ 'btn--active': activeTheme === t }"
-              @click="activeTheme = t"
-            >{{ t }}</button>
-          </div>
-        </div>
-      </div>
-
-      <div :style="themeStyle as any" class="themed-wrapper">
+      <div class="avatar__card">
         <CropVue
           stencil="circle"
           :aspect-ratio="1"
-          @done="(r: CropResult) => themeResult = r"
+          output-format="webp"
+          :output-quality="0.9"
+          @done="(r: CropResult) => avatarResult = r"
         >
-          <template #done="{ result, restart }">
-            <div class="result-card">
-              <img v-if="result" :src="result.url" alt="Result" class="result-image" />
-              <div v-if="result" class="result-meta">
-                <span>Theme: {{ activeTheme }}</span>
-                <span>{{ result.width }}x{{ result.height }}</span>
+          <template #dropzone="{ open, isDragging }">
+            <div
+              class="avatar__drop"
+              :class="{ 'avatar__drop--active': isDragging }"
+              @click="open"
+            >
+              <div class="avatar__drop-inner">
+                <div class="avatar__circle">
+                  <svg viewBox="0 0 24 24" width="36" height="36" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <circle cx="12" cy="8" r="4" />
+                    <path d="M20 21a8 8 0 0 0-16 0" />
+                  </svg>
+                </div>
+                <div class="avatar__drop-text">
+                  <span class="avatar__drop-title">{{ isDragging ? 'Drop to upload' : 'Upload avatar' }}</span>
+                  <span class="avatar__drop-sub">Click or drag an image</span>
+                </div>
               </div>
-              <button class="btn btn--primary" @click="restart">Try Another Theme</button>
+              <div class="avatar__lines">
+                <div class="avatar__line"></div>
+                <div class="avatar__line avatar__line--short"></div>
+              </div>
+            </div>
+          </template>
+
+          <template #done="{ result, restart }">
+            <div class="result result--center">
+              <div v-if="result" class="avatar__result-ring">
+                <img :src="result.url" alt="Avatar" class="avatar__result-img" />
+              </div>
+              <div v-if="result" class="result__meta">
+                <span class="pill pill--magenta">{{ result.width }}&times;{{ result.height }}</span>
+                <span class="pill pill--magenta">{{ result.blob.type }}</span>
+                <span class="pill pill--magenta">{{ kb(result.blob.size) }}</span>
+              </div>
+              <button class="btn btn--magenta" @click="restart">Choose Different Photo</button>
             </div>
           </template>
         </CropVue>
       </div>
     </section>
 
-    <!-- ===== 12. Load from URL ===== -->
-    <section :id="'url'" class="section">
-      <h2>12. Load Image from URL</h2>
-      <p class="description">Load an image directly from a URL using the `src` prop instead of file upload.</p>
-
-      <div class="url-input-row">
-        <input
-          v-model="urlInput"
-          type="text"
-          class="text-input"
-          placeholder="Enter image URL..."
-        />
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- 03 · FULL CONTROL                                      -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <section id="full-control" class="showcase">
+      <div class="showcase__header">
+        <span class="showcase__num" style="--accent: var(--emerald)">03</span>
+        <div>
+          <h2 class="showcase__title">Full Control</h2>
+          <p class="showcase__desc">Every slot overridden — custom dropzone, toolbar, actions, and result view.</p>
+        </div>
       </div>
 
       <CropVue
-        :src="urlInput"
         stencil="rectangle"
-        @done="handleUrlDone"
-        @error="(e: CropVueError) => console.error('URL error:', e)"
+        :aspect-ratio="16 / 9"
+        output-format="jpeg"
+        :output-quality="0.8"
+        @done="(r: CropResult) => fullControlResult = r"
       >
-        <template #done="{ result, restart }">
-          <div class="result-card">
-            <img v-if="result" :src="result.url" alt="Result" class="result-image" />
-            <div v-if="result" class="result-meta">
-              <span>{{ result.width }}x{{ result.height }}</span>
-              <span>{{ result.blob.type }}</span>
-              <span>{{ (result.blob.size / 1024).toFixed(1) }} KB</span>
+        <template #dropzone="{ open, isDragging }">
+          <div class="terminal" :class="{ 'terminal--active': isDragging }" @click="open">
+            <div class="terminal__bar">
+              <span class="terminal__dot terminal__dot--red"></span>
+              <span class="terminal__dot terminal__dot--yellow"></span>
+              <span class="terminal__dot terminal__dot--green"></span>
+              <span class="terminal__bar-title">cropvue &mdash; upload</span>
             </div>
-            <button class="btn btn--primary" @click="restart">Reload</button>
+            <div class="terminal__body">
+              <p class="terminal__line">
+                <span class="terminal__prompt">$</span>
+                <span>{{ isDragging ? 'receiving --image stream...' : 'drop --image here' }}</span>
+                <span class="terminal__cursor"></span>
+              </p>
+              <p class="terminal__hint">or click to browse &middot; 16:9 JPEG output</p>
+            </div>
+          </div>
+        </template>
+
+        <template #toolbar="{ rotateLeft, rotateRight, flipX, flipY, zoomIn, zoomOut, reset }">
+          <div class="dock">
+            <button class="dock__btn" @click="rotateLeft" title="Rotate left">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M2.5 2v6h6"/><path d="M2.66 12.5a9 9 0 1 0 1.34-5L2.5 8"/></svg>
+            </button>
+            <button class="dock__btn" @click="rotateRight" title="Rotate right">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21.5 2v6h-6"/><path d="M21.34 12.5a9 9 0 1 1-1.34-5L21.5 8"/></svg>
+            </button>
+            <span class="dock__sep"></span>
+            <button class="dock__btn" @click="flipX" title="Flip horizontal">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M8 3H5a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h3"/><path d="M16 3h3a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2h-3"/><line x1="12" y1="20" x2="12" y2="4"/></svg>
+            </button>
+            <button class="dock__btn" @click="flipY" title="Flip vertical">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 8V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2v3"/><path d="M3 16v3a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-3"/><line x1="4" y1="12" x2="20" y2="12"/></svg>
+            </button>
+            <span class="dock__sep"></span>
+            <button class="dock__btn" @click="zoomOut" title="Zoom out">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+            </button>
+            <button class="dock__btn" @click="zoomIn" title="Zoom in">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/><line x1="11" y1="8" x2="11" y2="14"/><line x1="8" y1="11" x2="14" y2="11"/></svg>
+            </button>
+            <span class="dock__sep"></span>
+            <button class="dock__btn dock__btn--danger" @click="reset" title="Reset">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 12a9 9 0 1 0 9-9 9.75 9.75 0 0 0-6.74 2.74L3 8"/><path d="M3 3v5h5"/></svg>
+            </button>
+          </div>
+        </template>
+
+        <template #actions="{ confirm, cancel }">
+          <div class="terminal__actions">
+            <button class="btn btn--ghost" @click="cancel">Discard</button>
+            <button class="btn btn--emerald" @click="confirm">Export 16:9 JPEG</button>
+          </div>
+        </template>
+
+        <template #done="{ result, restart }">
+          <div class="result">
+            <img v-if="result" :src="result.url" alt="Result" class="result__img" />
+            <table v-if="result" class="result__table">
+              <tr><td>Dimensions</td><td>{{ result.width }} &times; {{ result.height }}</td></tr>
+              <tr><td>Format</td><td>{{ result.blob.type }}</td></tr>
+              <tr><td>Size</td><td>{{ kb(result.blob.size) }}</td></tr>
+              <tr><td>Original</td><td>{{ result.originalWidth }} &times; {{ result.originalHeight }}</td></tr>
+            </table>
+            <button class="btn btn--emerald" @click="restart">Start Over</button>
           </div>
         </template>
       </CropVue>
     </section>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- 04 · SHAPE SHIFTER                                     -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <section id="shape-shifter" class="showcase">
+      <div class="showcase__header">
+        <span class="showcase__num" style="--accent: var(--amber)">04</span>
+        <div>
+          <h2 class="showcase__title">Shape Shifter</h2>
+          <p class="showcase__desc">Reactive props — change stencil, aspect ratio, format and quality in real-time.</p>
+        </div>
+      </div>
+
+      <div class="controls">
+        <div class="controls__row">
+          <span class="controls__label">Stencil</span>
+          <div class="controls__pills">
+            <button
+              v-for="s in (['rectangle', 'circle'] as StencilType[])"
+              :key="s"
+              class="pill-btn"
+              :class="{ 'pill-btn--active': shifterStencil === s }"
+              @click="shifterStencil = s"
+            >{{ s }}</button>
+          </div>
+        </div>
+        <div class="controls__row">
+          <span class="controls__label">Ratio</span>
+          <div class="controls__pills">
+            <button
+              v-for="p in aspectPresets"
+              :key="p.label"
+              class="pill-btn"
+              :class="{ 'pill-btn--active': shifterAspect === p.value }"
+              @click="shifterAspect = p.value"
+            >{{ p.label }}</button>
+          </div>
+        </div>
+        <div class="controls__row">
+          <span class="controls__label">Format</span>
+          <div class="controls__pills">
+            <button
+              v-for="f in (['auto', 'webp', 'jpeg', 'png'] as OutputFormat[])"
+              :key="f"
+              class="pill-btn"
+              :class="{ 'pill-btn--active': shifterFormat === f }"
+              @click="shifterFormat = f"
+            >{{ f }}</button>
+          </div>
+        </div>
+        <div class="controls__row">
+          <span class="controls__label">Quality</span>
+          <div class="controls__slider">
+            <input type="range" min="0.1" max="1" step="0.05" v-model.number="shifterQuality" class="range-input" />
+            <span class="controls__value">{{ shifterQuality.toFixed(2) }}</span>
+          </div>
+        </div>
+      </div>
+
+      <CropVue
+        :stencil="shifterStencil"
+        :aspect-ratio="shifterAspect"
+        :output-format="shifterFormat"
+        :output-quality="shifterQuality"
+        @done="(r: CropResult) => shifterResult = r"
+      >
+        <template #done="{ result, restart }">
+          <div class="result">
+            <img v-if="result" :src="result.url" alt="Result" class="result__img" />
+            <div v-if="result" class="result__meta">
+              <span class="pill pill--amber">{{ result.width }}&times;{{ result.height }}</span>
+              <span class="pill pill--amber">{{ result.blob.type }}</span>
+              <span class="pill pill--amber">{{ kb(result.blob.size) }}</span>
+              <span class="pill pill--amber">q{{ shifterQuality }}</span>
+            </div>
+            <button class="btn btn--amber" @click="restart">Try Again</button>
+          </div>
+        </template>
+      </CropVue>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- 05 · UNDER THE HOOD                                    -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <section id="composable" class="showcase showcase--blueprint">
+      <div class="showcase__header">
+        <span class="showcase__num" style="--accent: var(--cyan)">05</span>
+        <div>
+          <h2 class="showcase__title">Under the Hood</h2>
+          <p class="showcase__desc">The <code>useCropper()</code> composable with manual <code>CropEditor</code> wiring. Full programmatic control.</p>
+        </div>
+      </div>
+
+      <label class="file-btn">
+        <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>
+        Choose File
+        <input type="file" accept="image/*" @change="onFileSelect" hidden />
+      </label>
+
+      <template v-if="cropper.isReady.value">
+        <CropEditor
+          :image="cropper.image.value"
+          :transform="cropper.transform.value"
+          :crop="cropper.crop.value"
+          @update:transform="t => cropper.transform.value = t"
+          @update:crop="c => cropper.crop.value = c"
+        />
+
+        <div class="blueprint__controls">
+          <div class="btn-row">
+            <button class="btn btn--sm btn--outline" @click="cropper.rotateLeft()">&#x21BA; Rotate L</button>
+            <button class="btn btn--sm btn--outline" @click="cropper.rotateRight()">&#x21BB; Rotate R</button>
+            <button class="btn btn--sm btn--outline" @click="cropper.flipX()">&#x21C4; Flip X</button>
+            <button class="btn btn--sm btn--outline" @click="cropper.flipY()">&#x21C5; Flip Y</button>
+          </div>
+          <div class="btn-row">
+            <button class="btn btn--sm btn--outline" @click="cropper.zoomBy(-0.1)">&minus; Zoom</button>
+            <button class="btn btn--sm btn--outline" @click="cropper.zoomBy(0.1)">+ Zoom</button>
+            <button class="btn btn--sm btn--outline" @click="cropper.setStencil('rectangle')">&#x25AD; Rect</button>
+            <button class="btn btn--sm btn--outline" @click="cropper.setStencil('circle')">&#x25CB; Circle</button>
+            <button class="btn btn--sm btn--danger-outline" @click="cropper.reset()">Reset</button>
+          </div>
+        </div>
+
+        <div class="code-block">
+          <div class="code-block__header">transform state</div>
+          <pre>{{ JSON.stringify(cropper.transform.value, null, 2) }}</pre>
+        </div>
+
+        <button class="btn btn--cyan" style="margin-top: 12px" @click="exportResult">Export Result</button>
+
+        <div v-if="composableResult" class="result" style="margin-top: 16px">
+          <img :src="composableResult.url" alt="Result" class="result__img" />
+          <div class="result__meta">
+            <span class="pill">{{ composableResult.width }}&times;{{ composableResult.height }}</span>
+            <span class="pill">{{ composableResult.blob.type }}</span>
+            <span class="pill">{{ kb(composableResult.blob.size) }}</span>
+          </div>
+        </div>
+      </template>
+
+      <p v-else class="status-text">{{ composableStatus || 'Select a file to begin' }}</p>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- 06 · THEME GALLERY                                     -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <section id="themes" class="showcase">
+      <div class="showcase__header">
+        <span class="showcase__num" style="--accent: #a78bfa">06</span>
+        <div>
+          <h2 class="showcase__title">Theme Gallery</h2>
+          <p class="showcase__desc">Three radically different themes — all CSS custom properties, zero code changes.</p>
+        </div>
+      </div>
+
+      <div class="theme-grid">
+        <div
+          v-for="(theme, key) in themeConfigs"
+          :key="key"
+          class="theme-card"
+          :style="{ '--card-accent': theme.accent }"
+        >
+          <div class="theme-card__accent"></div>
+          <h3 class="theme-card__name">{{ theme.name }}</h3>
+          <div class="theme-card__body" :style="theme.style">
+            <CropVue
+              stencil="circle"
+              :aspect-ratio="1"
+              :src="themeImageUrls[key as ThemeKey]"
+            >
+              <template #done="{ result, restart }">
+                <div class="result result--compact">
+                  <img v-if="result" :src="result.url" alt="Result" class="result__img result__img--sm" />
+                  <button class="btn btn--sm btn--outline" @click="restart">Redo</button>
+                </div>
+              </template>
+            </CropVue>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- 07 · STANDALONE PARTS                                  -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <section id="standalone" class="showcase">
+      <div class="showcase__header">
+        <span class="showcase__num" style="--accent: var(--emerald)">07</span>
+        <div>
+          <h2 class="showcase__title">Standalone Parts</h2>
+          <p class="showcase__desc">Individual components used independently — dropzone, toolbar, and URL loading.</p>
+        </div>
+      </div>
+
+      <div class="bento">
+        <!-- Standalone Dropzone -->
+        <div class="bento__item">
+          <h3 class="bento__label">CropDropzone</h3>
+          <CropDropzone @files="(f: File[]) => standaloneFiles.push(...f)">
+            <template #default="{ open, isDragging }">
+              <div
+                class="rainbow-drop"
+                :class="{ 'rainbow-drop--active': isDragging }"
+                @click="open"
+              >
+                <div class="rainbow-drop__inner">
+                  <svg viewBox="0 0 24 24" width="32" height="32" fill="none" stroke="currentColor" stroke-width="1.5" opacity="0.6">
+                    <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/>
+                  </svg>
+                  <span>{{ isDragging ? 'Release!' : 'Drop files here' }}</span>
+                </div>
+              </div>
+            </template>
+          </CropDropzone>
+          <div v-if="standaloneFiles.length" class="bento__files">
+            <span v-for="(f, i) in standaloneFiles" :key="i" class="pill pill--sm">{{ f.name }}</span>
+          </div>
+        </div>
+
+        <!-- Standalone Toolbar -->
+        <div class="bento__item">
+          <h3 class="bento__label">CropToolbar</h3>
+          <div class="bento__toolbar-wrap">
+            <CropToolbar
+              :transform="toolbarTransform"
+              @rotate-left="logAction('rotate-left')"
+              @rotate-right="logAction('rotate-right')"
+              @flip-x="logAction('flip-x')"
+              @flip-y="logAction('flip-y')"
+              @zoom-in="logAction('zoom-in')"
+              @zoom-out="logAction('zoom-out')"
+              @reset="logAction('reset')"
+            />
+          </div>
+          <div v-if="toolbarLog.length" class="bento__log">
+            <span v-for="(entry, i) in toolbarLog" :key="i" class="bento__log-entry">{{ entry }}</span>
+          </div>
+        </div>
+
+        <!-- URL Loading -->
+        <div class="bento__item bento__item--url">
+          <h3 class="bento__label">URL Loading</h3>
+          <div class="url-row">
+            <input
+              v-model="urlInput"
+              type="text"
+              class="url-input"
+              placeholder="Enter image URL..."
+            />
+          </div>
+          <CropVue
+            :src="urlInput"
+            stencil="rectangle"
+            @done="(r: CropResult) => urlResult = r"
+          >
+            <template #done="{ result, restart }">
+              <div class="result result--compact">
+                <img v-if="result" :src="result.url" alt="Result" class="result__img result__img--sm" />
+                <div v-if="result" class="result__meta">
+                  <span class="pill">{{ result.width }}&times;{{ result.height }}</span>
+                  <span class="pill">{{ kb(result.blob.size) }}</span>
+                </div>
+                <button class="btn btn--emerald btn--sm" @click="restart">Reload</button>
+              </div>
+            </template>
+          </CropVue>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>Built with <strong>CropVue</strong> &middot; Vue 3 &middot; No extra dependencies</p>
+    </footer>
   </div>
 </template>
 
 <style>
-* {
-  box-sizing: border-box;
-  margin: 0;
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,100..1000;1,9..40,100..1000&family=Syne:wght@400..800&display=swap');
+
+/* =========================================================
+   CUSTOM PROPERTIES
+   ========================================================= */
+:root {
+  --bg: #0c0c0f;
+  --surface: #14141a;
+  --surface-2: #1a1a22;
+  --surface-3: #22222c;
+  --border: #2a2a34;
+  --border-light: #34343f;
+  --text: #e8e8ed;
+  --text-dim: #8888a0;
+  --text-muted: #55556a;
+
+  --cyan: #00d4ff;
+  --cyan-dim: rgba(0, 212, 255, 0.15);
+  --magenta: #ff2d8a;
+  --magenta-dim: rgba(255, 45, 138, 0.15);
+  --amber: #ffb020;
+  --amber-dim: rgba(255, 176, 32, 0.15);
+  --emerald: #10e080;
+  --emerald-dim: rgba(16, 224, 128, 0.15);
+
+  --font-display: 'Syne', sans-serif;
+  --font-body: 'DM Sans', sans-serif;
+  --nav-h: 56px;
+}
+
+/* =========================================================
+   RESET & BASE
+   ========================================================= */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  scroll-behavior: smooth;
 }
 
 body {
-  background: #f8fafc;
-  color: #1e293b;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
 }
 
-.playground {
-  max-width: 900px;
+code {
+  font-family: 'DM Mono', 'SF Mono', monospace;
+  font-size: 0.85em;
+  padding: 2px 6px;
+  background: var(--surface-2);
+  border-radius: 4px;
+  color: var(--cyan);
+}
+
+/* =========================================================
+   APP CONTAINER
+   ========================================================= */
+.app {
+  max-width: 960px;
   margin: 0 auto;
-  padding: 2rem 1rem;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  padding: 0 20px 80px;
 }
 
-.header {
+/* =========================================================
+   HERO
+   ========================================================= */
+.hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 340px;
+  overflow: hidden;
+  margin-bottom: 0;
+}
+
+.hero__grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(0, 212, 255, 0.06) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 212, 255, 0.06) 1px, transparent 1px);
+  background-size: 48px 48px;
+  mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, black 20%, transparent 70%);
+  -webkit-mask-image: radial-gradient(ellipse 60% 60% at 50% 50%, black 20%, transparent 70%);
+  animation: gridDrift 20s linear infinite;
+}
+
+@keyframes gridDrift {
+  from { background-position: 0 0; }
+  to { background-position: 48px 48px; }
+}
+
+.hero__content {
   text-align: center;
-  margin-bottom: 2rem;
+  animation: fadeSlideUp 0.8s ease-out;
 }
 
-.header h1 {
-  font-size: 2rem;
+.hero__title {
+  font-family: var(--font-display);
+  font-size: clamp(3.5rem, 8vw, 5.5rem);
+  font-weight: 800;
+  letter-spacing: -0.03em;
+  background: linear-gradient(135deg, var(--cyan) 0%, var(--magenta) 100%);
+  -webkit-background-clip: text;
+  background-clip: text;
+  -webkit-text-fill-color: transparent;
+  line-height: 1.1;
+}
+
+.hero__tagline {
+  font-family: var(--font-display);
+  font-size: clamp(1.1rem, 2.5vw, 1.4rem);
+  font-weight: 400;
+  color: var(--text-dim);
+  margin-top: 12px;
+}
+
+.hero__sub {
+  font-size: 14px;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+
+@keyframes fadeSlideUp {
+  from { opacity: 0; transform: translateY(24px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* =========================================================
+   STICKY NAV
+   ========================================================= */
+.nav {
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  padding: 10px 16px;
+  margin: 0 -20px 32px;
+  background: rgba(12, 12, 15, 0.75);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border-bottom: 1px solid var(--border);
+}
+
+.nav__pill {
+  padding: 6px 14px;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--text-muted);
+  text-decoration: none;
+  border-radius: 999px;
+  transition: all 200ms ease;
+  white-space: nowrap;
+}
+
+.nav__pill:hover {
+  color: var(--text-dim);
+  background: var(--surface-2);
+}
+
+.nav__pill--active {
+  color: var(--text);
+  background: var(--surface-3);
+}
+
+/* =========================================================
+   SHOWCASE (SECTION) BASE
+   ========================================================= */
+.showcase {
+  margin-bottom: 48px;
+  padding: 32px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  scroll-margin-top: calc(var(--nav-h) + 16px);
+}
+
+.showcase__header {
+  display: flex;
+  align-items: flex-start;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.showcase__num {
+  flex-shrink: 0;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--accent, var(--cyan));
+  background: color-mix(in srgb, var(--accent, var(--cyan)) 12%, transparent);
+  padding: 4px 10px;
+  border-radius: 6px;
+  line-height: 1.4;
+}
+
+.showcase__title {
+  font-family: var(--font-display);
+  font-size: 1.5rem;
   font-weight: 700;
   letter-spacing: -0.02em;
+  line-height: 1.3;
 }
 
-.subtitle {
-  color: #64748b;
-  margin-top: 0.5rem;
-}
-
-/* Navigation */
-.nav {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin-bottom: 2rem;
-  padding: 1rem;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-}
-
-.nav-link {
-  padding: 4px 10px;
-  font-size: 13px;
-  color: #475569;
-  text-decoration: none;
-  border-radius: 6px;
-  transition: all 150ms;
-}
-
-.nav-link:hover {
-  background: #f1f5f9;
-  color: #0f172a;
-}
-
-/* Sections */
-.section {
-  margin-bottom: 2.5rem;
-  padding: 1.5rem;
-  background: #fff;
-  border: 1px solid #e2e8f0;
-  border-radius: 12px;
-}
-
-.section h2 {
-  font-size: 1.25rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-}
-
-.description {
-  color: #64748b;
+.showcase__desc {
+  color: var(--text-dim);
   font-size: 14px;
-  margin-bottom: 1rem;
+  margin-top: 4px;
+  line-height: 1.5;
 }
 
-/* Buttons */
+/* =========================================================
+   SHARED: BUTTONS
+   ========================================================= */
 .btn {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  padding: 8px 16px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  background: #fff;
-  color: #374151;
+  gap: 6px;
+  padding: 10px 20px;
+  font-family: var(--font-body);
   font-size: 14px;
+  font-weight: 600;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--surface-2);
+  color: var(--text);
   cursor: pointer;
-  transition: all 150ms;
+  transition: all 200ms ease;
   white-space: nowrap;
 }
 
-.btn:hover { background: #f3f4f6; }
+.btn:hover { background: var(--surface-3); }
+.btn--sm { padding: 6px 12px; font-size: 12px; }
 
-.btn--sm { padding: 4px 10px; font-size: 12px; }
+.btn--cyan { background: var(--cyan); color: #0c0c0f; border-color: var(--cyan); }
+.btn--cyan:hover { background: #00b8db; }
 
-.btn--primary {
-  background: #3b82f6;
-  color: #fff;
-  border-color: #3b82f6;
-}
-.btn--primary:hover { background: #2563eb; }
+.btn--magenta { background: var(--magenta); color: #fff; border-color: var(--magenta); }
+.btn--magenta:hover { background: #e0206e; }
 
-.btn--danger {
-  background: #ef4444;
-  color: #fff;
-  border-color: #ef4444;
-}
-.btn--danger:hover { background: #dc2626; }
+.btn--emerald { background: var(--emerald); color: #0c0c0f; border-color: var(--emerald); }
+.btn--emerald:hover { background: #0cc56d; }
 
-.btn--ghost {
-  background: transparent;
-  border-color: transparent;
-  color: #6b7280;
-}
-.btn--ghost:hover { background: #f3f4f6; color: #374151; }
+.btn--amber { background: var(--amber); color: #0c0c0f; border-color: var(--amber); }
+.btn--amber:hover { background: #e09a10; }
 
-.btn--active {
-  background: #3b82f6 !important;
-  color: #fff !important;
-  border-color: #3b82f6 !important;
-}
+.btn--ghost { background: transparent; border-color: transparent; color: var(--text-dim); }
+.btn--ghost:hover { color: var(--text); background: var(--surface-2); }
 
-.btn-group {
+.btn--outline { background: transparent; border-color: var(--border-light); color: var(--text-dim); }
+.btn--outline:hover { border-color: var(--text-muted); color: var(--text); }
+
+.btn--danger-outline { border-color: rgba(255, 80, 80, 0.3); color: #ff6060; }
+.btn--danger-outline:hover { border-color: #ff6060; background: rgba(255, 80, 80, 0.08); }
+
+.btn-row {
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
+  gap: 6px;
+  margin-bottom: 8px;
 }
 
-/* Controls Panel */
-.controls-panel {
-  display: flex;
-  flex-direction: column;
-  gap: 12px;
-  padding: 12px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-  margin-bottom: 1rem;
-}
-
-.control-group {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-}
-
-.control-group label {
-  font-size: 13px;
-  font-weight: 500;
-  color: #475569;
-  min-width: 100px;
-}
-
-.control-group input[type="range"] {
-  flex: 1;
-  max-width: 200px;
-}
-
-/* Results */
-.result-card {
-  padding: 1.5rem;
+/* =========================================================
+   SHARED: RESULT DISPLAY
+   ========================================================= */
+.result {
+  padding: 24px;
   text-align: center;
 }
 
-.result-card--center {
+.result--center {
   display: flex;
   flex-direction: column;
   align-items: center;
 }
 
-.result-image {
+.result--compact {
+  padding: 16px;
+}
+
+.result__img {
   max-width: 100%;
   max-height: 300px;
-  border-radius: 8px;
-  margin: 1rem 0;
-  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  margin-bottom: 16px;
+  border: 1px solid var(--border);
 }
 
-.result-meta {
+.result__img--sm {
+  max-height: 180px;
+}
+
+.result__meta {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
+  gap: 8px;
   justify-content: center;
-  margin-bottom: 1rem;
-  font-size: 13px;
-  color: #64748b;
+  margin-bottom: 16px;
 }
 
-.result-meta span {
-  padding: 2px 8px;
-  background: #f1f5f9;
-  border-radius: 4px;
-}
-
-.result-table {
-  margin: 1rem auto;
+.result__table {
+  margin: 0 auto 16px;
   border-collapse: collapse;
-  font-size: 14px;
-}
-
-.result-table td {
-  padding: 4px 16px;
-  border-bottom: 1px solid #f1f5f9;
+  font-size: 13px;
   text-align: left;
 }
 
-.result-table td:first-child {
+.result__table td {
+  padding: 5px 20px 5px 0;
+  border-bottom: 1px solid var(--border);
+}
+
+.result__table td:first-child {
+  color: var(--text-muted);
   font-weight: 500;
-  color: #64748b;
 }
 
-/* Avatar Dropzone */
-.avatar-dropzone {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 2rem;
-  border: 2px dashed #d1d5db;
-  border-radius: 12px;
-  cursor: pointer;
-  transition: all 150ms;
+/* =========================================================
+   SHARED: PILLS / TAGS
+   ========================================================= */
+.pill {
+  display: inline-block;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-dim);
+  background: var(--surface-2);
+  border-radius: 6px;
 }
 
-.avatar-dropzone:hover {
-  border-color: #3b82f6;
-}
+.pill--sm { padding: 2px 8px; font-size: 11px; }
+.pill--magenta { background: var(--magenta-dim); color: var(--magenta); }
+.pill--amber { background: var(--amber-dim); color: var(--amber); }
 
-.avatar-dropzone--active {
-  border-color: #3b82f6;
-  background: rgba(59, 130, 246, 0.05);
-}
-
-.avatar-placeholder {
+/* =========================================================
+   SHARED: STATUS TEXT
+   ========================================================= */
+.status-text {
+  color: var(--text-muted);
+  font-style: italic;
+  padding: 24px;
   text-align: center;
-  color: #94a3b8;
 }
 
-.avatar-placeholder p {
-  margin-top: 8px;
-  font-size: 14px;
+/* =========================================================
+   01 · THE BASICS — geometric wireframe
+   ========================================================= */
+.basics__frame {
+  position: relative;
+  padding: 2px;
+  border-radius: 12px;
 }
 
-.avatar-result {
-  margin: 1rem 0;
+.basics__corner {
+  position: absolute;
+  width: 24px;
+  height: 24px;
+  border-color: var(--cyan);
+  border-style: solid;
+  border-width: 0;
+  opacity: 0.5;
+  z-index: 1;
+  pointer-events: none;
 }
 
-.avatar-image {
-  width: 150px;
-  height: 150px;
-  border-radius: 50%;
-  object-fit: cover;
-  border: 3px solid #e2e8f0;
+.basics__corner--tl { top: -4px; left: -4px; border-top-width: 2px; border-left-width: 2px; border-top-left-radius: 4px; }
+.basics__corner--tr { top: -4px; right: -4px; border-top-width: 2px; border-right-width: 2px; border-top-right-radius: 4px; }
+.basics__corner--bl { bottom: -4px; left: -4px; border-bottom-width: 2px; border-left-width: 2px; border-bottom-left-radius: 4px; }
+.basics__corner--br { bottom: -4px; right: -4px; border-bottom-width: 2px; border-right-width: 2px; border-bottom-right-radius: 4px; }
+
+/* =========================================================
+   02 · AVATAR STUDIO — glassmorphism
+   ========================================================= */
+.avatar__card {
+  background: linear-gradient(135deg, rgba(255, 45, 138, 0.05) 0%, rgba(0, 212, 255, 0.03) 100%);
+  border: 1px solid rgba(255, 45, 138, 0.12);
+  border-radius: 16px;
+  padding: 2px;
+  backdrop-filter: blur(8px);
 }
 
-/* Custom Dropzone */
-.custom-drop {
+.avatar__drop {
   display: flex;
   flex-direction: column;
   align-items: center;
-  justify-content: center;
-  gap: 12px;
-  padding: 3rem;
-  border: 2px dashed #d1d5db;
-  border-radius: 16px;
+  gap: 20px;
+  padding: 40px 32px;
+  border-radius: 14px;
   cursor: pointer;
-  color: #94a3b8;
-  transition: all 200ms;
+  transition: all 250ms ease;
 }
 
-.custom-drop:hover {
-  border-color: #6366f1;
-  color: #6366f1;
+.avatar__drop:hover .avatar__circle {
+  border-color: var(--magenta);
+  box-shadow: 0 0 24px rgba(255, 45, 138, 0.2);
 }
 
-.custom-drop--active {
-  border-color: #6366f1;
-  background: rgba(99, 102, 241, 0.05);
-  color: #6366f1;
+.avatar__drop--active .avatar__circle {
+  border-color: var(--magenta);
+  box-shadow: 0 0 32px rgba(255, 45, 138, 0.3);
+  background: rgba(255, 45, 138, 0.06);
 }
 
-.custom-drop__title {
-  font-size: 16px;
-  font-weight: 600;
+.avatar__drop-inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
 }
 
-.custom-drop__subtitle {
-  font-size: 13px;
-}
-
-/* Custom Toolbar */
-.custom-toolbar {
+.avatar__circle {
+  width: 96px;
+  height: 96px;
+  border: 2px dashed var(--border-light);
+  border-radius: 50%;
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: center;
+  color: var(--text-muted);
+  transition: all 300ms ease;
+}
+
+.avatar__drop-text {
+  text-align: center;
+}
+
+.avatar__drop-title {
+  display: block;
+  font-weight: 600;
+  font-size: 15px;
+  color: var(--text);
+}
+
+.avatar__drop-sub {
+  display: block;
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 2px;
+}
+
+.avatar__lines {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 140px;
+  opacity: 0.15;
+}
+
+.avatar__line {
+  height: 8px;
+  background: var(--text-dim);
+  border-radius: 4px;
+}
+
+.avatar__line--short {
+  width: 60%;
+}
+
+.avatar__result-ring {
+  padding: 3px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, var(--cyan), var(--magenta));
+  margin-bottom: 16px;
+}
+
+.avatar__result-img {
+  display: block;
+  width: 128px;
+  height: 128px;
+  border-radius: 50%;
+  object-fit: cover;
+  border: 3px solid var(--surface);
+}
+
+/* =========================================================
+   03 · FULL CONTROL — terminal aesthetic
+   ========================================================= */
+.terminal {
+  border: 1px solid var(--border);
+  border-radius: 10px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: border-color 250ms ease;
+}
+
+.terminal:hover,
+.terminal--active {
+  border-color: var(--emerald);
+}
+
+.terminal__bar {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  padding: 10px 14px;
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
+}
+
+.terminal__dot {
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+}
+
+.terminal__dot--red { background: #ff5f57; }
+.terminal__dot--yellow { background: #febc2e; }
+.terminal__dot--green { background: #28c840; }
+
+.terminal__bar-title {
+  margin-left: auto;
+  font-size: 12px;
+  color: var(--text-muted);
+  font-family: 'DM Mono', 'SF Mono', monospace;
+}
+
+.terminal__body {
+  padding: 32px 24px;
+  background: var(--surface);
+}
+
+.terminal__line {
+  font-family: 'DM Mono', 'SF Mono', monospace;
+  font-size: 15px;
+  color: var(--emerald);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.terminal__prompt {
+  color: var(--text-muted);
+  user-select: none;
+}
+
+.terminal__cursor {
+  display: inline-block;
+  width: 8px;
+  height: 18px;
+  background: var(--emerald);
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  50% { opacity: 0; }
+}
+
+.terminal__hint {
+  font-size: 13px;
+  color: var(--text-muted);
+  margin-top: 8px;
+}
+
+/* Dock toolbar */
+.dock {
+  display: flex;
+  align-items: center;
+  gap: 4px;
   padding: 8px 12px;
-  background: #1e293b;
-  border-radius: 8px;
   margin: 8px 0;
+  background: rgba(16, 224, 128, 0.04);
+  border: 1px solid rgba(16, 224, 128, 0.1);
+  border-radius: 12px;
+  backdrop-filter: blur(8px);
 }
 
-.custom-toolbar--minimal {
-  background: #f1f5f9;
-}
-
-.custom-toolbar__btn {
-  padding: 6px 12px;
+.dock__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
   border: none;
   background: transparent;
-  color: #e2e8f0;
-  font-size: 16px;
+  color: var(--text-dim);
   cursor: pointer;
-  border-radius: 4px;
-  transition: background 150ms;
+  border-radius: 8px;
+  transition: all 150ms ease;
 }
 
-.custom-toolbar__btn:hover {
-  background: rgba(255, 255, 255, 0.1);
+.dock__btn:hover {
+  background: rgba(16, 224, 128, 0.1);
+  color: var(--emerald);
 }
 
-.custom-toolbar__btn--reset {
-  font-size: 13px;
-  color: #f87171;
+.dock__btn--danger:hover {
+  background: rgba(255, 80, 80, 0.1);
+  color: #ff6060;
 }
 
-.custom-toolbar__divider {
-  color: #475569;
-  margin: 0 2px;
+.dock__sep {
+  width: 1px;
+  height: 20px;
+  background: var(--border);
+  margin: 0 4px;
 }
 
-/* Custom Actions */
-.custom-actions {
+.terminal__actions {
   display: flex;
   gap: 8px;
   justify-content: flex-end;
   padding: 12px 0;
 }
 
-/* Error Box */
-.error-box {
-  margin-top: 12px;
-  padding: 12px 16px;
-  background: #fef2f2;
-  border: 1px solid #fecaca;
-  border-radius: 8px;
-  color: #dc2626;
-  font-size: 14px;
-}
-
-/* Composable Demo */
-.composable-demo {
-  margin-top: 1rem;
-}
-
-.composable-controls {
+/* =========================================================
+   04 · SHAPE SHIFTER — control dashboard
+   ========================================================= */
+.controls {
   display: flex;
   flex-direction: column;
-  gap: 8px;
-  margin-bottom: 1rem;
+  gap: 12px;
+  padding: 16px 20px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  margin-bottom: 16px;
 }
 
-.state-display {
-  margin: 1rem 0;
-  padding: 12px;
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-radius: 8px;
-}
-
-.state-display h4 {
-  font-size: 13px;
-  color: #64748b;
-  margin-bottom: 4px;
-}
-
-.state-display pre {
-  font-size: 12px;
-  color: #334155;
-  overflow-x: auto;
-  margin-bottom: 8px;
-}
-
-.status-text {
-  color: #94a3b8;
-  font-style: italic;
-  padding: 1rem;
-}
-
-/* File Input */
-.file-input {
-  display: block;
-  margin-bottom: 1rem;
-}
-
-/* Dropzone Demos */
-.dropzone-demos {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 1rem;
-  margin-bottom: 1rem;
-}
-
-.dropzone-demo h4 {
-  font-size: 13px;
-  color: #64748b;
-  margin-bottom: 8px;
-}
-
-.dropzone-styled {
+.controls__row {
   display: flex;
   align-items: center;
-  justify-content: center;
-  min-height: 120px;
-  padding: 1rem;
-  border: 2px dashed #fbbf24;
-  border-radius: 12px;
-  background: #fffbeb;
-  color: #92400e;
-  cursor: pointer;
-  transition: all 150ms;
+  gap: 16px;
 }
 
-.dropzone-styled:hover {
-  border-color: #f59e0b;
-}
-
-.dropzone-styled--active {
-  border-color: #f59e0b;
-  background: #fef3c7;
-}
-
-.file-list {
-  margin-top: 12px;
-}
-
-.file-list h4 { font-size: 13px; color: #64748b; margin-bottom: 4px; }
-
-.file-item {
-  padding: 4px 8px;
+.controls__label {
   font-size: 13px;
-  border-bottom: 1px solid #f1f5f9;
+  font-weight: 600;
+  color: var(--text-muted);
+  min-width: 64px;
+  flex-shrink: 0;
 }
 
-.error-list { margin-top: 8px; }
-.error-list h4 { font-size: 13px; color: #dc2626; margin-bottom: 4px; }
-.error-item {
-  padding: 4px 8px;
-  font-size: 13px;
-  color: #dc2626;
-  background: #fef2f2;
-  border-radius: 4px;
-  margin-bottom: 4px;
-}
-
-/* Toolbar Demo */
-.toolbar-demo {
-  margin-bottom: 1rem;
-}
-
-.toolbar-demo h4 {
-  font-size: 13px;
-  color: #64748b;
-  margin-bottom: 8px;
-}
-
-.action-log {
-  margin-top: 12px;
-  padding: 12px;
-  background: #f8fafc;
-  border-radius: 8px;
-}
-
-.action-log h4 {
-  font-size: 13px;
-  color: #64748b;
-  margin-bottom: 4px;
-}
-
-.log-entry {
-  font-size: 12px;
-  font-family: monospace;
-  padding: 2px 0;
-  color: #334155;
-}
-
-/* Validation Dropzone */
-.validation-dropzone {
+.controls__pills {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  min-height: 150px;
-  padding: 2rem;
-  border: 2px dashed #fca5a5;
-  border-radius: 12px;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.pill-btn {
+  padding: 5px 14px;
+  font-family: var(--font-body);
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 999px;
   cursor: pointer;
-  color: #dc2626;
-  transition: all 150ms;
+  transition: all 180ms ease;
 }
 
-.validation-dropzone:hover {
-  border-color: #ef4444;
-  background: rgba(239, 68, 68, 0.03);
+.pill-btn:hover {
+  color: var(--text);
+  border-color: var(--border-light);
 }
 
-.validation-dropzone--active {
-  border-color: #ef4444;
-  background: rgba(239, 68, 68, 0.05);
+.pill-btn--active {
+  background: var(--amber);
+  color: #0c0c0f;
+  border-color: var(--amber);
 }
 
-.validation-dropzone small {
-  color: #f87171;
-  margin-top: 4px;
+.controls__slider {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  flex: 1;
 }
 
-/* URL Input */
-.url-input-row {
-  margin-bottom: 1rem;
+.controls__value {
+  font-family: 'DM Mono', 'SF Mono', monospace;
+  font-size: 13px;
+  color: var(--amber);
+  min-width: 40px;
 }
 
-.text-input {
-  width: 100%;
-  padding: 8px 12px;
-  border: 1px solid #d1d5db;
-  border-radius: 6px;
-  font-size: 14px;
-  color: #1e293b;
-}
-
-.text-input:focus {
+.range-input {
+  -webkit-appearance: none;
+  appearance: none;
+  flex: 1;
+  max-width: 200px;
+  height: 4px;
+  background: var(--border);
+  border-radius: 2px;
   outline: none;
-  border-color: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
 }
 
-/* Theme Wrapper */
-.themed-wrapper {
-  border-radius: 12px;
+.range-input::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  background: var(--amber);
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid var(--surface);
+  box-shadow: 0 0 8px rgba(255, 176, 32, 0.3);
+}
+
+.range-input::-moz-range-thumb {
+  width: 16px;
+  height: 16px;
+  background: var(--amber);
+  border-radius: 50%;
+  cursor: pointer;
+  border: 2px solid var(--surface);
+}
+
+/* =========================================================
+   05 · UNDER THE HOOD — blueprint aesthetic
+   ========================================================= */
+.showcase--blueprint {
+  background:
+    linear-gradient(rgba(0, 212, 255, 0.02) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0, 212, 255, 0.02) 1px, transparent 1px),
+    var(--surface);
+  background-size: 20px 20px, 20px 20px, 100%;
+}
+
+.file-btn {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 20px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--cyan);
+  background: var(--cyan-dim);
+  border: 1px solid rgba(0, 212, 255, 0.2);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 200ms ease;
+  margin-bottom: 16px;
+}
+
+.file-btn:hover {
+  background: rgba(0, 212, 255, 0.2);
+  border-color: rgba(0, 212, 255, 0.35);
+}
+
+.blueprint__controls {
+  margin: 12px 0;
+}
+
+.code-block {
+  margin-top: 12px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
   overflow: hidden;
 }
 
-.theme-dark .section {
-  background: #0f172a;
-  border-color: #1e293b;
-  color: #e2e8f0;
+.code-block__header {
+  padding: 6px 12px;
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: var(--text-muted);
+  background: var(--surface-2);
+  border-bottom: 1px solid var(--border);
 }
 
-.theme-dark .description { color: #94a3b8; }
-.theme-dark .controls-panel { background: #1e293b; border-color: #334155; }
-.theme-dark .control-group label { color: #94a3b8; }
+.code-block pre {
+  padding: 12px;
+  font-family: 'DM Mono', 'SF Mono', monospace;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--text-dim);
+  overflow-x: auto;
+  background: var(--surface);
+}
+
+/* =========================================================
+   06 · THEME GALLERY
+   ========================================================= */
+.theme-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+.theme-card {
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow: hidden;
+  transition: transform 250ms ease, box-shadow 250ms ease;
+}
+
+.theme-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3), 0 0 0 1px var(--card-accent, var(--border));
+}
+
+.theme-card__accent {
+  height: 3px;
+  background: var(--card-accent);
+}
+
+.theme-card__name {
+  padding: 12px 14px 8px;
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+.theme-card__body {
+  background: var(--surface);
+}
+
+/* =========================================================
+   07 · STANDALONE PARTS — bento grid
+   ========================================================= */
+.bento {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
+.bento__item {
+  padding: 20px;
+  background: var(--surface-2);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+}
+
+.bento__item--url {
+  grid-column: 1 / -1;
+}
+
+.bento__label {
+  font-family: var(--font-display);
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--text-dim);
+  margin-bottom: 12px;
+}
+
+/* Rainbow dropzone */
+.rainbow-drop {
+  position: relative;
+  border-radius: 12px;
+  padding: 2px;
+  background: conic-gradient(
+    from 0deg,
+    #ff0080, #ff8c00, #40e0d0, #7b68ee, #ff0080
+  );
+  cursor: pointer;
+  animation: rainbowSpin 4s linear infinite;
+}
+
+.rainbow-drop--active {
+  animation-duration: 1s;
+}
+
+@keyframes rainbowSpin {
+  to { filter: hue-rotate(360deg); }
+}
+
+.rainbow-drop__inner {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  padding: 28px 16px;
+  background: var(--surface-2);
+  border-radius: 10px;
+  color: var(--text-dim);
+  font-size: 13px;
+  transition: background 200ms ease;
+}
+
+.rainbow-drop:hover .rainbow-drop__inner {
+  background: var(--surface-3);
+}
+
+.bento__files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+  margin-top: 10px;
+}
+
+/* Toolbar wrap */
+.bento__toolbar-wrap {
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.bento__log {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-top: 10px;
+}
+
+.bento__log-entry {
+  font-family: 'DM Mono', 'SF Mono', monospace;
+  font-size: 11px;
+  color: var(--text-muted);
+  padding: 2px 0;
+}
+
+/* URL input */
+.url-row {
+  margin-bottom: 12px;
+}
+
+.url-input {
+  width: 100%;
+  padding: 10px 14px;
+  font-family: var(--font-body);
+  font-size: 14px;
+  color: var(--text);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  outline: none;
+  transition: border-color 200ms ease, box-shadow 200ms ease;
+}
+
+.url-input::placeholder {
+  color: var(--text-muted);
+}
+
+.url-input:focus {
+  border-color: var(--emerald);
+  box-shadow: 0 0 0 3px rgba(16, 224, 128, 0.1);
+}
+
+/* =========================================================
+   FOOTER
+   ========================================================= */
+.footer {
+  text-align: center;
+  padding: 40px 0 0;
+  color: var(--text-muted);
+  font-size: 13px;
+}
+
+.footer strong {
+  color: var(--text-dim);
+}
+
+/* =========================================================
+   RESPONSIVE
+   ========================================================= */
+@media (max-width: 768px) {
+  .app {
+    padding: 0 12px 60px;
+  }
+
+  .hero { min-height: 260px; }
+  .hero__title { font-size: 3rem; }
+
+  .nav {
+    gap: 3px;
+    padding: 8px 10px;
+    margin: 0 -12px 24px;
+    overflow-x: auto;
+    justify-content: flex-start;
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+  .nav::-webkit-scrollbar { display: none; }
+  .nav__pill {
+    padding: 5px 10px;
+    font-size: 12px;
+  }
+
+  .showcase {
+    padding: 20px;
+    margin-bottom: 32px;
+  }
+
+  .showcase__header {
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .theme-grid {
+    grid-template-columns: 1fr;
+  }
+
+  .bento {
+    grid-template-columns: 1fr;
+  }
+
+  .bento__item--url {
+    grid-column: 1;
+  }
+
+  .controls__row {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 6px;
+  }
+
+  .controls__label {
+    min-width: auto;
+  }
+
+  .avatar__drop {
+    padding: 28px 20px;
+  }
+}
 </style>
