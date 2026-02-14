@@ -1,11 +1,14 @@
 <script setup lang="ts">
 import { useDropzone } from '@cropvue/core'
 import type { CropVueError } from '@cropvue/core'
+import type { CropDropzoneUI } from '../types/ui'
+import { useComponentUI } from '../composables/useComponentUI'
 
 const props = withDefaults(defineProps<{
   accept?: string[]
   maxSize?: number
   multiple?: boolean
+  ui?: CropDropzoneUI
 }>(), {
   accept: () => ['image/*'],
   maxSize: Infinity,
@@ -25,13 +28,15 @@ const { isDragging, files, dropzoneRef, open } = useDropzone({
   onError: (e) => emit('error', e),
 })
 
+const mergedUi = useComponentUI('CropDropzone', () => props.ui)
+
 defineExpose({ open, files })
 </script>
 
 <template>
-  <div ref="dropzoneRef" class="cropvue-dropzone" :class="{ 'cropvue-dropzone--active': isDragging }">
+  <div ref="dropzoneRef" class="cropvue-dropzone" :class="[mergedUi.root, { 'cropvue-dropzone--active': isDragging }]">
     <slot :open="open" :is-dragging="isDragging">
-      <div class="cropvue-dropzone__default" @click="open">
+      <div class="cropvue-dropzone__default" :class="mergedUi.default" @click="open">
         <p>Drop image here or click to select</p>
       </div>
     </slot>

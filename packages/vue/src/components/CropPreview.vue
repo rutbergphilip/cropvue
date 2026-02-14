@@ -2,6 +2,8 @@
 import { ref, watch, onMounted, onUnmounted } from 'vue'
 import { renderCrop } from '@cropvue/core'
 import type { TransformState, CropState, ImageData as CropImageData } from '@cropvue/core'
+import type { CropPreviewUI } from '../types/ui'
+import { useComponentUI } from '../composables/useComponentUI'
 
 const props = withDefaults(defineProps<{
   image: CropImageData | null
@@ -10,11 +12,14 @@ const props = withDefaults(defineProps<{
   maxWidth?: number
   maxHeight?: number
   debounce?: number
+  ui?: CropPreviewUI
 }>(), {
   maxWidth: undefined,
   maxHeight: undefined,
   debounce: 50,
 })
+
+const mergedUi = useComponentUI('CropPreview', () => props.ui)
 
 const canvasRef = ref<HTMLCanvasElement | null>(null)
 let debounceTimer: ReturnType<typeof setTimeout> | undefined
@@ -51,9 +56,9 @@ defineExpose({ canvasRef, render })
 </script>
 
 <template>
-  <div class="cropvue-preview">
+  <div class="cropvue-preview" :class="mergedUi.root">
     <slot :canvas-ref="canvasRef" :render="render">
-      <canvas ref="canvasRef" class="cropvue-preview__canvas" />
+      <canvas ref="canvasRef" class="cropvue-preview__canvas" :class="mergedUi.canvas" />
     </slot>
   </div>
 </template>

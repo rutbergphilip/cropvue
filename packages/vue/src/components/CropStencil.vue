@@ -1,12 +1,17 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import type { CropState, Point } from '@cropvue/core'
+import type { CropStencilUI } from '../types/ui'
+import { useComponentUI } from '../composables/useComponentUI'
 
 const props = defineProps<{
   crop: CropState
   containerWidth: number
   containerHeight: number
+  ui?: CropStencilUI
 }>()
+
+const mergedUi = useComponentUI('CropStencil', () => props.ui)
 
 const clipPath = computed(() => {
   const c = props.crop
@@ -38,7 +43,7 @@ const stencilStyle = computed(() => ({
 </script>
 
 <template>
-  <div class="cropvue-stencil">
+  <div class="cropvue-stencil" :class="mergedUi.root">
     <slot
       :clip-path="clipPath"
       :style="stencilStyle"
@@ -46,7 +51,7 @@ const stencilStyle = computed(() => ({
       :stencil="crop.stencil"
       :points="crop.points"
     >
-      <div class="cropvue-stencil__shape" :style="stencilStyle" />
+      <div class="cropvue-stencil__shape" :class="mergedUi.shape" :style="stencilStyle" />
     </slot>
   </div>
 </template>
