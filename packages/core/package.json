@@ -1,11 +1,18 @@
 {
   "name": "@cropvue/core",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "type": "module",
   "license": "MIT",
   "description": "Headless image cropping engine - composables and utilities",
   "author": "Philip Rutberg",
-  "keywords": ["vue", "cropper", "image-crop", "headless", "composable", "canvas"],
+  "keywords": [
+    "vue",
+    "cropper",
+    "image-crop",
+    "headless",
+    "composable",
+    "canvas"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/rutbergphilip/cropvue.git",
@@ -23,7 +30,9 @@
       "types": "./dist/index.d.ts"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "unbuild",
     "dev": "unbuild --stub"

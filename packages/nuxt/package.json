@@ -1,11 +1,18 @@
 {
   "name": "@cropvue/nuxt",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "type": "module",
   "license": "MIT",
   "description": "Nuxt module for CropVue - auto-imports and SSR handling",
   "author": "Philip Rutberg",
-  "keywords": ["nuxt", "nuxt-module", "vue", "cropper", "image-crop", "headless"],
+  "keywords": [
+    "nuxt",
+    "nuxt-module",
+    "vue",
+    "cropper",
+    "image-crop",
+    "headless"
+  ],
   "repository": {
     "type": "git",
     "url": "https://github.com/rutbergphilip/cropvue.git",
@@ -23,7 +30,9 @@
       "types": "./dist/module.d.ts"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "unbuild",
     "dev": "unbuild --stub"
