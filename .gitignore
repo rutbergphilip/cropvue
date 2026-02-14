@@ -7,3 +7,7 @@ coverage
 .worktrees
 test-results
 playwright-report
+*.log
+*test*.png
+*test*.svg
+docs/.vitepress/cache
