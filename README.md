@@ -1,8 +1,12 @@
-# CropVue
+<p align="center">
+  <img src=".github/banner@2x.png" alt="CropVue - Headless image cropping for Vue 3 and Nuxt" width="960" />
+</p>
 
-[![npm version](https://img.shields.io/npm/v/@cropvue/vue)](https://www.npmjs.com/package/@cropvue/vue)
-[![CI](https://github.com/rutbergphilip/cropvue/actions/workflows/ci.yml/badge.svg)](https://github.com/rutbergphilip/cropvue/actions/workflows/ci.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+<p align="center">
+  <a href="https://www.npmjs.com/package/@cropvue/vue"><img src="https://img.shields.io/npm/v/@cropvue/vue" alt="npm version" /></a>
+  <a href="https://github.com/rutbergphilip/cropvue/actions/workflows/ci.yml"><img src="https://github.com/rutbergphilip/cropvue/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://opensource.org/licenses/MIT"><img src="https://img.shields.io/badge/License-MIT-yellow.svg" alt="License: MIT" /></a>
+</p>
 
 A headless, fully customizable **Vue 3 image cropper** with built-in file upload, drag and drop, image compression, and Nuxt support. Drop it into any Vue project and get a complete image cropping pipeline out of the box, or use the composables to build your own UI from scratch.
 
