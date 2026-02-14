@@ -207,8 +207,13 @@ function setupPointerHandler() {
       const threshold = 14 // px hit area around corner
 
       if (c.stencil === 'circle') {
-        // Circle: only NE handle
-        if (Math.abs(px - cropRight) < threshold && Math.abs(py - cropTop) < threshold) return 'ne'
+        // Circle: NE handle sits on circle edge at 45°
+        const r = (c.width * s) / 2
+        const cx = cropLeft + r
+        const cy = cropTop + r
+        const handleX = cx + r * Math.SQRT1_2
+        const handleY = cy - r * Math.SQRT1_2
+        if (Math.abs(px - handleX) < threshold && Math.abs(py - handleY) < threshold) return 'ne'
         return null
       }
 
@@ -440,4 +445,13 @@ defineExpose({ editorRef, displayScale })
 .cropvue-editor__handle--ne { top: -5px; right: -5px; cursor: nesw-resize; }
 .cropvue-editor__handle--sw { bottom: -5px; left: -5px; cursor: nesw-resize; }
 .cropvue-editor__handle--se { bottom: -5px; right: -5px; cursor: nwse-resize; }
+
+/* Circle: place NE handle on the circle edge at 45° */
+.cropvue-editor__crop-area--circle .cropvue-editor__handle--ne {
+  /* 50% + 50% * cos(45°) ≈ 85.36%, 50% - 50% * sin(45°) ≈ 14.64% */
+  top: 14.64%;
+  right: auto;
+  left: 85.36%;
+  transform: translate(-50%, -50%);
+}
 </style>
