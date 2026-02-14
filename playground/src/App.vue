@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, computed, nextTick, onMounted, onUnmounted } from 'vue'
+import { ref, computed, watch, nextTick, onMounted, onUnmounted } from 'vue'
 import {
   CropVue,
   CropEditor,
@@ -56,7 +56,10 @@ const sections = [
 ]
 
 const activeSection = ref('basics')
-let observer: IntersectionObserver | null = null
+const navRef = ref<HTMLElement | null>(null)
+const showSidebar = ref(false)
+let sectionObserver: IntersectionObserver | null = null
+let navObserver: IntersectionObserver | null = null
 
 onMounted(async () => {
   highlighter.value = await createHighlighter({
@@ -64,7 +67,8 @@ onMounted(async () => {
     langs: ['vue'],
   })
 
-  observer = new IntersectionObserver(
+  // Track which section is in view
+  sectionObserver = new IntersectionObserver(
     (entries) => {
       for (const entry of entries) {
         if (entry.isIntersecting) {
@@ -72,15 +76,27 @@ onMounted(async () => {
         }
       }
     },
-    { rootMargin: '-80px 0px -55% 0px', threshold: 0 }
+    { rootMargin: '0px 0px -55% 0px', threshold: 0 }
   )
   for (const { id } of sections) {
     const el = document.getElementById(id)
-    if (el) observer!.observe(el)
+    if (el) sectionObserver!.observe(el)
+  }
+
+  // Show sidebar when top nav scrolls out of view
+  if (navRef.value) {
+    navObserver = new IntersectionObserver(
+      ([entry]) => { showSidebar.value = !entry.isIntersecting },
+      { threshold: 0 }
+    )
+    navObserver.observe(navRef.value)
   }
 })
 
-onUnmounted(() => observer?.disconnect())
+onUnmounted(() => {
+  sectionObserver?.disconnect()
+  navObserver?.disconnect()
+})
 
 // ============================================================
 // Section 1: The Basics — zero-config with CSS var theming
@@ -710,9 +726,9 @@ function kb(bytes: number) {
     </header>
 
     <!-- ═══════════════════════════════════════════════════════ -->
-    <!-- STICKY NAV                                             -->
+    <!-- INLINE NAV (visible at top)                            -->
     <!-- ═══════════════════════════════════════════════════════ -->
-    <nav class="nav">
+    <nav ref="navRef" class="nav">
       <a
         v-for="s in sections"
         :key="s.id"
@@ -721,6 +737,24 @@ function kb(bytes: number) {
         :class="{ 'nav__pill--active': activeSection === s.id }"
       >{{ s.label }}</a>
     </nav>
+
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <!-- SIDEBAR TOC (appears on scroll)                        -->
+    <!-- ═══════════════════════════════════════════════════════ -->
+    <Transition name="toc">
+      <aside v-if="showSidebar" class="toc">
+        <a
+          v-for="(s, i) in sections"
+          :key="s.id"
+          :href="`#${s.id}`"
+          class="toc__item"
+          :class="{ 'toc__item--active': activeSection === s.id }"
+        >
+          <span class="toc__num">{{ String(i + 1).padStart(2, '0') }}</span>
+          <span class="toc__label">{{ s.label }}</span>
+        </a>
+      </aside>
+    </Transition>
 
     <!-- ═══════════════════════════════════════════════════════ -->
     <!-- 01 · THE BASICS                                        -->
@@ -2275,19 +2309,13 @@ code {
    STICKY NAV
    ========================================================= */
 .nav {
-  position: sticky;
-  top: 0;
-  z-index: 100;
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: center;
   gap: 4px;
-  padding: 10px 16px;
-  margin: 0 -20px 32px;
-  background: rgba(12, 12, 15, 0.75);
-  backdrop-filter: blur(16px);
-  -webkit-backdrop-filter: blur(16px);
-  border-bottom: 1px solid var(--border);
+  padding: 10px 0;
+  margin: 0 0 32px;
 }
 
 .nav__pill {
@@ -2309,6 +2337,100 @@ code {
 .nav__pill--active {
   color: var(--text);
   background: var(--surface-3);
+}
+
+/* =========================================================
+   SIDEBAR TOC
+   ========================================================= */
+.toc {
+  position: fixed;
+  top: 50%;
+  left: 16px;
+  transform: translateY(-50%);
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 8px;
+  background: rgba(22, 22, 28, 0.85);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  max-height: 80vh;
+  overflow-y: auto;
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.toc::-webkit-scrollbar { display: none; }
+
+.toc__item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  text-decoration: none;
+  border-radius: 8px;
+  transition: all 180ms ease;
+  white-space: nowrap;
+}
+
+.toc__num {
+  font-family: 'DM Mono', 'SF Mono', monospace;
+  font-size: 10px;
+  font-weight: 600;
+  color: var(--text-muted);
+  opacity: 0.5;
+  min-width: 16px;
+  transition: all 180ms ease;
+}
+
+.toc__label {
+  font-size: 12px;
+  font-weight: 500;
+  color: var(--text-muted);
+  transition: all 180ms ease;
+}
+
+.toc__item:hover .toc__label {
+  color: var(--text-dim);
+}
+
+.toc__item:hover .toc__num {
+  opacity: 0.8;
+}
+
+.toc__item--active {
+  background: var(--surface-3);
+}
+
+.toc__item--active .toc__num {
+  color: var(--cyan);
+  opacity: 1;
+}
+
+.toc__item--active .toc__label {
+  color: var(--text);
+}
+
+/* TOC transition */
+.toc-enter-active {
+  transition: opacity 250ms ease, transform 250ms ease;
+}
+
+.toc-leave-active {
+  transition: opacity 200ms ease, transform 200ms ease;
+}
+
+.toc-enter-from {
+  opacity: 0;
+  transform: translateY(-50%) translateX(-12px);
+}
+
+.toc-leave-to {
+  opacity: 0;
+  transform: translateY(-50%) translateX(-12px);
 }
 
 /* =========================================================
@@ -4578,6 +4700,10 @@ code {
 /* =========================================================
    RESPONSIVE
    ========================================================= */
+@media (max-width: 1200px) {
+  .toc { display: none; }
+}
+
 @media (max-width: 768px) {
   .app {
     padding: 0 12px 60px;
@@ -4588,14 +4714,9 @@ code {
 
   .nav {
     gap: 3px;
-    padding: 8px 10px;
-    margin: 0 -12px 24px;
-    overflow-x: auto;
-    justify-content: flex-start;
-    -ms-overflow-style: none;
-    scrollbar-width: none;
+    padding: 8px 0;
+    margin: 0 0 24px;
   }
-  .nav::-webkit-scrollbar { display: none; }
   .nav__pill {
     padding: 5px 10px;
     font-size: 12px;
