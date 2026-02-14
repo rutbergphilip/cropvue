@@ -1,8 +1,5 @@
 import type { TransformState, CropState } from '../types'
-
-const MIN_SCALE = 0.1
-const MAX_SCALE = 10
-const MIN_CROP = 32
+import { MIN_SCALE, MAX_SCALE, MIN_CROP_SIZE } from './constants'
 
 export function handlePan(
   state: TransformState,
@@ -59,10 +56,10 @@ export function handleCropResize(
     y = anchorBottom - height
 
     // Enforce minimum
-    if (width < MIN_CROP) {
-      width = MIN_CROP
-      height = MIN_CROP
-      y = anchorBottom - MIN_CROP
+    if (width < MIN_CROP_SIZE) {
+      width = MIN_CROP_SIZE
+      height = MIN_CROP_SIZE
+      y = anchorBottom - MIN_CROP_SIZE
     }
 
     // Enforce bounds
@@ -126,17 +123,17 @@ export function handleCropResize(
       break
   }
 
-  if (width < MIN_CROP) {
+  if (width < MIN_CROP_SIZE) {
     if (handle === 'nw' || handle === 'sw' || handle === 'w') {
-      x = crop.x + crop.width - MIN_CROP
+      x = crop.x + crop.width - MIN_CROP_SIZE
     }
-    width = MIN_CROP
+    width = MIN_CROP_SIZE
   }
-  if (height < MIN_CROP) {
+  if (height < MIN_CROP_SIZE) {
     if (handle === 'nw' || handle === 'ne' || handle === 'n') {
-      y = crop.y + crop.height - MIN_CROP
+      y = crop.y + crop.height - MIN_CROP_SIZE
     }
-    height = MIN_CROP
+    height = MIN_CROP_SIZE
   }
 
   x = Math.max(0, x)

@@ -1,8 +1,7 @@
 import type { TransformState, CropState, StencilType } from '../types'
+import { MIN_SCALE, MAX_SCALE, SNAP_THRESHOLD_DEGREES } from './constants'
 
-export const MIN_SCALE = 0.1
-export const MAX_SCALE = 10
-export const SNAP_THRESHOLD_DEGREES = 3
+export { MIN_SCALE, MAX_SCALE, SNAP_THRESHOLD_DEGREES }
 
 export function createTransformState(
   overrides: Partial<TransformState> = {}

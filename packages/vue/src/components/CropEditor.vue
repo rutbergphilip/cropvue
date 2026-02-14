@@ -26,6 +26,8 @@ const emit = defineEmits<{
   'update:crop': [crop: CropState]
 }>()
 
+const HANDLE_HIT_THRESHOLD = 14 // px hit area around crop handles
+
 const editorRef = ref<HTMLElement | null>()
 const containerRef = ref<HTMLElement | null>()
 const containerWidth = ref(0)
@@ -35,6 +37,7 @@ const isPanning = ref(false)
 const displayScale = computed(() => {
   const img = props.image
   if (!img || containerWidth.value === 0 || containerHeight.value === 0) return 1
+  if (img.naturalWidth === 0 || img.naturalHeight === 0) return 1
 
   const scaleX = containerWidth.value / img.naturalWidth
   const scaleY = containerHeight.value / img.naturalHeight
@@ -210,7 +213,7 @@ function setupPointerHandler() {
       const rect = viewportEl.getBoundingClientRect()
       const px = e.clientX - rect.left
       const py = e.clientY - rect.top
-      const threshold = 14 // px hit area around corner
+      const threshold = HANDLE_HIT_THRESHOLD
 
       if (c.stencil === 'circle') {
         // Circle: NE handle sits on circle edge at 45°
@@ -252,12 +255,19 @@ function setupPointerHandler() {
 }
 
 let resizeObserver: ResizeObserver | null = null
+let resizeRaf: number | null = null
 
 onMounted(() => {
   updateContainerSize()
   setupPointerHandler()
   if (containerRef.value) {
-    resizeObserver = new ResizeObserver(() => updateContainerSize())
+    resizeObserver = new ResizeObserver(() => {
+      if (resizeRaf) return
+      resizeRaf = requestAnimationFrame(() => {
+        updateContainerSize()
+        resizeRaf = null
+      })
+    })
     resizeObserver.observe(containerRef.value)
   }
 })
@@ -265,6 +275,10 @@ onMounted(() => {
 onUnmounted(() => {
   resizeObserver?.disconnect()
   resizeObserver = null
+  if (resizeRaf) {
+    cancelAnimationFrame(resizeRaf)
+    resizeRaf = null
+  }
   if (pointerHandler) {
     pointerHandler.destroy()
     pointerHandler = null

@@ -79,7 +79,11 @@ export function useUploader(options: UploaderOptions = {}) {
       progress.value = 100
       return result
     } catch (e) {
-      error.value = e instanceof Error ? e.message : 'Upload failed'
+      if (e instanceof Error && e.name === 'AbortError') {
+        error.value = 'Upload cancelled'
+      } else {
+        error.value = e instanceof Error ? e.message : 'Upload failed'
+      }
       throw e
     } finally {
       isUploading.value = false

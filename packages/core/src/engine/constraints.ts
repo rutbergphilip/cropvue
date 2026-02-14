@@ -1,6 +1,7 @@
 import type { CropState } from '../types'
+import { MIN_CROP_SIZE } from './constants'
 
-export const MIN_CROP_SIZE = 32
+export { MIN_CROP_SIZE }
 
 interface ContainerBounds {
   containerWidth: number

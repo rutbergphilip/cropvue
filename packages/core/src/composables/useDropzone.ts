@@ -1,6 +1,17 @@
 import { ref, watch, onMounted, onUnmounted, type Ref } from 'vue'
 import type { CropVueError, DropzoneOptions } from '../types'
 
+const IMAGE_EXTENSIONS = new Set([
+  '.jpg', '.jpeg', '.png', '.gif', '.webp', '.bmp', '.svg', '.avif', '.ico', '.tiff', '.tif',
+])
+
+function hasImageExtension(filename: string): boolean {
+  const ext = filename.lastIndexOf('.') !== -1
+    ? filename.slice(filename.lastIndexOf('.')).toLowerCase()
+    : ''
+  return IMAGE_EXTENSIONS.has(ext)
+}
+
 export function validateFile(
   file: File,
   options: { accept: string[]; maxSize: number }
@@ -14,12 +25,18 @@ export function validateFile(
     }
   }
 
-  // Check type
+  // Check type (with file extension fallback when MIME is missing)
   const accepted = options.accept.some((pattern) => {
     if (pattern === 'image/*') {
-      return file.type.startsWith('image/')
+      if (file.type) return file.type.startsWith('image/')
+      return hasImageExtension(file.name)
     }
-    return file.type === pattern
+    if (file.type) return file.type === pattern
+    // Fallback: match MIME subtype against extension (e.g. "image/png" matches ".png")
+    const ext = file.name.lastIndexOf('.') !== -1
+      ? file.name.slice(file.name.lastIndexOf('.') + 1).toLowerCase()
+      : ''
+    return pattern.endsWith(`/${ext}`)
   })
 
   if (!accepted) {

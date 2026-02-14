@@ -7,6 +7,7 @@ export function loadImageFromFile(file: File): Promise<CropImageData> {
     const img = new Image()
 
     img.onload = () => {
+      URL.revokeObjectURL(url)
       resolve({
         element: img,
         naturalWidth: img.naturalWidth,
@@ -38,6 +39,7 @@ export async function loadImageFromUrl(url: string): Promise<CropImageData> {
     const img = new Image()
 
     img.onload = () => {
+      URL.revokeObjectURL(blobUrl)
       resolve({
         element: img,
         naturalWidth: img.naturalWidth,

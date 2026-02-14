@@ -100,7 +100,7 @@ export function exportCrop(
         if (blob) {
           resolve(blob)
         } else {
-          reject(new Error('Canvas export failed: toBlob returned null'))
+          reject(new Error(`Canvas export failed: toBlob returned null (canvas size: ${canvas.width}x${canvas.height}, format: ${options.format})`))
         }
       },
       options.format,

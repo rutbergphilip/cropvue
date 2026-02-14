@@ -1,4 +1,4 @@
-import { ref, computed } from 'vue'
+import { ref, computed, onUnmounted } from 'vue'
 import type { QueueItem, CropResult } from '../types'
 
 let nextId = 0
@@ -112,6 +112,10 @@ export function useImageQueue() {
   const results = computed(() =>
     queue.items.filter((i) => i.result).map((i) => i.result!)
   )
+
+  onUnmounted(() => {
+    queue.clear()
+  })
 
   return { images, current, add, remove, select, next, previous, clear, results }
 }
