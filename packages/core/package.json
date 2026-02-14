@@ -7,11 +7,25 @@
   "author": "Philip Rutberg",
   "keywords": [
     "vue",
+    "vue3",
     "cropper",
     "image-crop",
+    "image-cropper",
+    "image-editor",
+    "image-resize",
+    "image-compress",
     "headless",
     "composable",
-    "canvas"
+    "canvas",
+    "crop",
+    "rotate",
+    "flip",
+    "zoom",
+    "webp",
+    "jpeg",
+    "png",
+    "typescript",
+    "client-side"
   ],
   "repository": {
     "type": "git",
