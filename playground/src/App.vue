@@ -67,6 +67,15 @@ const sectionGroups = [
       { id: 'wizard', label: 'Wizard' },
     ],
   },
+  {
+    id: 'group-advanced',
+    label: 'Advanced',
+    sections: [
+      { id: 'cropper-modes', label: 'Cropper Modes' },
+      { id: 'handles-config', label: 'Configurable Handles' },
+      { id: 'transitions-demo', label: 'Transitions' },
+    ],
+  },
 ]
 
 const sections = sectionGroups.flatMap(g => g.sections)
@@ -723,6 +732,20 @@ function wizardDownload() {
   a.download = `cropped-${wizardResult.value.width}x${wizardResult.value.height}.webp`
   a.click()
 }
+
+// Advanced section state
+const advancedMode = ref<'classic' | 'static' | 'hybrid'>('classic')
+const advancedMoveImage = ref(true)
+
+const handlePresets = ref({
+  corners: { nw: true, n: false, ne: true, e: false, se: true, s: false, sw: true, w: false },
+  edges: { nw: false, n: true, ne: false, e: true, se: false, s: true, sw: false, w: true },
+  all: { nw: true, n: true, ne: true, e: true, se: true, s: true, sw: true, w: true },
+  minimal: { nw: false, n: false, ne: true, e: false, se: false, s: false, sw: false, w: false },
+})
+const activeHandlePreset = ref<'corners' | 'edges' | 'all' | 'minimal'>('all')
+
+const transitionsEnabled = ref(true)
 
 function kb(bytes: number) {
   return `${(bytes / 1024).toFixed(1)} KB`
@@ -2293,6 +2316,158 @@ function kb(bytes: number) {
           <button class="snippet__copy" @click="copyCode('wizard')">Copy</button>
         </div>
         <div class="snippet__body" v-html="highlightedCode('wizard')"></div>
+      </div>
+    </section>
+
+    <div id="group-advanced" class="section-group">
+      <h2 class="section-group__title">Advanced</h2>
+      <p class="section-group__desc">Cropper modes, handle configuration, and smooth transitions.</p>
+    </div>
+
+    <section id="cropper-modes" class="showcase">
+      <div class="showcase__header">
+        <span class="showcase__num">18</span>
+        <div>
+          <h2 class="showcase__title">Cropper Modes</h2>
+          <p class="showcase__desc">Three paradigms: <strong>Classic</strong> (move stencil over image), <strong>Static</strong> (move image under fixed stencil, Instagram-style), and <strong>Hybrid</strong> (both, Telegram-style).</p>
+        </div>
+        <div class="showcase__toggle">
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': !showCode['cropper-modes'] }" @click="showCode['cropper-modes'] = false">Preview</button>
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': showCode['cropper-modes'] }" @click="showCode['cropper-modes'] = true">Code</button>
+        </div>
+      </div>
+
+      <template v-if="!showCode['cropper-modes']">
+      <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
+        <button
+          v-for="m in (['classic', 'static', 'hybrid'] as const)"
+          :key="m"
+          class="pill-btn"
+          :class="{ 'pill-btn--active': advancedMode === m }"
+          @click="advancedMode = m"
+        >{{ m.charAt(0).toUpperCase() + m.slice(1) }}</button>
+        <label style="display: flex; align-items: center; gap: 6px; margin-left: auto; color: var(--text-dim); font-size: 13px;">
+          <input type="checkbox" v-model="advancedMoveImage" /> Move Image
+        </label>
+      </div>
+      <CropVue
+        :mode="advancedMode"
+        :move-image="advancedMoveImage"
+        stencil="rectangle"
+        :aspect-ratio="1"
+      >
+        <template #done="{ result, restart }">
+          <div class="result">
+            <img v-if="result" :src="result.url" alt="Cropped" class="result__img" />
+            <button class="btn btn--accent" @click="restart">Try Again</button>
+          </div>
+        </template>
+      </CropVue>
+      <p style="color: var(--text-dim); font-size: 13px; margin-top: 8px;">
+        <template v-if="advancedMode === 'classic'">Classic: Drag the stencil, resize with handles. Image panning via mouse/touch.</template>
+        <template v-else-if="advancedMode === 'static'">Static: Stencil is fixed. Pan and zoom the image to frame your crop.</template>
+        <template v-else>Hybrid: Move stencil freely. When released, auto-zoom snaps the view back to center.</template>
+      </p>
+      </template>
+
+      <div v-else class="snippet">
+        <div class="snippet__header">
+          <span class="snippet__filename">CropperModes.vue</span>
+          <button class="snippet__copy" @click="copyCode('cropper-modes')">Copy</button>
+        </div>
+        <div class="snippet__body" v-html="highlightedCode('cropper-modes')"></div>
+      </div>
+    </section>
+
+    <section id="handles-config" class="showcase">
+      <div class="showcase__header">
+        <span class="showcase__num">19</span>
+        <div>
+          <h2 class="showcase__title">Configurable Handles</h2>
+          <p class="showcase__desc">8-directional handles — pick which ones are visible. Corner handles, edge handles, all, or minimal.</p>
+        </div>
+        <div class="showcase__toggle">
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': !showCode['handles-config'] }" @click="showCode['handles-config'] = false">Preview</button>
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': showCode['handles-config'] }" @click="showCode['handles-config'] = true">Code</button>
+        </div>
+      </div>
+
+      <template v-if="!showCode['handles-config']">
+      <div style="display: flex; gap: 8px; margin-bottom: 16px; flex-wrap: wrap;">
+        <button
+          v-for="(_, key) in handlePresets"
+          :key="key"
+          class="pill-btn"
+          :class="{ 'pill-btn--active': activeHandlePreset === key }"
+          @click="activeHandlePreset = key as any"
+        >{{ (key as string).charAt(0).toUpperCase() + (key as string).slice(1) }}</button>
+      </div>
+      <CropVue
+        :handlers="handlePresets[activeHandlePreset]"
+        stencil="rectangle"
+        :aspect-ratio="null"
+      >
+        <template #done="{ result, restart }">
+          <div class="result">
+            <img v-if="result" :src="result.url" alt="Cropped" class="result__img" />
+            <button class="btn btn--accent" @click="restart">Try Again</button>
+          </div>
+        </template>
+      </CropVue>
+      <p style="color: var(--text-dim); font-size: 13px; margin-top: 8px;">
+        Active handles: {{ Object.entries(handlePresets[activeHandlePreset]).filter(([_, v]) => v).map(([k]) => k.toUpperCase()).join(', ') || 'None' }}
+      </p>
+      </template>
+
+      <div v-else class="snippet">
+        <div class="snippet__header">
+          <span class="snippet__filename">ConfigurableHandles.vue</span>
+          <button class="snippet__copy" @click="copyCode('handles-config')">Copy</button>
+        </div>
+        <div class="snippet__body" v-html="highlightedCode('handles-config')"></div>
+      </div>
+    </section>
+
+    <section id="transitions-demo" class="showcase">
+      <div class="showcase__header">
+        <span class="showcase__num">20</span>
+        <div>
+          <h2 class="showcase__title">Smooth Transitions</h2>
+          <p class="showcase__desc">Programmatic operations (rotate, flip, zoom) animate smoothly. Toggle transitions to compare.</p>
+        </div>
+        <div class="showcase__toggle">
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': !showCode['transitions-demo'] }" @click="showCode['transitions-demo'] = false">Preview</button>
+          <button class="toggle-btn" :class="{ 'toggle-btn--active': showCode['transitions-demo'] }" @click="showCode['transitions-demo'] = true">Code</button>
+        </div>
+      </div>
+
+      <template v-if="!showCode['transitions-demo']">
+      <div style="display: flex; gap: 8px; margin-bottom: 16px; align-items: center;">
+        <label style="display: flex; align-items: center; gap: 6px; color: var(--text-dim); font-size: 13px;">
+          <input type="checkbox" v-model="transitionsEnabled" /> Transitions
+        </label>
+        <span style="color: var(--text-dim); font-size: 12px; opacity: 0.6;">Use the toolbar to rotate/flip and see the difference</span>
+      </div>
+      <CropVue
+        :transitions="transitionsEnabled"
+        stencil="rectangle"
+        :aspect-ratio="null"
+      >
+        <template #done="{ result, restart }">
+          <div class="result">
+            <img v-if="result" :src="result.url" alt="Cropped" class="result__img" />
+            <button class="btn btn--accent" @click="restart">Try Again</button>
+          </div>
+        </template>
+      </CropVue>
+      </template>
+
+      <div v-else class="snippet">
+        <div class="snippet__header">
+          <span class="snippet__filename">Transitions.vue</span>
+          <button class="snippet__copy" @click="copyCode('transitions-demo')">Copy</button>
+        </div>
+        <div class="snippet__body" v-html="highlightedCode('transitions-demo')"></div>
       </div>
     </section>
 
