@@ -5,6 +5,7 @@ import {
   handleCropResize,
   handleCropMove,
   handleKeyboard,
+  handlePinchZoom,
 } from '../engine/gestures'
 import { createTransformState, createCropState } from '../engine/transform'
 
@@ -142,5 +143,97 @@ describe('handleKeyboard', () => {
     const transform = createTransformState()
     const result = handleKeyboard(transform, 'a', false)
     expect(result).toEqual(transform)
+  })
+})
+
+describe('handlePinchZoom', () => {
+  it('zooms in when fingers spread apart', () => {
+    const state = createTransformState()
+    const result = handlePinchZoom(state, 1.2, 100, 100, 0, 0)
+    expect(result.scale).toBeGreaterThan(1)
+  })
+
+  it('zooms out when fingers pinch together', () => {
+    const state = createTransformState()
+    const result = handlePinchZoom(state, 0.8, 100, 100, 0, 0)
+    expect(result.scale).toBeLessThan(1)
+  })
+
+  it('pans simultaneously with zoom', () => {
+    const state = createTransformState()
+    const result = handlePinchZoom(state, 1.0, 100, 100, 10, 20)
+    expect(result.x).toBe(10)
+    expect(result.y).toBe(20)
+  })
+
+  it('clamps scale within bounds', () => {
+    const state = createTransformState()
+    const result = handlePinchZoom(state, 100, 0, 0, 0, 0)
+    expect(result.scale).toBeLessThanOrEqual(10)
+  })
+
+  it('centers zoom on pinch center point', () => {
+    const state = createTransformState()
+    const result = handlePinchZoom(state, 1.5, 200, 150, 0, 0)
+    expect(result.x).not.toBe(0)
+    expect(result.y).not.toBe(0)
+  })
+})
+
+describe('handleCropResize with aspect ratio', () => {
+  it('enforces aspect ratio when resizing from east handle', () => {
+    const crop = {
+      ...createCropState({ width: 800, height: 800 }),
+      x: 100, y: 100, width: 200, height: 100,
+      aspectRatio: 2,
+    }
+    const result = handleCropResize(crop, 'e', 50, 0, { width: 800, height: 800 })
+    expect(result.width).toBe(250)
+    expect(result.height).toBe(125)
+  })
+
+  it('enforces aspect ratio when resizing from south handle', () => {
+    const crop = {
+      ...createCropState({ width: 800, height: 800 }),
+      x: 100, y: 100, width: 200, height: 100,
+      aspectRatio: 2,
+    }
+    const result = handleCropResize(crop, 's', 0, 50, { width: 800, height: 800 })
+    expect(result.height).toBe(150)
+    expect(result.width).toBe(300)
+  })
+
+  it('enforces aspect ratio when resizing from north handle', () => {
+    const crop = {
+      ...createCropState({ width: 800, height: 800 }),
+      x: 100, y: 200, width: 200, height: 100,
+      aspectRatio: 2,
+    }
+    const result = handleCropResize(crop, 'n', 0, -50, { width: 800, height: 800 })
+    expect(result.height).toBe(150)
+    expect(result.width).toBe(300)
+    expect(result.y).toBe(150)
+  })
+
+  it('enforces aspect ratio when resizing from west handle', () => {
+    const crop = {
+      ...createCropState({ width: 800, height: 800 }),
+      x: 200, y: 100, width: 200, height: 100,
+      aspectRatio: 2,
+    }
+    const result = handleCropResize(crop, 'w', -50, 0, { width: 800, height: 800 })
+    expect(result.width).toBe(250)
+    expect(result.height).toBe(125)
+    expect(result.x).toBe(150)
+  })
+
+  it('enforces aspect ratio for SE corner handle', () => {
+    const crop = {
+      ...createCropState({ width: 800, height: 800 }),
+      x: 100, y: 100, width: 200, height: 200,
+      aspectRatio: 1,
+    }
+    const result = handleCropResize(crop, 'se', 50, 30, { width: 800, height: 800 })
+    expect(result.width).toBe(result.height)
   })
 })
