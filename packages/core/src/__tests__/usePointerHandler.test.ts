@@ -246,23 +246,19 @@ describe('usePointerHandler', () => {
       expect(el.setPointerCapture).not.toHaveBeenCalled()
     })
 
-    it('ignores second concurrent pointer', () => {
-      const opts = createOptions()
+    it('switches to pinch mode on second concurrent pointer', () => {
+      const opts = createOptions({ onPinchZoom: vi.fn() })
       usePointerHandler(el as unknown as HTMLElement, opts)
 
       el._dispatch('pointerdown', { button: 0, pointerId: 1, clientX: 100, clientY: 100 })
       el._dispatch('pointerdown', { button: 0, pointerId: 2, clientX: 200, clientY: 200 })
 
-      // Only one setPointerCapture call (for pointer 1)
-      expect(el.setPointerCapture).toHaveBeenCalledTimes(1)
+      // Both pointers get capture
+      expect(el.setPointerCapture).toHaveBeenCalledTimes(2)
 
-      // Move second pointer - should be ignored
-      el._dispatch('pointermove', { pointerId: 2, clientX: 250, clientY: 250 })
-      expect(opts.onPan).not.toHaveBeenCalled()
-
-      // Move first pointer - should work
+      // Single pointer move should not trigger pan (we are in pinch mode)
       el._dispatch('pointermove', { pointerId: 1, clientX: 120, clientY: 130 })
-      expect(opts.onPan).toHaveBeenCalledWith(20, 30)
+      expect(opts.onPan).not.toHaveBeenCalled()
     })
   })
 
@@ -333,6 +329,278 @@ describe('usePointerHandler', () => {
       el._dispatch('keydown', { key: 'a', shiftKey: false })
 
       expect(opts.onKeyboard).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('pinch zoom', () => {
+    it('detects pinch zoom with two active pointers', () => {
+      const onPinchZoom = vi.fn()
+      const opts = createOptions({ onPinchZoom })
+      usePointerHandler(el as unknown as HTMLElement, opts)
+
+      // First finger down at (100, 200)
+      el._dispatch('pointerdown', { button: 0, pointerId: 1, clientX: 100, clientY: 200 })
+      // Second finger down at (300, 200) - triggers pinch mode
+      el._dispatch('pointerdown', { button: 0, pointerId: 2, clientX: 300, clientY: 200 })
+
+      // Spread fingers apart: pointer 1 moves left, pointer 2 moves right
+      el._dispatch('pointermove', { pointerId: 1, clientX: 50, clientY: 200 })
+      el._dispatch('pointermove', { pointerId: 2, clientX: 350, clientY: 200 })
+
+      expect(onPinchZoom).toHaveBeenCalled()
+      // Factor should be > 1 because fingers spread apart
+      const firstCall = onPinchZoom.mock.calls[0]
+      expect(firstCall[0]).toBeGreaterThan(1) // factor
+    })
+
+    it('reports factor < 1 when fingers pinch inward', () => {
+      const onPinchZoom = vi.fn()
+      const opts = createOptions({ onPinchZoom })
+      usePointerHandler(el as unknown as HTMLElement, opts)
+
+      // Fingers start far apart
+      el._dispatch('pointerdown', { button: 0, pointerId: 1, clientX: 0, clientY: 300 })
+      el._dispatch('pointerdown', { button: 0, pointerId: 2, clientX: 400, clientY: 300 })
+
+      // Move fingers closer together
+      el._dispatch('pointermove', { pointerId: 1, clientX: 150, clientY: 300 })
+      el._dispatch('pointermove', { pointerId: 2, clientX: 250, clientY: 300 })
+
+      expect(onPinchZoom).toHaveBeenCalled()
+      // Get the last call (after both moves)
+      const lastCall = onPinchZoom.mock.calls[onPinchZoom.mock.calls.length - 1]
+      expect(lastCall[0]).toBeLessThan(1) // factor
+    })
+
+    it('does not call onPan during pinch', () => {
+      const onPinchZoom = vi.fn()
+      const opts = createOptions({ onPinchZoom })
+      usePointerHandler(el as unknown as HTMLElement, opts)
+
+      el._dispatch('pointerdown', { button: 0, pointerId: 1, clientX: 100, clientY: 100 })
+      el._dispatch('pointerdown', { button: 0, pointerId: 2, clientX: 200, clientY: 200 })
+
+      el._dispatch('pointermove', { pointerId: 1, clientX: 90, clientY: 90 })
+      el._dispatch('pointermove', { pointerId: 2, clientX: 210, clientY: 210 })
+
+      expect(opts.onPan).not.toHaveBeenCalled()
+    })
+
+    it('reports center coordinates in image space', () => {
+      const onPinchZoom = vi.fn()
+      el.getBoundingClientRect.mockReturnValue({ left: 10, top: 20, width: 800, height: 600 })
+      const opts = createOptions({ onPinchZoom, displayScale: () => 2 })
+      usePointerHandler(el as unknown as HTMLElement, opts)
+
+      // Two pointers centered around (210, 220) in client space
+      el._dispatch('pointerdown', { button: 0, pointerId: 1, clientX: 110, clientY: 220 })
+      el._dispatch('pointerdown', { button: 0, pointerId: 2, clientX: 310, clientY: 220 })
+
+      // Spread out a bit to trigger onPinchZoom
+      el._dispatch('pointermove', { pointerId: 1, clientX: 100, clientY: 220 })
+      el._dispatch('pointermove', { pointerId: 2, clientX: 320, clientY: 220 })
+
+      expect(onPinchZoom).toHaveBeenCalled()
+      const lastCall = onPinchZoom.mock.calls[onPinchZoom.mock.calls.length - 1]
+      // center x in image space: (center.clientX - rect.left) / scale
+      // center y in image space: (center.clientY - rect.top) / scale
+      // cx and cy are args [1] and [2]
+      expect(typeof lastCall[1]).toBe('number')
+      expect(typeof lastCall[2]).toBe('number')
+    })
+
+    it('transitions from pinch back to pan when one finger lifts', () => {
+      const onPinchZoom = vi.fn()
+      const opts = createOptions({ onPinchZoom })
+      usePointerHandler(el as unknown as HTMLElement, opts)
+
+      // Start pinch
+      el._dispatch('pointerdown', { button: 0, pointerId: 1, clientX: 100, clientY: 100 })
+      el._dispatch('pointerdown', { button: 0, pointerId: 2, clientX: 200, clientY: 200 })
+
+      // Lift second finger
+      el._dispatch('pointerup', { pointerId: 2 })
+
+      // Now move the remaining finger - should trigger pan
+      el._dispatch('pointermove', { pointerId: 1, clientX: 120, clientY: 130 })
+
+      expect(opts.onPan).toHaveBeenCalledWith(20, 30)
+    })
+
+    it('does not call onPinchZoom if callback not provided', () => {
+      // No onPinchZoom in options
+      const opts = createOptions()
+      usePointerHandler(el as unknown as HTMLElement, opts)
+
+      el._dispatch('pointerdown', { button: 0, pointerId: 1, clientX: 100, clientY: 100 })
+      el._dispatch('pointerdown', { button: 0, pointerId: 2, clientX: 200, clientY: 200 })
+      el._dispatch('pointermove', { pointerId: 1, clientX: 90, clientY: 90 })
+
+      // Should not throw
+      expect(opts.onPan).not.toHaveBeenCalled()
+    })
+
+    it('fully resets state when all pointers are released', () => {
+      const onPinchZoom = vi.fn()
+      const opts = createOptions({ onPinchZoom })
+      usePointerHandler(el as unknown as HTMLElement, opts)
+
+      // Pinch gesture
+      el._dispatch('pointerdown', { button: 0, pointerId: 1, clientX: 100, clientY: 100 })
+      el._dispatch('pointerdown', { button: 0, pointerId: 2, clientX: 200, clientY: 200 })
+      el._dispatch('pointerup', { pointerId: 1 })
+      el._dispatch('pointerup', { pointerId: 2 })
+
+      // New single-pointer drag should work as normal pan
+      el._dispatch('pointerdown', { button: 0, pointerId: 3, clientX: 50, clientY: 50 })
+      el._dispatch('pointermove', { pointerId: 3, clientX: 70, clientY: 60 })
+
+      expect(opts.onPan).toHaveBeenCalledWith(20, 10)
+    })
+  })
+
+  describe('multi-pointer transition', () => {
+    it('switches from resize to pinch when second pointer arrives', () => {
+      const onPinchZoom = vi.fn()
+      const opts = createOptions({
+        onPinchZoom,
+        getHandleAtPoint: vi.fn(() => 'se' as HandlePosition),
+      })
+      usePointerHandler(el as unknown as HTMLElement, opts)
+
+      // Start resize with pointer 1
+      el._dispatch('pointerdown', { button: 0, pointerId: 1, clientX: 100, clientY: 100 })
+      el._dispatch('pointermove', { pointerId: 1, clientX: 110, clientY: 110 })
+      expect(opts.onCropResize).toHaveBeenCalled()
+
+      // Second finger arrives - switches to pinch
+      el._dispatch('pointerdown', { button: 0, pointerId: 2, clientX: 300, clientY: 300 })
+
+      // Now moving should trigger pinch, not resize
+      opts.onCropResize = vi.fn()
+      el._dispatch('pointermove', { pointerId: 1, clientX: 90, clientY: 90 })
+      el._dispatch('pointermove', { pointerId: 2, clientX: 310, clientY: 310 })
+
+      expect(onPinchZoom).toHaveBeenCalled()
+      expect(opts.onCropResize).not.toHaveBeenCalled()
+    })
+
+    it('switches from crop-move to pinch when second pointer arrives', () => {
+      const onPinchZoom = vi.fn()
+      const opts = createOptions({
+        onPinchZoom,
+        isInsideCropArea: vi.fn(() => true),
+      })
+      usePointerHandler(el as unknown as HTMLElement, opts)
+
+      // Start crop-move
+      el._dispatch('pointerdown', { button: 0, pointerId: 1, clientX: 200, clientY: 200 })
+      el._dispatch('pointermove', { pointerId: 1, clientX: 210, clientY: 210 })
+      expect(opts.onCropMove).toHaveBeenCalled()
+
+      // Second finger
+      el._dispatch('pointerdown', { button: 0, pointerId: 2, clientX: 400, clientY: 400 })
+
+      opts.onCropMove = vi.fn()
+      el._dispatch('pointermove', { pointerId: 2, clientX: 420, clientY: 420 })
+
+      expect(onPinchZoom).toHaveBeenCalled()
+      expect(opts.onCropMove).not.toHaveBeenCalled()
+    })
+  })
+
+  describe('mode-aware routing', () => {
+    it('static mode routes all single-pointer drags to pan', () => {
+      const opts = createOptions({
+        mode: 'static',
+        getHandleAtPoint: vi.fn(() => 'se' as HandlePosition),
+        isInsideCropArea: vi.fn(() => true),
+      })
+      usePointerHandler(el as unknown as HTMLElement, opts)
+
+      el._dispatch('pointerdown', { button: 0, pointerId: 1, clientX: 100, clientY: 100 })
+      el._dispatch('pointermove', { pointerId: 1, clientX: 120, clientY: 130 })
+
+      // Should pan even though handle and crop area return true
+      expect(opts.onPan).toHaveBeenCalledWith(20, 30)
+      expect(opts.onCropResize).not.toHaveBeenCalled()
+      expect(opts.onCropMove).not.toHaveBeenCalled()
+    })
+
+    it('static mode ignores handle detection', () => {
+      const opts = createOptions({
+        mode: 'static',
+        getHandleAtPoint: vi.fn(() => 'nw' as HandlePosition),
+      })
+      usePointerHandler(el as unknown as HTMLElement, opts)
+
+      el._dispatch('pointerdown', { button: 0, pointerId: 1, clientX: 50, clientY: 50 })
+      el._dispatch('pointermove', { pointerId: 1, clientX: 60, clientY: 60 })
+
+      expect(opts.onPan).toHaveBeenCalledWith(10, 10)
+      expect(opts.onCropResize).not.toHaveBeenCalled()
+    })
+
+    it('classic mode (default) uses normal routing', () => {
+      const opts = createOptions({
+        mode: 'classic',
+        isInsideCropArea: vi.fn(() => true),
+      })
+      usePointerHandler(el as unknown as HTMLElement, opts)
+
+      el._dispatch('pointerdown', { button: 0, pointerId: 1, clientX: 200, clientY: 200 })
+      el._dispatch('pointermove', { pointerId: 1, clientX: 220, clientY: 210 })
+
+      expect(opts.onCropMove).toHaveBeenCalledWith(20, 10)
+      expect(opts.onPan).not.toHaveBeenCalled()
+    })
+
+    it('moveImage=false prevents pan on outside clicks', () => {
+      const opts = createOptions({
+        moveImage: false,
+        isInsideCropArea: vi.fn(() => false),
+        getHandleAtPoint: vi.fn(() => null),
+      })
+      usePointerHandler(el as unknown as HTMLElement, opts)
+
+      el._dispatch('pointerdown', { button: 0, pointerId: 1, clientX: 10, clientY: 10 })
+      el._dispatch('pointermove', { pointerId: 1, clientX: 30, clientY: 20 })
+
+      expect(opts.onPan).not.toHaveBeenCalled()
+    })
+
+    it('moveImage=false still allows crop resize', () => {
+      const opts = createOptions({
+        moveImage: false,
+        getHandleAtPoint: vi.fn(() => 'se' as HandlePosition),
+      })
+      usePointerHandler(el as unknown as HTMLElement, opts)
+
+      el._dispatch('pointerdown', { button: 0, pointerId: 1, clientX: 100, clientY: 100 })
+      el._dispatch('pointermove', { pointerId: 1, clientX: 115, clientY: 120 })
+
+      expect(opts.onCropResize).toHaveBeenCalledWith('se', 15, 20)
+    })
+
+    it('moveImage=false prevents pan after pinch ends with one finger', () => {
+      const onPinchZoom = vi.fn()
+      const opts = createOptions({
+        onPinchZoom,
+        moveImage: false,
+      })
+      usePointerHandler(el as unknown as HTMLElement, opts)
+
+      // Start pinch
+      el._dispatch('pointerdown', { button: 0, pointerId: 1, clientX: 100, clientY: 100 })
+      el._dispatch('pointerdown', { button: 0, pointerId: 2, clientX: 200, clientY: 200 })
+
+      // Lift one finger
+      el._dispatch('pointerup', { pointerId: 2 })
+
+      // Remaining finger moves - should NOT pan because moveImage=false
+      el._dispatch('pointermove', { pointerId: 1, clientX: 120, clientY: 130 })
+
+      expect(opts.onPan).not.toHaveBeenCalled()
     })
   })
 })
