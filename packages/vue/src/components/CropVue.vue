@@ -8,6 +8,12 @@ import type {
   OutputFormat,
   UploadFn,
   QueueItem,
+  CropperMode,
+  ImageRestriction,
+  HandlersConfig,
+  MoveImageConfig,
+  ResizeImageConfig,
+  StencilSize,
 } from '@cropvue/core'
 import type { CropVueUI } from '../types/ui'
 import { useComponentUI } from '../composables/useComponentUI'
@@ -33,6 +39,17 @@ const props = withDefaults(defineProps<{
   src?: string | null
   modelValue?: CropResult | null
   pannable?: boolean
+  mode?: CropperMode
+  moveImage?: boolean | MoveImageConfig
+  resizeImage?: boolean | ResizeImageConfig
+  transitions?: boolean
+  autoZoom?: boolean
+  imageRestriction?: ImageRestriction
+  handlers?: HandlersConfig
+  checkOrientation?: boolean
+  stencilSize?: StencilSize
+  minAspectRatio?: number
+  maxAspectRatio?: number
   ui?: CropVueUI
 }>(), {
   stencil: 'rectangle',
@@ -52,6 +69,17 @@ const props = withDefaults(defineProps<{
   src: null,
   modelValue: null,
   pannable: true,
+  mode: 'classic',
+  moveImage: true,
+  resizeImage: true,
+  transitions: true,
+  autoZoom: undefined,
+  imageRestriction: 'fit-area',
+  handlers: undefined,
+  checkOrientation: true,
+  stencilSize: undefined,
+  minAspectRatio: undefined,
+  maxAspectRatio: undefined,
 })
 
 const mergedUi = useComponentUI('CropVue', () => props.ui)
@@ -82,6 +110,13 @@ const cropper = useCropper({
   outputQuality: props.outputQuality,
   outputMaxWidth: props.outputMaxWidth,
   outputMaxHeight: props.outputMaxHeight,
+  mode: props.mode,
+  transitions: props.transitions,
+  autoZoom: props.autoZoom,
+  imageRestriction: props.imageRestriction,
+  checkOrientation: props.checkOrientation,
+  minAspectRatio: props.minAspectRatio,
+  maxAspectRatio: props.maxAspectRatio,
 })
 
 const dropzone = useDropzone({
@@ -252,12 +287,24 @@ defineExpose({
         :cancel="cancel"
         :remove="remove"
         :pannable="pannable"
+        :mode="mode"
+        :move-image="moveImage"
+        :resize-image="resizeImage"
+        :handlers="handlers"
+        :transitions="transitions"
+        :is-transitioning="cropper.isTransitioning.value"
       >
         <CropEditor
           :image="cropper.image.value"
           :transform="cropper.transform.value"
           :crop="cropper.crop.value"
           :pannable="pannable"
+          :mode="mode"
+          :move-image="moveImage"
+          :resize-image="resizeImage"
+          :handlers="handlers"
+          :transitions="transitions"
+          :is-transitioning="cropper.isTransitioning.value"
           @update:transform="t => cropper.transform.value = t"
           @update:crop="c => cropper.crop.value = c"
         />
