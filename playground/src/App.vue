@@ -81,6 +81,22 @@ const sectionGroups = [
 const sections = sectionGroups.flatMap(g => g.sections)
 
 const activeSection = ref('basics')
+
+const activeGroupId = computed(() => {
+  for (const g of sectionGroups) {
+    if (g.sections.some(s => s.id === activeSection.value)) return g.id
+  }
+  return sectionGroups[0].id
+})
+
+const navGroup = ref<string | null>(null)
+const visibleGroup = computed(() => navGroup.value ?? activeGroupId.value)
+const visibleGroupSections = computed(() =>
+  sectionGroups.find(g => g.id === visibleGroup.value)?.sections ?? []
+)
+// Reset explicit tab selection when scroll moves to a different group
+watch(activeGroupId, () => { navGroup.value = null })
+
 const navRef = ref<HTMLElement | null>(null)
 const showSidebar = ref(false)
 let sectionObserver: IntersectionObserver | null = null
@@ -786,18 +802,27 @@ function kb(bytes: number) {
     </header>
 
     <nav ref="navRef" class="nav">
-      <div v-for="group in sectionGroups" :key="group.label" class="nav__group">
-        <span class="nav__group-label">{{ group.label }}</span>
-        <div class="nav__pills">
+      <div class="nav__tabs">
+        <button
+          v-for="group in sectionGroups"
+          :key="group.id"
+          class="nav__tab"
+          :class="{ 'nav__tab--active': visibleGroup === group.id }"
+          @click="navGroup = group.id"
+        >{{ group.label }}<span class="nav__tab-count">{{ group.sections.length }}</span></button>
+      </div>
+      <Transition name="nav-pills" mode="out-in">
+        <div :key="visibleGroup" class="nav__pills">
           <a
-            v-for="s in group.sections"
+            v-for="s in visibleGroupSections"
             :key="s.id"
             :href="`#${s.id}`"
             class="nav__pill"
             :class="{ 'nav__pill--active': activeSection === s.id }"
+            @click="navGroup = null"
           >{{ s.label }}</a>
         </div>
-      </div>
+      </Transition>
     </nav>
 
     <Transition name="toc">
@@ -2642,28 +2667,65 @@ code {
 
 .nav {
   display: flex;
-  flex-wrap: wrap;
-  align-items: flex-start;
-  justify-content: center;
-  gap: 16px;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
   padding: 10px 0;
   margin: 0 0 32px;
 }
 
-.nav__group {
+.nav__tabs {
   display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
+  gap: 2px;
+  padding: 3px;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
 }
 
-.nav__group-label {
+.nav__tab {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 18px;
+  font-family: var(--font-body);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-muted);
+  background: none;
+  border: none;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: all 200ms ease;
+  white-space: nowrap;
+}
+
+.nav__tab:hover {
+  color: var(--text-dim);
+  background: var(--surface-2);
+}
+
+.nav__tab--active {
+  color: var(--text);
+  background: var(--surface-2);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+}
+
+.nav__tab-count {
+  font-family: 'DM Mono', 'SF Mono', monospace;
   font-size: 10px;
   font-weight: 600;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
   color: var(--text-muted);
-  opacity: 0.5;
+  background: var(--surface-3);
+  padding: 1px 6px;
+  border-radius: 6px;
+  opacity: 0.6;
+}
+
+.nav__tab--active .nav__tab-count {
+  color: var(--accent);
+  background: rgba(16, 185, 129, 0.1);
+  opacity: 1;
 }
 
 .nav__pills {
@@ -2692,6 +2754,21 @@ code {
 .nav__pill--active {
   color: var(--text);
   background: var(--surface-3);
+}
+
+.nav-pills-enter-active {
+  transition: opacity 150ms ease, transform 150ms ease;
+}
+.nav-pills-leave-active {
+  transition: opacity 100ms ease, transform 100ms ease;
+}
+.nav-pills-enter-from {
+  opacity: 0;
+  transform: translateY(-4px);
+}
+.nav-pills-leave-to {
+  opacity: 0;
+  transform: translateY(4px);
 }
 
 .toc {
@@ -5042,9 +5119,13 @@ code {
   .hero__title { font-size: 3rem; }
 
   .nav {
-    gap: 3px;
+    gap: 8px;
     padding: 8px 0;
     margin: 0 0 24px;
+  }
+  .nav__tab {
+    padding: 7px 12px;
+    font-size: 12px;
   }
   .nav__pill {
     padding: 7px 10px;
@@ -5226,13 +5307,24 @@ code {
     padding: 16px;
   }
 
+  .nav__tabs {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+  .nav__tab {
+    padding: 6px 10px;
+    font-size: 11px;
+  }
+  .nav__tab-count {
+    display: none;
+  }
   .nav__pill {
     padding: 6px 8px;
     font-size: 11px;
   }
 
   .nav {
-    gap: 2px;
+    gap: 6px;
   }
 
   .section-group {
