@@ -111,6 +111,18 @@ export interface CropperOptions {
   outputQuality?: number
   outputMaxWidth?: number
   outputMaxHeight?: number
+  mode?: CropperMode
+  moveImage?: MoveImageConfig
+  resizeImage?: ResizeImageConfig
+  transitions?: boolean
+  autoZoom?: boolean
+  imageRestriction?: ImageRestriction
+  handlers?: HandlersConfig
+  checkOrientation?: boolean
+  stencilSize?: StencilSize
+  defaultTransforms?: ImageTransforms
+  minAspectRatio?: number
+  maxAspectRatio?: number
 }
 
 export interface DropzoneOptions {
@@ -133,4 +145,47 @@ export interface CompressorOptions {
   quality?: number
   maxWidth?: number
   maxHeight?: number
+}
+
+// === Cropper Mode Types ===
+
+export type CropperMode = 'classic' | 'static' | 'hybrid'
+
+export type ImageRestriction = 'fill-area' | 'fit-area' | 'stencil' | 'none'
+
+export interface HandlersConfig {
+  nw?: boolean
+  n?: boolean
+  ne?: boolean
+  e?: boolean
+  se?: boolean
+  s?: boolean
+  sw?: boolean
+  w?: boolean
+}
+
+export type MoveImageConfig = boolean | {
+  mouse?: boolean
+  touch?: boolean
+}
+
+export type ResizeImageConfig = boolean | {
+  touch?: boolean
+  wheel?: boolean | { ratio: number }
+}
+
+export interface VisibleArea {
+  left: number
+  top: number
+  width: number
+  height: number
+}
+
+export type StencilSize =
+  | { width: number; height: number }
+  | ((boundaries: { width: number; height: number }) => { width: number; height: number })
+
+export interface ImageTransforms {
+  rotate: number
+  flip: { horizontal: boolean; vertical: boolean }
 }
