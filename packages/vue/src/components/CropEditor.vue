@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { ref, computed, watch, onMounted, onUnmounted, nextTick } from 'vue'
-import type { TransformState, CropState, ImageData as CropImageData } from '@cropvue/core'
+import type { TransformState, CropState, ImageData as CropImageData, HandlersConfig, CropperMode, MoveImageConfig, ResizeImageConfig } from '@cropvue/core'
 import {
   usePointerHandler,
   handlePan,
   handleZoom,
+  handlePinchZoom,
   handleCropResize,
   handleCropMove,
   handleKeyboard,
@@ -19,9 +20,21 @@ const props = withDefaults(defineProps<{
   transform: TransformState
   crop: CropState
   pannable?: boolean
+  handlers?: HandlersConfig
+  mode?: CropperMode
+  moveImage?: boolean | MoveImageConfig
+  resizeImage?: boolean | ResizeImageConfig
+  transitions?: boolean
+  isTransitioning?: boolean
   ui?: CropEditorUI
 }>(), {
   pannable: true,
+  handlers: () => ({ nw: true, n: true, ne: true, e: true, se: true, s: true, sw: true, w: true }),
+  mode: 'classic',
+  moveImage: true,
+  resizeImage: true,
+  transitions: true,
+  isTransitioning: false,
 })
 
 const mergedUi = useComponentUI('CropEditor', () => props.ui)
@@ -38,6 +51,24 @@ const containerRef = ref<HTMLElement | null>()
 const containerWidth = ref(0)
 const containerHeight = ref(0)
 const isPanning = ref(false)
+
+const activeHandles = computed(() => {
+  if (props.mode === 'static') return []
+  const all = ['nw', 'n', 'ne', 'e', 'se', 's', 'sw', 'w'] as const
+  return all.filter(pos => props.handlers[pos] !== false)
+})
+
+function isMoveImageEnabled(): boolean {
+  if (typeof props.moveImage === 'boolean') return props.moveImage
+  if (typeof props.moveImage === 'object') return props.moveImage.mouse !== false
+  return true
+}
+
+function isResizeImageEnabled(): boolean {
+  if (typeof props.resizeImage === 'boolean') return props.resizeImage
+  if (typeof props.resizeImage === 'object') return true
+  return true
+}
 
 const displayScale = computed(() => {
   const img = props.image
@@ -174,12 +205,16 @@ function setupPointerHandler() {
 
   pointerHandler = usePointerHandler(viewport, {
     onPan(dx, dy) {
-      if (!props.pannable) return
+      if (!isMoveImageEnabled() && !props.pannable) return
       isPanning.value = true
       emit('update:transform', handlePan(props.transform, dx, dy))
     },
+    onPinchZoom(factor, cx, cy, pdx, pdy) {
+      if (!isResizeImageEnabled()) return
+      emit('update:transform', handlePinchZoom(props.transform, factor, cx, cy, pdx, pdy))
+    },
     onZoom(delta, centerX, centerY) {
-      if (!props.pannable) return
+      if (!isResizeImageEnabled()) return
       emit('update:transform', handleZoom(props.transform, delta, centerX, centerY))
     },
     onCropResize(handle, dx, dy) {
@@ -197,7 +232,7 @@ function setupPointerHandler() {
       emit('update:crop', handleCropMove(props.crop, dx, dy, bounds))
     },
     onKeyboard(key, shiftKey) {
-      if (!props.pannable) return
+      if (!isMoveImageEnabled() && !props.pannable) return
       emit('update:transform', handleKeyboard(props.transform, key, shiftKey))
     },
     getHandleAtPoint(e: PointerEvent) {
@@ -222,19 +257,29 @@ function setupPointerHandler() {
 
       if (c.stencil === 'circle') {
         // Circle: NE handle sits on circle edge at 45°
-        const r = (c.width * s) / 2
-        const cx = cropLeft + r
-        const cy = cropTop + r
+        const r = Math.min(c.width * s, c.height * s) / 2
+        const cx = cropLeft + (c.width * s) / 2
+        const cy = cropTop + (c.height * s) / 2
         const handleX = cx + r * Math.SQRT1_2
         const handleY = cy - r * Math.SQRT1_2
         if (Math.abs(px - handleX) < threshold && Math.abs(py - handleY) < threshold) return 'ne'
         return null
       }
 
-      if (Math.abs(px - cropLeft) < threshold && Math.abs(py - cropTop) < threshold) return 'nw'
-      if (Math.abs(px - cropRight) < threshold && Math.abs(py - cropTop) < threshold) return 'ne'
-      if (Math.abs(px - cropLeft) < threshold && Math.abs(py - cropBottom) < threshold) return 'sw'
-      if (Math.abs(px - cropRight) < threshold && Math.abs(py - cropBottom) < threshold) return 'se'
+      // Corner handles (check first — corners take priority)
+      if (props.handlers.nw !== false && Math.abs(px - cropLeft) < threshold && Math.abs(py - cropTop) < threshold) return 'nw'
+      if (props.handlers.ne !== false && Math.abs(px - cropRight) < threshold && Math.abs(py - cropTop) < threshold) return 'ne'
+      if (props.handlers.sw !== false && Math.abs(px - cropLeft) < threshold && Math.abs(py - cropBottom) < threshold) return 'sw'
+      if (props.handlers.se !== false && Math.abs(px - cropRight) < threshold && Math.abs(py - cropBottom) < threshold) return 'se'
+
+      // Edge handles (midpoints of edges)
+      const midX = (cropLeft + cropRight) / 2
+      const midY = (cropTop + cropBottom) / 2
+
+      if (props.handlers.n !== false && Math.abs(py - cropTop) < threshold && Math.abs(px - midX) < (cropRight - cropLeft) / 2) return 'n'
+      if (props.handlers.s !== false && Math.abs(py - cropBottom) < threshold && Math.abs(px - midX) < (cropRight - cropLeft) / 2) return 's'
+      if (props.handlers.e !== false && Math.abs(px - cropRight) < threshold && Math.abs(py - midY) < (cropBottom - cropTop) / 2) return 'e'
+      if (props.handlers.w !== false && Math.abs(px - cropLeft) < threshold && Math.abs(py - midY) < (cropBottom - cropTop) / 2) return 'w'
 
       return null
     },
@@ -256,6 +301,9 @@ function setupPointerHandler() {
       return isPointInsideStencil(imgX, imgY, c)
     },
     displayScale: () => displayScale.value,
+    mode: props.mode,
+    moveImage: typeof props.moveImage === 'boolean' ? props.moveImage : true,
+    resizeImage: typeof props.resizeImage === 'boolean' ? props.resizeImage : true,
   })
 }
 
@@ -278,12 +326,12 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  resizeObserver?.disconnect()
-  resizeObserver = null
   if (resizeRaf) {
     cancelAnimationFrame(resizeRaf)
     resizeRaf = null
   }
+  resizeObserver?.disconnect()
+  resizeObserver = null
   if (pointerHandler) {
     pointerHandler.destroy()
     pointerHandler = null
@@ -293,6 +341,10 @@ onUnmounted(() => {
 watch(() => props.image, async () => {
   await nextTick()
   updateContainerSize()
+})
+
+watch([() => props.mode, () => props.moveImage, () => props.resizeImage], () => {
+  setupPointerHandler()
 })
 
 function onViewportPointerUp() {
@@ -307,7 +359,10 @@ defineExpose({ editorRef, displayScale })
     <div
       ref="editorRef"
       class="cropvue-editor__viewport"
-      :class="[mergedUi.viewport, { 'cropvue-editor__viewport--panning': isPanning }]"
+      :class="[mergedUi.viewport, {
+        'cropvue-editor__viewport--panning': isPanning,
+        'cropvue-editor__viewport--transitioning': isTransitioning
+      }]"
       tabindex="0"
       @pointerup="onViewportPointerUp"
     >
@@ -357,13 +412,13 @@ defineExpose({ editorRef, displayScale })
 
           <slot name="handles" :crop="crop">
             <template v-if="crop.stencil === 'circle'">
-              <div class="cropvue-editor__handle cropvue-editor__handle--ne" :class="mergedUi.handle" data-handle="ne" />
+              <div v-if="handlers.ne !== false" class="cropvue-editor__handle cropvue-editor__handle--ne" :class="mergedUi.handle" data-handle="ne" />
             </template>
             <template v-else>
-              <div class="cropvue-editor__handle cropvue-editor__handle--nw" :class="mergedUi.handle" data-handle="nw" />
-              <div class="cropvue-editor__handle cropvue-editor__handle--ne" :class="mergedUi.handle" data-handle="ne" />
-              <div class="cropvue-editor__handle cropvue-editor__handle--sw" :class="mergedUi.handle" data-handle="sw" />
-              <div class="cropvue-editor__handle cropvue-editor__handle--se" :class="mergedUi.handle" data-handle="se" />
+              <div v-for="pos in activeHandles" :key="pos"
+                :class="['cropvue-editor__handle', `cropvue-editor__handle--${pos}`, mergedUi.handle]"
+                :data-handle="pos"
+              />
             </template>
           </slot>
         </div>
@@ -472,6 +527,11 @@ defineExpose({ editorRef, displayScale })
 .cropvue-editor__handle--sw { bottom: -5px; left: -5px; cursor: nesw-resize; }
 .cropvue-editor__handle--se { bottom: -5px; right: -5px; cursor: nwse-resize; }
 
+.cropvue-editor__handle--n { top: -5px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
+.cropvue-editor__handle--s { bottom: -5px; left: 50%; transform: translateX(-50%); cursor: ns-resize; }
+.cropvue-editor__handle--e { right: -5px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
+.cropvue-editor__handle--w { left: -5px; top: 50%; transform: translateY(-50%); cursor: ew-resize; }
+
 /* Circle: place NE handle on the circle edge at 45° */
 .cropvue-editor__crop-area--circle .cropvue-editor__handle--ne {
   /* 50% + 50% * cos(45°) ≈ 85.36%, 50% - 50% * sin(45°) ≈ 14.64% */
@@ -486,6 +546,10 @@ defineExpose({ editorRef, displayScale })
   .cropvue-editor__handle--ne { top: -8px; right: -8px; }
   .cropvue-editor__handle--sw { bottom: -8px; left: -8px; }
   .cropvue-editor__handle--se { bottom: -8px; right: -8px; }
+  .cropvue-editor__handle--n { top: -8px; }
+  .cropvue-editor__handle--s { bottom: -8px; }
+  .cropvue-editor__handle--e { right: -8px; }
+  .cropvue-editor__handle--w { left: -8px; }
 }
 
 @media (pointer: coarse) {
@@ -498,5 +562,22 @@ defineExpose({ editorRef, displayScale })
   .cropvue-editor__handle--ne { top: -10px; right: -10px; }
   .cropvue-editor__handle--sw { bottom: -10px; left: -10px; }
   .cropvue-editor__handle--se { bottom: -10px; right: -10px; }
+  .cropvue-editor__handle--n { top: -10px; }
+  .cropvue-editor__handle--s { bottom: -10px; }
+  .cropvue-editor__handle--e { right: -10px; }
+  .cropvue-editor__handle--w { left: -10px; }
+}
+
+/* Transition support */
+.cropvue-editor__viewport--transitioning .cropvue-editor__image {
+  transition: transform 300ms ease-out;
+}
+
+.cropvue-editor__viewport--transitioning .cropvue-editor__crop-area {
+  transition: left 300ms ease-out, top 300ms ease-out, width 300ms ease-out, height 300ms ease-out;
+}
+
+.cropvue-editor__viewport--transitioning .cropvue-editor__overlay {
+  transition: clip-path 300ms ease-out;
 }
 </style>
