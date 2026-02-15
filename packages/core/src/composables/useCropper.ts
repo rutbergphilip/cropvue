@@ -6,6 +6,7 @@ import type {
   CropperOptions,
   StencilType,
   ImageData as CropImageData,
+  ImageTransforms,
 } from '../types'
 import {
   createTransformState,
@@ -19,6 +20,7 @@ import { renderCrop } from '../engine/canvas-renderer'
 import { compressBlob } from './useCompressor'
 import { loadImageFromFile, loadImageFromUrl } from '../utils/image-loader'
 import { detectMimeType } from '../utils/format-detect'
+import { readExifOrientation, getOrientationTransforms } from '../utils/exif'
 
 export function useCropper(options: CropperOptions = {}) {
   const transform: Ref<TransformState> = ref(createTransformState())
@@ -35,6 +37,20 @@ export function useCropper(options: CropperOptions = {}) {
   const image: Ref<CropImageData | null> = ref(null)
   const isReady = ref(false)
   const canvasRef: Ref<HTMLCanvasElement | null> = ref(null)
+
+  // --- Transition system ---
+
+  const isTransitioning = ref(false)
+  let transitionTimeout: ReturnType<typeof setTimeout> | null = null
+
+  function startTransition() {
+    if (options.transitions === false) return
+    isTransitioning.value = true
+    if (transitionTimeout) clearTimeout(transitionTimeout)
+    transitionTimeout = setTimeout(() => {
+      isTransitioning.value = false
+    }, 350)
+  }
 
   // --- Image loading ---
 
@@ -56,8 +72,25 @@ export function useCropper(options: CropperOptions = {}) {
   }
 
   async function loadFile(file: File) {
+    let exifTransforms: ImageTransforms | null = null
+    if (options.checkOrientation !== false) {
+      const orientation = await readExifOrientation(file)
+      if (orientation !== 1) {
+        exifTransforms = getOrientationTransforms(orientation)
+      }
+    }
     image.value = await loadImageFromFile(file)
     initCropForImage(image.value)
+    if (exifTransforms) {
+      // Store EXIF transforms for canvas rendering correction
+      // Modern browsers handle display, but canvas needs manual correction
+      transform.value = {
+        ...transform.value,
+        rotation: exifTransforms.rotate,
+        flipX: exifTransforms.flip.horizontal,
+        flipY: exifTransforms.flip.vertical,
+      }
+    }
     isReady.value = true
   }
 
@@ -70,10 +103,12 @@ export function useCropper(options: CropperOptions = {}) {
   // --- Transform operations ---
 
   function rotateLeft() {
+    startTransition()
     transform.value = applyRotation(transform.value, -90)
   }
 
   function rotateRight() {
+    startTransition()
     transform.value = applyRotation(transform.value, 90)
   }
 
@@ -82,10 +117,12 @@ export function useCropper(options: CropperOptions = {}) {
   }
 
   function flipX() {
+    startTransition()
     transform.value = applyFlip(transform.value, 'x')
   }
 
   function flipY() {
+    startTransition()
     transform.value = applyFlip(transform.value, 'y')
   }
 
@@ -103,6 +140,43 @@ export function useCropper(options: CropperOptions = {}) {
 
   function reset() {
     transform.value = resetTransform(transform.value)
+  }
+
+  // --- New methods ---
+
+  function setCoordinates(coords: { left?: number; top?: number; width?: number; height?: number }) {
+    startTransition()
+    crop.value = {
+      ...crop.value,
+      x: coords.left ?? crop.value.x,
+      y: coords.top ?? crop.value.y,
+      width: coords.width ?? crop.value.width,
+      height: coords.height ?? crop.value.height,
+    }
+  }
+
+  function move(dx: number, dy: number) {
+    startTransition()
+    transform.value = { ...transform.value, x: transform.value.x + dx, y: transform.value.y + dy }
+  }
+
+  function zoom(factor: number, center?: { left: number; top: number }) {
+    startTransition()
+    const cx = center?.left ?? 0
+    const cy = center?.top ?? 0
+    const newScale = Math.max(0.1, Math.min(10, transform.value.scale * factor))
+    const ratio = newScale / transform.value.scale
+    transform.value = {
+      ...transform.value,
+      scale: newScale,
+      x: cx - (cx - transform.value.x) * ratio,
+      y: cy - (cy - transform.value.y) * ratio,
+    }
+  }
+
+  function refresh() {
+    // Placeholder for container resize recalculation
+    // The component layer handles this via ResizeObserver
   }
 
   // --- Crop operations ---
@@ -205,6 +279,7 @@ export function useCropper(options: CropperOptions = {}) {
     transform,
     crop,
     isReady,
+    isTransitioning,
 
     // Image loading
     loadFile,
@@ -220,6 +295,12 @@ export function useCropper(options: CropperOptions = {}) {
     zoomBy,
     panTo,
     reset,
+
+    // New methods
+    setCoordinates,
+    move,
+    zoom,
+    refresh,
 
     // Crop area
     setCropArea,
