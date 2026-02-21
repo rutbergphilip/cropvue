@@ -197,7 +197,7 @@ export function usePointerHandler(
     element.removeEventListener('pointermove', onPointerMove)
     element.removeEventListener('pointerup', onPointerUp)
     element.removeEventListener('pointercancel', onPointerCancel)
-    element.removeEventListener('wheel', onWheel)
+    element.removeEventListener('wheel', onWheel, { passive: false } as EventListenerOptions)
     element.removeEventListener('keydown', onKeyDown)
   }
 

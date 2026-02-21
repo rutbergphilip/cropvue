@@ -50,6 +50,9 @@
     },
     "./styles": "./dist/styles.css"
   },
+  "sideEffects": [
+    "./dist/styles.css"
+  ],
   "files": [
     "dist"
   ],

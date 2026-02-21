@@ -7,9 +7,8 @@ export function chooseOutputFormat(
   format: OutputFormat,
   inputMime: string
 ): string {
-  // If input has transparency and format is auto, keep PNG
-  if (format === 'auto' && hasTransparency(inputMime) && inputMime === 'image/png') {
-    return 'image/png'
+  if (format === 'auto' && hasTransparency(inputMime)) {
+    return inputMime
   }
 
   return getMimeForFormat(format)
@@ -27,11 +26,9 @@ export async function compressBlob(
   const outputMime = chooseOutputFormat(options.format, options.inputMime)
   let quality = options.quality
 
-  // First attempt
   let blob = await exportCrop(canvas, { format: outputMime, quality })
 
-  // "Never larger than input" guarantee: re-encode at lower quality if needed
-  if (options.maxInputSize && blob.size > options.maxInputSize) {
+  if (options.maxInputSize && blob.size > options.maxInputSize && outputMime !== 'image/png') {
     const maxAttempts = 3
     for (let i = 0; i < maxAttempts && blob.size > options.maxInputSize; i++) {
       quality = Math.max(0.1, quality - 0.15)

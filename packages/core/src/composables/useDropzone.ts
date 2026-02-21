@@ -16,7 +16,6 @@ export function validateFile(
   file: File,
   options: { accept: string[]; maxSize: number }
 ): CropVueError | null {
-  // Check size
   if (file.size > options.maxSize) {
     return {
       type: 'file-too-large',
@@ -25,7 +24,6 @@ export function validateFile(
     }
   }
 
-  // Check type (with file extension fallback when MIME is missing)
   const accepted = options.accept.some((pattern) => {
     if (pattern === 'image/*') {
       if (file.type) return file.type.startsWith('image/')
@@ -90,18 +88,28 @@ export function useDropzone(options: DropzoneOptions = {}) {
     input.click()
   }
 
+  let dragCount = 0
+
+  function onDragEnter(e: DragEvent) {
+    e.preventDefault()
+    dragCount++
+    isDragging.value = true
+  }
+
   function onDragOver(e: DragEvent) {
     e.preventDefault()
-    isDragging.value = true
   }
 
   function onDragLeave(e: DragEvent) {
     e.preventDefault()
-    isDragging.value = false
+    if (--dragCount === 0) {
+      isDragging.value = false
+    }
   }
 
   function onDrop(e: DragEvent) {
     e.preventDefault()
+    dragCount = 0
     isDragging.value = false
     if (e.dataTransfer?.files) {
       processFiles(e.dataTransfer.files)
@@ -111,12 +119,14 @@ export function useDropzone(options: DropzoneOptions = {}) {
   let currentEl: HTMLElement | null = null
 
   function attachListeners(el: HTMLElement) {
+    el.addEventListener('dragenter', onDragEnter)
     el.addEventListener('dragover', onDragOver)
     el.addEventListener('dragleave', onDragLeave)
     el.addEventListener('drop', onDrop)
   }
 
   function detachListeners(el: HTMLElement) {
+    el.removeEventListener('dragenter', onDragEnter)
     el.removeEventListener('dragover', onDragOver)
     el.removeEventListener('dragleave', onDragLeave)
     el.removeEventListener('drop', onDrop)

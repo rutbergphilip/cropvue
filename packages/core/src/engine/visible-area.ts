@@ -49,7 +49,10 @@ export function visibleAreaToTransform(
     1
   )
 
-  const effectiveScale = boundaries.width / area.width / displayScale
+  const effectiveScale = Math.min(
+    boundaries.width / area.width,
+    boundaries.height / area.height
+  ) / displayScale
   const centerX = area.left + area.width / 2
   const centerY = area.top + area.height / 2
 

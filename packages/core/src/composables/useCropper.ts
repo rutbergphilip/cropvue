@@ -38,8 +38,6 @@ export function useCropper(options: CropperOptions = {}) {
   const isReady = ref(false)
   const canvasRef: Ref<HTMLCanvasElement | null> = ref(null)
 
-  // --- Transition system ---
-
   const isTransitioning = ref(false)
   let transitionTimeout: ReturnType<typeof setTimeout> | null = null
 
@@ -51,8 +49,6 @@ export function useCropper(options: CropperOptions = {}) {
       isTransitioning.value = false
     }, 350)
   }
-
-  // --- Image loading ---
 
   function initCropForImage(img: CropImageData) {
     const stencil = crop.value.stencil ?? options.stencil ?? 'rectangle'
@@ -100,8 +96,6 @@ export function useCropper(options: CropperOptions = {}) {
     isReady.value = true
   }
 
-  // --- Transform operations ---
-
   function rotateLeft() {
     startTransition()
     transform.value = applyRotation(transform.value, -90)
@@ -142,8 +136,6 @@ export function useCropper(options: CropperOptions = {}) {
     transform.value = resetTransform(transform.value)
   }
 
-  // --- New methods ---
-
   function setCoordinates(coords: { left?: number; top?: number; width?: number; height?: number }) {
     startTransition()
     crop.value = {
@@ -174,13 +166,6 @@ export function useCropper(options: CropperOptions = {}) {
     }
   }
 
-  function refresh() {
-    // Placeholder for container resize recalculation
-    // The component layer handles this via ResizeObserver
-  }
-
-  // --- Crop operations ---
-
   function setCropArea(area: Partial<CropState>) {
     crop.value = { ...crop.value, ...area }
   }
@@ -206,7 +191,7 @@ export function useCropper(options: CropperOptions = {}) {
     crop.value = { ...crop.value, aspectRatio: ratio ?? undefined }
   }
 
-  // --- Output ---
+  let lastResultUrl: string | null = null
 
   async function getResult(opts?: {
     format?: 'auto' | 'webp' | 'jpeg' | 'png'
@@ -232,7 +217,12 @@ export function useCropper(options: CropperOptions = {}) {
       maxInputSize: img.originalSize,
     })
 
+    if (lastResultUrl) {
+      URL.revokeObjectURL(lastResultUrl)
+    }
+
     const url = URL.createObjectURL(blob)
+    lastResultUrl = url
     const file = new File([blob], `cropped.${blob.type.split('/')[1] ?? 'jpg'}`, {
       type: blob.type,
     })
@@ -274,18 +264,13 @@ export function useCropper(options: CropperOptions = {}) {
   }
 
   return {
-    // State
     image,
     transform,
     crop,
     isReady,
     isTransitioning,
-
-    // Image loading
     loadFile,
     loadUrl,
-
-    // Manipulation
     rotateLeft,
     rotateRight,
     rotateTo,
@@ -295,23 +280,14 @@ export function useCropper(options: CropperOptions = {}) {
     zoomBy,
     panTo,
     reset,
-
-    // New methods
     setCoordinates,
     move,
     zoom,
-    refresh,
-
-    // Crop area
     setCropArea,
     setStencil,
     setAspectRatio,
-
-    // Output
     getResult,
     getPreviewUrl,
-
-    // Canvas
     canvasRef,
     renderToCanvas,
   }

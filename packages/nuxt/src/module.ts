@@ -19,7 +19,6 @@ export default defineNuxtModule<CropVueModuleOptions>({
   setup(options, nuxt) {
     const resolver = createResolver(import.meta.url)
 
-    // Auto-import components
     const components = [
       'CropVue', 'CropEditor', 'CropPreview',
       'CropDropzone', 'CropToolbar', 'CropQueue', 'CropStencil',
@@ -34,7 +33,6 @@ export default defineNuxtModule<CropVueModuleOptions>({
       })
     }
 
-    // Auto-import composables
     const composables = [
       'useCropper', 'useDropzone', 'useImageQueue',
       'useUploader', 'useCompressor',
@@ -44,14 +42,11 @@ export default defineNuxtModule<CropVueModuleOptions>({
       addImports({ name, from: '@cropvue/core' })
     }
 
-    // Auto-import theme utilities
     addImports({ name: 'createCropVueTheme', from: '@cropvue/vue' })
     addImports({ name: 'useComponentUI', from: '@cropvue/vue' })
 
-    // Add CSS
     nuxt.options.css.push('@cropvue/vue/styles')
 
-    // If theme is provided, generate a plugin that provides it
     if (options.theme) {
       const themeJson = JSON.stringify(options.theme)
       addTemplate({

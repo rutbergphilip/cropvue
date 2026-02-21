@@ -1,5 +1,3 @@
-// === State Types ===
-
 export interface TransformState {
   x: number
   y: number
@@ -30,8 +28,6 @@ export interface Point {
   y: number
 }
 
-// === Image Types ===
-
 export interface ImageData {
   element: HTMLImageElement
   naturalWidth: number
@@ -39,8 +35,6 @@ export interface ImageData {
   originalFile?: File
   originalSize?: number
 }
-
-// === Result Types ===
 
 export interface CropResult {
   blob: Blob
@@ -64,8 +58,6 @@ export interface CropCoordinates {
   scale: number
 }
 
-// === Upload Types ===
-
 export interface UploadResult {
   url?: string
   [key: string]: unknown
@@ -76,8 +68,6 @@ export type UploadFn = (
   options: { onProgress: (percent: number) => void; signal: AbortSignal }
 ) => Promise<UploadResult>
 
-// === Queue Types ===
-
 export interface QueueItem {
   id: string
   file: File
@@ -86,8 +76,6 @@ export interface QueueItem {
   status: 'pending' | 'cropping' | 'done'
 }
 
-// === Error Types ===
-
 export type CropVueError =
   | { type: 'file-too-large'; maxSize: number; actualSize: number }
   | { type: 'invalid-type'; accepted: string[]; actual: string }
@@ -95,8 +83,6 @@ export type CropVueError =
   | { type: 'canvas-limit'; maxDimension: number }
   | { type: 'upload-failed'; message: string }
   | { type: 'compress-failed'; message: string }
-
-// === Options Types ===
 
 export type OutputFormat = 'auto' | 'webp' | 'jpeg' | 'png'
 
@@ -115,14 +101,9 @@ export interface CropperOptions {
   moveImage?: MoveImageConfig
   resizeImage?: ResizeImageConfig
   transitions?: boolean
-  autoZoom?: boolean
-  imageRestriction?: ImageRestriction
   handlers?: HandlersConfig
   checkOrientation?: boolean
-  stencilSize?: StencilSize
   defaultTransforms?: ImageTransforms
-  minAspectRatio?: number
-  maxAspectRatio?: number
 }
 
 export interface DropzoneOptions {
@@ -146,8 +127,6 @@ export interface CompressorOptions {
   maxWidth?: number
   maxHeight?: number
 }
-
-// === Cropper Mode Types ===
 
 export type CropperMode = 'classic' | 'static' | 'hybrid'
 

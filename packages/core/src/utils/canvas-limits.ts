@@ -4,8 +4,7 @@ export function getMaxCanvasSize(): number {
   if (cachedMaxSize !== null) return cachedMaxSize
 
   if (typeof document === 'undefined') {
-    cachedMaxSize = 4096
-    return cachedMaxSize
+    return 4096
   }
 
   // Binary search for max canvas dimension

@@ -90,13 +90,11 @@ export function createQueue(): Queue {
   return state as unknown as Queue
 }
 
-// Vue composable wrapper
 export function useImageQueue() {
   const queue = createQueue()
   const images = ref(queue.items)
   const current = ref(queue.currentIndex)
 
-  // Sync refs with queue state
   function sync() {
     images.value = [...queue.items]
     current.value = queue.currentIndex

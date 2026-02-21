@@ -7,5 +7,5 @@ export default defineBuildConfig({
   rollup: {
     emitCJS: true,
   },
-  externals: ['vue', 'nuxt', '@nuxt/kit', 'cropvue', '@cropvue/core'],
+  externals: ['vue', 'nuxt', '@nuxt/kit', '@cropvue/vue', '@cropvue/core'],
 })

@@ -1,4 +1,3 @@
-// Composables
 export { useCropper } from './composables/useCropper'
 export { useDropzone, validateFile } from './composables/useDropzone'
 export { useImageQueue, createQueue } from './composables/useImageQueue'
@@ -7,7 +6,6 @@ export { useCompressor, chooseOutputFormat, compressBlob } from './composables/u
 export { usePointerHandler } from './composables/usePointerHandler'
 export type { PointerHandlerOptions, PointerHandlerCleanup } from './composables/usePointerHandler'
 
-// Engine (for advanced usage)
 export {
   createTransformState,
   createCropState,
@@ -27,6 +25,7 @@ export {
   handleCropResize,
   handleCropMove,
   handleKeyboard,
+  handlePinchZoom,
 } from './engine/gestures'
 export type { HandlePosition } from './engine/gestures'
 export {
@@ -36,17 +35,13 @@ export {
   isPointInsideStencil,
 } from './engine/stencils'
 
-// New engine modules
 export { computePanBounds, computeZoomBounds } from './engine/image-restriction'
 export { transformToVisibleArea, visibleAreaToTransform, fitVisibleArea } from './engine/visible-area'
 export { classicAutoZoom, fixedAutoZoom, hybridAutoZoom } from './engine/auto-zoom'
-export { handlePinchZoom } from './engine/gestures'
 
-// Utils
 export { getMaxCanvasSize, downsampleDimensions } from './utils/canvas-limits'
 export { detectMimeType, supportsWebP, getMimeForFormat, hasTransparency } from './utils/format-detect'
 export { loadImageFromFile, loadImageFromUrl, needsDownsample, getSafeDimensions } from './utils/image-loader'
 export { readExifOrientation, getOrientationTransforms } from './utils/exif'
 
-// Types
 export type * from './types'

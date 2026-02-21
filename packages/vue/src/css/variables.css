@@ -1,4 +1,4 @@
-:root {
+.cropvue {
   /* Overlay */
   --cropvue-overlay-color: rgba(0, 0, 0, 0.5);
   --cropvue-overlay-transition: 150ms ease;
@@ -86,7 +86,7 @@
 }
 
 @media (max-width: 768px) {
-  :root {
+  .cropvue {
     --cropvue-handle-size: 16px;
     --cropvue-toolbar-btn-size: 44px;
     --cropvue-toolbar-gap: 6px;

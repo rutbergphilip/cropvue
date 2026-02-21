@@ -123,28 +123,20 @@ export function handleCropResize(
       break
   }
 
-  // Enforce aspect ratio when set (non-circle stencils only, circle handled above)
-  if (crop.aspectRatio && crop.stencil !== 'circle') {
+  if (crop.aspectRatio) {
     const ratio = crop.aspectRatio
 
     if (handle === 'e' || handle === 'w') {
-      // East/West edge: adjust height to maintain ratio
       const newHeight = width / ratio
-      if (handle === 'w') {
-        // Right edge stays fixed, so no y adjustment needed beyond centering
-      }
+      const heightDiff = newHeight - height
+      y -= heightDiff / 2
       height = newHeight
     } else if (handle === 'n' || handle === 's') {
-      // North/South edge: adjust width to maintain ratio
       const newWidth = height * ratio
-      if (handle === 'n' || handle === 's') {
-        // Center the width change
-        const widthDiff = newWidth - width
-        x -= widthDiff / 2
-      }
+      const widthDiff = newWidth - width
+      x -= widthDiff / 2
       width = newWidth
     } else {
-      // Corner handles (nw, ne, sw, se): constrain both dimensions
       const targetHeight = width / ratio
       if (targetHeight <= height) {
         height = targetHeight
@@ -153,31 +145,24 @@ export function handleCropResize(
       }
     }
 
-    // Fix anchor points after aspect ratio adjustment
     if (handle === 'n') {
-      // Bottom edge should stay fixed
       const anchorBottom = crop.y + crop.height
       y = anchorBottom - height
     } else if (handle === 'w') {
-      // Right edge should stay fixed
       const anchorRight = crop.x + crop.width
       x = anchorRight - width
     } else if (handle === 'nw') {
-      // Bottom-right corner stays fixed
       const anchorBottom = crop.y + crop.height
       const anchorRight = crop.x + crop.width
       x = anchorRight - width
       y = anchorBottom - height
     } else if (handle === 'ne') {
-      // Bottom-left corner stays fixed
       const anchorBottom = crop.y + crop.height
       y = anchorBottom - height
     } else if (handle === 'sw') {
-      // Top-right corner stays fixed
       const anchorRight = crop.x + crop.width
       x = anchorRight - width
     }
-    // 'se', 's', 'e' - top-left corner stays fixed (x, y don't need adjustment)
   }
 
   if (width < MIN_CROP_SIZE) {

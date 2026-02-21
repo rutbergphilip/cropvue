@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { ref, watch, computed } from 'vue'
+import { ref, watch } from 'vue'
 import { useCropper, useDropzone } from '@cropvue/core'
 import type {
   CropResult,
@@ -9,11 +9,9 @@ import type {
   UploadFn,
   QueueItem,
   CropperMode,
-  ImageRestriction,
   HandlersConfig,
   MoveImageConfig,
   ResizeImageConfig,
-  StencilSize,
 } from '@cropvue/core'
 import type { CropVueUI } from '../types/ui'
 import { useComponentUI } from '../composables/useComponentUI'
@@ -43,13 +41,8 @@ const props = withDefaults(defineProps<{
   moveImage?: boolean | MoveImageConfig
   resizeImage?: boolean | ResizeImageConfig
   transitions?: boolean
-  autoZoom?: boolean
-  imageRestriction?: ImageRestriction
   handlers?: HandlersConfig
   checkOrientation?: boolean
-  stencilSize?: StencilSize
-  minAspectRatio?: number
-  maxAspectRatio?: number
   ui?: CropVueUI
 }>(), {
   stencil: 'rectangle',
@@ -73,13 +66,8 @@ const props = withDefaults(defineProps<{
   moveImage: true,
   resizeImage: true,
   transitions: true,
-  autoZoom: undefined,
-  imageRestriction: 'fit-area',
   handlers: undefined,
   checkOrientation: true,
-  stencilSize: undefined,
-  minAspectRatio: undefined,
-  maxAspectRatio: undefined,
 })
 
 const mergedUi = useComponentUI('CropVue', () => props.ui)
@@ -112,11 +100,7 @@ const cropper = useCropper({
   outputMaxHeight: props.outputMaxHeight,
   mode: props.mode,
   transitions: props.transitions,
-  autoZoom: props.autoZoom,
-  imageRestriction: props.imageRestriction,
   checkOrientation: props.checkOrientation,
-  minAspectRatio: props.minAspectRatio,
-  maxAspectRatio: props.maxAspectRatio,
 })
 
 const dropzone = useDropzone({
@@ -170,6 +154,13 @@ watch(() => props.src, async (newSrc) => {
 watch(() => props.stencil, (s) => cropper.setStencil(s))
 watch(() => props.aspectRatio, (r) => cropper.setAspectRatio(r ?? null))
 
+// Emit change when crop area changes
+watch(() => cropper.crop.value, (c) => {
+  if (phase.value === 'editor') {
+    emit('change', { x: c.x, y: c.y, width: c.width, height: c.height })
+  }
+}, { deep: true })
+
 async function confirm() {
   try {
     const cropResult = await cropper.getResult({
@@ -219,6 +210,9 @@ function cancel() {
 }
 
 function restart() {
+  if (result.value?.url) {
+    URL.revokeObjectURL(result.value.url)
+  }
   phase.value = 'dropzone'
   result.value = null
   cropper.reset()
@@ -227,6 +221,9 @@ function restart() {
 function remove() {
   emit('remove')
   emit('update:modelValue', null)
+  if (result.value?.url) {
+    URL.revokeObjectURL(result.value.url)
+  }
   phase.value = 'dropzone'
   result.value = null
   cropper.reset()
