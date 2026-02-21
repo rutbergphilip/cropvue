@@ -1,6 +1,6 @@
 {
   "name": "@cropvue/nuxt",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "type": "module",
   "license": "MIT",
   "description": "Nuxt module for CropVue - auto-imports and SSR handling",
