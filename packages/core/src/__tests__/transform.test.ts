@@ -39,6 +39,45 @@ describe('createCropState', () => {
     expect(state.stencil).toBe('rectangle')
     expect(state.width).toBe(100)
   })
+
+  it('creates square centered crop for circle stencil with non-square dimensions (lines 38-42)', () => {
+    const state = createCropState({ width: 400, height: 200 }, { stencil: 'circle' })
+    // Should use the smallest dimension (200)
+    expect(state.width).toBe(200)
+    expect(state.height).toBe(200)
+    expect(state.aspectRatio).toBe(1)
+    // Should be centered: x = 0 + (400 - 200) / 2 = 100
+    expect(state.x).toBe(100)
+    // y should be centered: y = 0 + (200 - 200) / 2 = 0
+    expect(state.y).toBe(0)
+  })
+
+  it('creates square centered crop for circle stencil when height is larger', () => {
+    const state = createCropState({ width: 200, height: 400 }, { stencil: 'circle' })
+    expect(state.width).toBe(200)
+    expect(state.height).toBe(200)
+    expect(state.x).toBe(0)
+    expect(state.y).toBe(100)
+  })
+
+  it('keeps dimensions for circle stencil when already square', () => {
+    const state = createCropState({ width: 300, height: 300 }, { stencil: 'circle' })
+    expect(state.width).toBe(300)
+    expect(state.height).toBe(300)
+    expect(state.aspectRatio).toBe(1)
+    expect(state.x).toBe(0)
+    expect(state.y).toBe(0)
+  })
+
+  it('applies overrides before circle logic', () => {
+    const state = createCropState({ width: 800, height: 600 }, { stencil: 'circle', x: 50, y: 50 })
+    // size = min(800, 600) = 600
+    // x = 50 + (800 - 600) / 2 = 150, y = 50 + (600 - 600) / 2 = 50
+    expect(state.width).toBe(600)
+    expect(state.height).toBe(600)
+    expect(state.x).toBe(150)
+    expect(state.y).toBe(50)
+  })
 })
 
 describe('applyRotation', () => {
@@ -64,6 +103,20 @@ describe('applyRotation', () => {
     const state = createTransformState({ rotation: -350 })
     const result = applyRotation(state, -20)
     expect(result.rotation).toBe(-10)
+  })
+
+  it('normalizes angle > 180 to negative (normalizeAngle line 51)', () => {
+    // If raw % 360 > 180, subtract 360. E.g. rotation=0, degrees=200 => raw=200 => 200%360=200 > 180 => -160
+    const state = createTransformState()
+    const result = applyRotation(state, 200)
+    expect(result.rotation).toBe(-160)
+  })
+
+  it('normalizes angle < -180 to positive (normalizeAngle line 52)', () => {
+    // If raw % 360 < -180, add 360. E.g. rotation=0, degrees=-200 => raw=-200 => -200%360=-200 < -180 => 160
+    const state = createTransformState()
+    const result = applyRotation(state, -200)
+    expect(result.rotation).toBe(160)
   })
 })
 
@@ -153,6 +206,54 @@ describe('applyPan', () => {
     const result = applyPan(state, 10, 10)
     expect(result.x).toBe(15)
     expect(result.y).toBe(15)
+  })
+})
+
+describe('clampTransform', () => {
+  it('clamps x below minX (line 108)', () => {
+    const state = createTransformState({ x: -50, y: 0 })
+    const result = clampTransform(state, { minX: 0, maxX: 100, minY: 0, maxY: 100 })
+    expect(result.x).toBe(0)
+  })
+
+  it('clamps x above maxX (line 108)', () => {
+    const state = createTransformState({ x: 200, y: 0 })
+    const result = clampTransform(state, { minX: 0, maxX: 100, minY: 0, maxY: 100 })
+    expect(result.x).toBe(100)
+  })
+
+  it('clamps y below minY (line 109)', () => {
+    const state = createTransformState({ x: 50, y: -20 })
+    const result = clampTransform(state, { minX: 0, maxX: 100, minY: 0, maxY: 100 })
+    expect(result.y).toBe(0)
+  })
+
+  it('clamps y above maxY (line 109)', () => {
+    const state = createTransformState({ x: 50, y: 200 })
+    const result = clampTransform(state, { minX: 0, maxX: 100, minY: 0, maxY: 100 })
+    expect(result.y).toBe(100)
+  })
+
+  it('does not change values within bounds', () => {
+    const state = createTransformState({ x: 50, y: 50 })
+    const result = clampTransform(state, { minX: 0, maxX: 100, minY: 0, maxY: 100 })
+    expect(result.x).toBe(50)
+    expect(result.y).toBe(50)
+  })
+
+  it('clamps both x and y simultaneously', () => {
+    const state = createTransformState({ x: -10, y: 150 })
+    const result = clampTransform(state, { minX: 0, maxX: 100, minY: 0, maxY: 100 })
+    expect(result.x).toBe(0)
+    expect(result.y).toBe(100)
+  })
+
+  it('preserves other transform properties', () => {
+    const state = createTransformState({ x: -10, y: 150, scale: 2, rotation: 45, flipX: true })
+    const result = clampTransform(state, { minX: 0, maxX: 100, minY: 0, maxY: 100 })
+    expect(result.scale).toBe(2)
+    expect(result.rotation).toBe(45)
+    expect(result.flipX).toBe(true)
   })
 })
 

@@ -71,4 +71,120 @@ describe('isPointInsideStencil', () => {
       x: 0, y: 0, width: 100, height: 100,
     })).toBe(false)
   })
+
+  // Freeform stencil tests (covers lines 58-76: isPointInsidePolygon)
+  describe('freeform stencil', () => {
+    const triangle = [
+      { x: 50, y: 0 },
+      { x: 100, y: 100 },
+      { x: 0, y: 100 },
+    ]
+
+    it('detects point inside a freeform triangle', () => {
+      expect(isPointInsideStencil(50, 50, {
+        stencil: 'freeform',
+        x: 0, y: 0, width: 100, height: 100,
+        points: triangle,
+      })).toBe(true)
+    })
+
+    it('detects point outside a freeform triangle', () => {
+      expect(isPointInsideStencil(5, 5, {
+        stencil: 'freeform',
+        x: 0, y: 0, width: 100, height: 100,
+        points: triangle,
+      })).toBe(false)
+    })
+
+    it('detects point inside a freeform square polygon', () => {
+      const square = [
+        { x: 10, y: 10 },
+        { x: 90, y: 10 },
+        { x: 90, y: 90 },
+        { x: 10, y: 90 },
+      ]
+      expect(isPointInsideStencil(50, 50, {
+        stencil: 'freeform',
+        x: 0, y: 0, width: 100, height: 100,
+        points: square,
+      })).toBe(true)
+    })
+
+    it('detects point outside a freeform square polygon', () => {
+      const square = [
+        { x: 10, y: 10 },
+        { x: 90, y: 10 },
+        { x: 90, y: 90 },
+        { x: 10, y: 90 },
+      ]
+      expect(isPointInsideStencil(5, 5, {
+        stencil: 'freeform',
+        x: 0, y: 0, width: 100, height: 100,
+        points: square,
+      })).toBe(false)
+    })
+
+    it('detects point inside concave polygon (L-shape)', () => {
+      // L-shaped polygon
+      const lShape = [
+        { x: 0, y: 0 },
+        { x: 50, y: 0 },
+        { x: 50, y: 50 },
+        { x: 100, y: 50 },
+        { x: 100, y: 100 },
+        { x: 0, y: 100 },
+      ]
+      // Inside the bottom-right part of the L
+      expect(isPointInsideStencil(75, 75, {
+        stencil: 'freeform',
+        x: 0, y: 0, width: 100, height: 100,
+        points: lShape,
+      })).toBe(true)
+      // Inside the top-left part of the L
+      expect(isPointInsideStencil(25, 25, {
+        stencil: 'freeform',
+        x: 0, y: 0, width: 100, height: 100,
+        points: lShape,
+      })).toBe(true)
+    })
+
+    it('detects point outside concave polygon (in the notch)', () => {
+      const lShape = [
+        { x: 0, y: 0 },
+        { x: 50, y: 0 },
+        { x: 50, y: 50 },
+        { x: 100, y: 50 },
+        { x: 100, y: 100 },
+        { x: 0, y: 100 },
+      ]
+      // The concave notch: top-right area (75, 25) should be outside
+      expect(isPointInsideStencil(75, 25, {
+        stencil: 'freeform',
+        x: 0, y: 0, width: 100, height: 100,
+        points: lShape,
+      })).toBe(false)
+    })
+
+    it('returns false for freeform with no points', () => {
+      expect(isPointInsideStencil(50, 50, {
+        stencil: 'freeform',
+        x: 0, y: 0, width: 100, height: 100,
+      })).toBe(false)
+    })
+
+    it('returns false for freeform with fewer than 3 points', () => {
+      expect(isPointInsideStencil(50, 50, {
+        stencil: 'freeform',
+        x: 0, y: 0, width: 100, height: 100,
+        points: [{ x: 0, y: 0 }, { x: 100, y: 100 }],
+      })).toBe(false)
+    })
+  })
+
+  it('returns false for unknown stencil type', () => {
+    expect(isPointInsideStencil(50, 50, {
+      stencil: 'unknown' as any,
+      x: 0, y: 0, width: 100, height: 100,
+    })).toBe(false)
+  })
 })

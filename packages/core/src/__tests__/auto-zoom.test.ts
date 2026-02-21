@@ -21,6 +21,61 @@ describe('classicAutoZoom', () => {
     const result = classicAutoZoom(coordinates, currentArea, imageSize, boundaries)
     expect(result).toEqual(currentArea)
   })
+
+  it('expands area when coordinates overflow to the left (line 49)', () => {
+    const coordinates = { left: -50, top: 100, width: 200, height: 200 }
+    const currentArea = { left: 0, top: 0, width: 500, height: 400 }
+    const result = classicAutoZoom(coordinates, currentArea, imageSize, boundaries)
+    // left should be min(0, -50) = -50, but fitArea clamps to 0
+    expect(result.left).toBe(0)
+    expect(result.left + result.width).toBeGreaterThanOrEqual(coordinates.left + coordinates.width)
+  })
+
+  it('expands area when coordinates overflow to the top (line 50)', () => {
+    const coordinates = { left: 100, top: -30, width: 200, height: 200 }
+    const currentArea = { left: 0, top: 0, width: 500, height: 400 }
+    const result = classicAutoZoom(coordinates, currentArea, imageSize, boundaries)
+    expect(result.top).toBe(0)
+    expect(result.top + result.height).toBeGreaterThanOrEqual(coordinates.top + coordinates.height)
+  })
+
+  it('expands area when coordinates exceed right boundary (line 51)', () => {
+    const coordinates = { left: 400, top: 100, width: 200, height: 200 }
+    const currentArea = { left: 0, top: 0, width: 500, height: 400 }
+    const result = classicAutoZoom(coordinates, currentArea, imageSize, boundaries)
+    // coordRight = 600 > areaRight = 500, so right = max(500, 600) = 600
+    expect(result.left + result.width).toBeGreaterThanOrEqual(600)
+  })
+
+  it('expands area when coordinates exceed bottom boundary (line 52)', () => {
+    const coordinates = { left: 100, top: 300, width: 200, height: 200 }
+    const currentArea = { left: 0, top: 0, width: 500, height: 400 }
+    const result = classicAutoZoom(coordinates, currentArea, imageSize, boundaries)
+    // coordBottom = 500 > areaBottom = 400, so bottom = max(400, 500) = 500
+    expect(result.top + result.height).toBeGreaterThanOrEqual(500)
+  })
+
+  it('expands area in all directions when coordinates fully outside', () => {
+    const coordinates = { left: -10, top: -10, width: 600, height: 500 }
+    const currentArea = { left: 0, top: 0, width: 500, height: 400 }
+    const result = classicAutoZoom(coordinates, currentArea, imageSize, boundaries)
+    // Should encompass both currentArea and coordinates
+    expect(result.left).toBe(0) // fitArea clamps negative to 0
+    expect(result.top).toBe(0)
+    expect(result.width).toBeGreaterThanOrEqual(500)
+    expect(result.height).toBeGreaterThanOrEqual(400)
+  })
+
+  it('clamps expanded area to image size via fitArea', () => {
+    const coordinates = { left: 800, top: 600, width: 300, height: 300 }
+    const currentArea = { left: 0, top: 0, width: 500, height: 400 }
+    const result = classicAutoZoom(coordinates, currentArea, imageSize, boundaries)
+    // fitArea ensures width <= imageSize.width and height <= imageSize.height
+    expect(result.width).toBeLessThanOrEqual(imageSize.width)
+    expect(result.height).toBeLessThanOrEqual(imageSize.height)
+    expect(result.left).toBeGreaterThanOrEqual(0)
+    expect(result.top).toBeGreaterThanOrEqual(0)
+  })
 })
 
 describe('fixedAutoZoom', () => {
